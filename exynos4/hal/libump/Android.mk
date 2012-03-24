@@ -34,7 +34,7 @@ LOCAL_SRC_FILES := $(UMP_SRCS)
 
 LOCAL_C_INCLUDES:= \
 	$(BOARD_HAL_PATH)/libump/ \
-	$(BOARD_HAL_PATH)/libump/include/ump \
+	$(BOARD_HAL_PATH)/libump/include \
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_STATIC_LIBRARIES)/

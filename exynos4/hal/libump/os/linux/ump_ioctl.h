@@ -25,7 +25,7 @@ extern "C"
 #include <linux/types.h>
 #include <linux/ioctl.h>
 
-#include <ump_uk_types.h>
+#include <ump/ump_uk_types.h>
 
 #ifndef __user
 #define __user
