@@ -1765,7 +1765,11 @@ OMX_ERRORTYPE SEC_OMX_VideoEncodeComponentInit(OMX_IN OMX_HANDLETYPE hComponent)
     pSECPort->portDefinition.format.video.pNativeWindow = NULL;
     pVideoEnc->eControlRate[INPUT_PORT_INDEX] = OMX_Video_ControlRateDisable;
 
+#ifdef USE_STOREMETADATA
+    pSECPort->bStoreMetaData = OMX_TRUE;
+#else
     pSECPort->bStoreMetaData = OMX_FALSE;
+#endif
 
     /* Output port */
     pSECPort = &pSECComponent->pSECPort[OUTPUT_PORT_INDEX];
