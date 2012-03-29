@@ -257,7 +257,6 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcEncInit(void *openHandle, void *param)
 
         EncArg.args.enc_init.cmn.in_ms_mode = mpeg4_arg->SliceMode;
         EncArg.args.enc_init.cmn.in_ms_arg = mpeg4_arg->SliceArgument;
-        EncArg.args.enc_init.cmn.in_output_mode = mpeg4_arg->OutputMode;
 
         EncArg.args.enc_init.cmn.in_mb_refresh = mpeg4_arg->RandomIntraMBRefresh;
 
@@ -326,7 +325,6 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcEncInit(void *openHandle, void *param)
 
         EncArg.args.enc_init.cmn.in_ms_mode = h263_arg->SliceMode;
         EncArg.args.enc_init.cmn.in_ms_arg = 0;
-        EncArg.args.enc_init.cmn.in_output_mode = FRAME;  /* not support to slice output mode */
 
         EncArg.args.enc_init.cmn.in_mb_refresh = h263_arg->RandomIntraMBRefresh;
 
@@ -383,7 +381,6 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcEncInit(void *openHandle, void *param)
             return MFC_RET_INVALID_PARAM;
         }
         EncArg.args.enc_init.cmn.in_ms_arg = h264_arg->SliceArgument;
-        EncArg.args.enc_init.cmn.in_output_mode = h264_arg->OutputMode;
 
         EncArg.args.enc_init.cmn.in_mb_refresh = h264_arg->RandomIntraMBRefresh;
         /* pad control */
