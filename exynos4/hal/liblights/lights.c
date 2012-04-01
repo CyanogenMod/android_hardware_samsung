@@ -39,6 +39,10 @@ static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 static int g_enable_touchlight = -1;
 
+#ifdef EXYNOS4210_TABLET
+char const*const PANEL_FILE
+        = "/sys/class/backlight/backlight/brightness";
+#else
 char const*const PANEL_FILE
         = "/sys/class/backlight/panel/brightness";
 
@@ -47,6 +51,7 @@ char const*const BUTTON_POWER
 
 char const*const BUTTON_FILE
         = "/sys/class/sec/sec_touchkey/brightness";
+#endif
 
 void init_globals(void)
 {
@@ -119,8 +124,10 @@ set_light_backlight(struct light_device_t* dev,
     pthread_mutex_lock(&g_lock);
     err = write_int(PANEL_FILE, brightness);
 
+#ifndef EXYNOS4210_TABLET
     if (g_enable_touchlight == -1 || g_enable_touchlight > 0)
         err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 0);
+#endif
 
     pthread_mutex_unlock(&g_lock);
 
@@ -138,6 +145,9 @@ static int
 set_light_buttons(struct light_device_t* dev,
         struct light_state_t const* state)
 {
+#ifdef EXYNOS4210_TABLET
+    return 0;
+#else
     int err = 0;
     int on = is_lit(state);
 
@@ -147,6 +157,7 @@ set_light_buttons(struct light_device_t* dev,
     pthread_mutex_unlock(&g_lock);
 
     return err;
+#endif
 }
 
 static int
