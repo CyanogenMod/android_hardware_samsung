@@ -175,6 +175,7 @@ int AkmSensor::enable(int32_t handle, int en)
 
 int AkmSensor::setDelay(int32_t handle, int64_t ns)
 {
+    int what = -1;
     uint32_t sensor_type = 0;
 
     if (ns < 0)
@@ -189,8 +190,28 @@ int AkmSensor::setDelay(int32_t handle, int64_t ns)
     if (sensor_type == 0)
         return -EINVAL;
 
-    return akm_set_delay(sensor_type, ns);
+    mDelays[what] = ns;
+    return update_delay();
 }
+
+int AkmSensor::update_delay()
+{
+    if (mEnabled) {
+        uint64_t wanted = -1LLU;
+        for (int i=0 ; i<numSensors ; i++) {
+            if (mEnabled & (1<<i)) {
+                uint64_t ns = mDelays[i];
+                wanted = wanted < ns ? wanted : ns;
+            }
+        }
+        short delay = int64_t(wanted) / 1000000;
+        if (ioctl(dev_fd, ECS_IOCTL_APP_SET_DELAY, &delay)) {
+            return -errno;
+        }
+    }
+    return 0;
+}
+
 
 int AkmSensor::loadAKMLibrary()
 {
