@@ -230,9 +230,9 @@ void Set_H264Enc_Param(SSBSIP_MFC_ENC_H264_PARAM *pH264Arg, SEC_OMX_BASECOMPONEN
     pH264Arg->LoopFilterDisable     = 1;    // 1: Loop Filter Disable, 0: Filter Enable
     pH264Arg->LoopFilterAlphaC0Offset = 0;
     pH264Arg->LoopFilterBetaOffset    = 0;
-    pH264Arg->SymbolMode       = 0;         // 0: CAVLC, 1: CABAC
+    pH264Arg->SymbolMode       = 1;         // 0: CAVLC, 1: CABAC
     pH264Arg->PictureInterlace = 0;
-    pH264Arg->Transform8x8Mode = 0;         // 0: 4x4, 1: allow 8x8
+    pH264Arg->Transform8x8Mode = 1;         // 0: 4x4, 1: allow 8x8
     pH264Arg->DarkDisable     = 1;
     pH264Arg->SmoothDisable   = 1;
     pH264Arg->StaticDisable   = 1;
@@ -1537,8 +1537,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE SEC_OMX_ComponentInit(OMX_HANDLETYPE hComponent, O
     for(i = 0; i < ALL_PORT_NUM; i++) {
         INIT_SET_SIZE_VERSION(&pH264Enc->AVCComponent[i], OMX_VIDEO_PARAM_AVCTYPE);
         pH264Enc->AVCComponent[i].nPortIndex = i;
-        pH264Enc->AVCComponent[i].eProfile   = OMX_VIDEO_AVCProfileBaseline;
-        pH264Enc->AVCComponent[i].eLevel     = OMX_VIDEO_AVCLevel31;
+        pH264Enc->AVCComponent[i].eProfile   = OMX_VIDEO_AVCProfileHigh;
+        pH264Enc->AVCComponent[i].eLevel     = OMX_VIDEO_AVCLevel4;
 
         pH264Enc->AVCComponent[i].nPFrames = 20;
     }
