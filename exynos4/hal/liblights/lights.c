@@ -148,12 +148,14 @@ set_light_buttons(struct light_device_t* dev,
 #ifdef EXYNOS4210_TABLET
     return 0;
 #else
+
+    load_settings();
+
     int err = 0;
-    int on = is_lit(state);
 
     pthread_mutex_lock(&g_lock);
-    LOGD("set_light_button on=%d\n", on ? 1 : 0);
-    err = write_int(BUTTON_FILE, on ? 1:0);
+    LOGD("set_light_button on=%d\n", g_enable_touchlight ? 1 : 0);
+    err = write_int(BUTTON_FILE, g_enable_touchlight ? 1 : 0);
     pthread_mutex_unlock(&g_lock);
 
     return err;
