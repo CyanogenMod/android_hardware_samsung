@@ -55,7 +55,6 @@ typedef struct {
 #ifdef BOARD_USE_V4L2_ION
 struct s3c_fb_user_ion_client {
     int fd;
-    int offset;
 };
 #endif
 

@@ -15,7 +15,6 @@
  */
 
 #include <utils/Log.h>
-
 #include "SEC_OMX_Def.h"
 #include "SecFimc.h"
 #include "HardwareConverter.h"
@@ -25,7 +24,7 @@ HardwareConverter::HardwareConverter()
     SecFimc* handle_fimc = new SecFimc();
     mSecFimc = (void *)handle_fimc;
 
-    if (handle_fimc->create(SecFimc::DEV_2, SecFimc::MODE_MULTI_BUF, 1) == false)
+    if (handle_fimc->create(SecFimc::DEV_0, SecFimc::MODE_MULTI_BUF, 1) == false)
         bHWconvert_flag = 0;
     else
         bHWconvert_flag = 1;

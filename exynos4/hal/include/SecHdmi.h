@@ -159,6 +159,7 @@ private :
     void         *mFBaddr;
     unsigned int mFBsize;
     int          mFBionfd;
+    unsigned int mFBIndex;
     int          mHdmiFd[HDMI_LAYER_MAX];
 
     int          mDstWidth[HDMI_LAYER_MAX];

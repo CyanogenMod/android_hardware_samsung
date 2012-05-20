@@ -15,9 +15,8 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH) \
-    $(BOARD_HAL_PATH)/include \
+LOCAL_C_INCLUDES := $(LOCAL_PATH)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../include
 
 LOCAL_SRC_FILES:= \
 	jpeg_api.c \

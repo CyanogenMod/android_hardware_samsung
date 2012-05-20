@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ifeq ($(filter-out exynos4,$(TARGET_BOARD_PLATFORM)),)
+
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -21,10 +23,13 @@ LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libfimc
 LOCAL_SRC_FILES := HardwareConverter.cpp
 
 LOCAL_C_INCLUDES := \
-	$(TOP)/$(BOARD_HAL_PATH)/include \
-	$(TOP)/$(BOARD_HMM_PATH)/openmax/sec_omx/include/khronos \
-	$(TOP)/$(BOARD_HMM_PATH)/openmax/sec_omx/include/sec
+	$(LOCAL_PATH)/../include \
+	$(TOP)/$(TARGET_HAL_PATH)/include \
+	$(TOP)/$(TARGET_OMX_PATH)/include/khronos \
+	$(TOP)/$(TARGET_OMX_PATH)/include/sec
 
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libhwconverter
 include $(BUILD_SHARED_LIBRARY)
+
+endif
