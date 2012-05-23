@@ -39,13 +39,10 @@ static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 static int g_enable_touchlight = -1;
 
-#ifdef EXYNOS4210_TABLET
-char const*const PANEL_FILE
-        = "/sys/class/backlight/backlight/brightness";
-#else
 char const*const PANEL_FILE
         = "/sys/class/backlight/panel/brightness";
 
+#ifndef EXYNOS4210_TABLET
 char const*const BUTTON_POWER
         = "/sys/class/sec/sec_touchkey/enable_disable";
 
