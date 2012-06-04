@@ -17,12 +17,6 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/include/
 
-LOCAL_MODULE := libsecmfcapi
-
-ifeq ($(TARGET_SOC),exynos4x12)
-LOCAL_MODULE_STEM := libsecmfcdecapi
-endif
-
 LOCAL_PRELINK_MODULE := false
 
 ifeq ($(BOARD_USES_MFC_FPS),true)
@@ -40,7 +34,9 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES := liblog
 
 ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_MODULE := libsecmfcdecapi
 include $(BUILD_SHARED_LIBRARY)
 else
+LOCAL_MODULE := libsecmfcapi
 include $(BUILD_STATIC_LIBRARY)
 endif

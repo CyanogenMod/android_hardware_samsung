@@ -24,9 +24,15 @@ endif
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := libSEC_OMX_Vdec libsecosal libsecbasecomponent \
-	libseccscapi libsecmfcapi
+	libseccscapi
 LOCAL_SHARED_LIBRARIES := libc libdl libcutils libutils libui \
 	libSEC_OMX_Resourcemanager
+
+ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_SHARED_LIBRARIES += libsecmfcdecapi
+else
+LOCAL_STATIC_LIBRARIES += libsecmfcapi
+endif
 
 ifeq ($(filter-out exynos4,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SHARED_LIBRARIES += libhwconverter

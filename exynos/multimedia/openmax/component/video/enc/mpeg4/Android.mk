@@ -24,9 +24,15 @@ endif
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := libSEC_OMX_Venc libsecosal libsecbasecomponent \
-	libseccscapi libsecmfcapi
+	libseccscapi
 LOCAL_SHARED_LIBRARIES := libc libdl libcutils libutils libui \
 	libSEC_OMX_Resourcemanager
+
+ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_SHARED_LIBRARIES += libsecmfcdecapi
+else
+LOCAL_STATIC_LIBRARIES += libsecmfcapi
+endif
 
 LOCAL_C_INCLUDES := $(SEC_OMX_INC)/khronos \
 	$(SEC_OMX_INC)/sec \
