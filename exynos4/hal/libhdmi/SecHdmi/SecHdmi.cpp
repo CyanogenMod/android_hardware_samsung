@@ -415,7 +415,7 @@ bool SecHdmi::create(int width, int height)
     }
 
     for (int i = 0; i < HDMI_G2D_OUTPUT_BUF_NUM; i++)
-        g2d_reserved_memory[i] = ion_base_addr + (g2d_reserved_memory_size * i);
+        g2d_reserved_memory[i] = (unsigned int)ion_base_addr + (g2d_reserved_memory_size * i);
 #endif
 #else
 #ifndef BOARD_USE_V4L2
