@@ -203,6 +203,31 @@ EXIT:
     return ret;
 }
 
+#ifdef SAMSUNG_EXYNOS4x12
+OMX_ERRORTYPE SEC_OSAL_GetPhysANBHandle(
+    OMX_IN OMX_U32 handle,
+    OMX_OUT OMX_PTR paddr)
+{
+    FunctionIn();
+
+    OMX_ERRORTYPE ret = OMX_ErrorNone;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    buffer_handle_t bufferHandle = (buffer_handle_t) handle;
+
+    SEC_OSAL_Log(SEC_LOG_TRACE, "%s: handle: 0x%x", __func__, handle);
+
+    if (mapper.getphys(bufferHandle, (int*)paddr) != 0) {
+        SEC_OSAL_Log(SEC_LOG_ERROR, "%s: mapper.getphys() fail", __func__);
+        ret = OMX_ErrorUndefined;
+        goto EXIT;
+    }
+
+EXIT:
+    FunctionOut();
+
+    return ret;
+}
+#else
 OMX_ERRORTYPE SEC_OSAL_GetPhysANBHandle(
     OMX_IN OMX_U32 handle,
     OMX_OUT OMX_PTR *paddr)
@@ -226,6 +251,7 @@ EXIT:
 
     return ret;
 }
+#endif
 
 OMX_ERRORTYPE SEC_OSAL_LockANB(
     OMX_IN OMX_PTR pBuffer,

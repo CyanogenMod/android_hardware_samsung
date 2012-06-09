@@ -20,6 +20,14 @@ LOCAL_MODULE := libsecosal
 
 LOCAL_CFLAGS :=
 
+ifeq ($(TARGET_SOC),exynos4210)
+LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4210
+endif
+
+ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4x12
+endif
+
 ifeq ($(BOARD_USE_V4L2), false)
 ifeq ($(BOARD_USE_S3D_SUPPORT), true)
 LOCAL_CFLAGS += -DS3D_SUPPORT
