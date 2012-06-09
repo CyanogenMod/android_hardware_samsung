@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
- *              http://www.samsung.com/
+ *		http://www.samsung.com/
  *
- * Global header for Samsung MFC (Multi Function Codec - FIMV) driver
+ * user interface header for Samsung MFC (Multi Function Codec - FIMV) driver
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -40,6 +40,11 @@
 
 #define SAMSUNG_MFC_DEV_NAME           "/dev/s3c-mfc"
 
+#ifdef SAMSUNG_EXYNOS4x12
+#define SUPPORT_SLICE_ENCODING        1
+#else
+#define SUPPORT_SLICE_ENCODING        0
+#endif
 
 /*--------------------------------------------------------------------------------*/
 /* Structure and Type                                                             */
@@ -71,12 +76,20 @@ typedef enum {
 
 typedef enum {
     NV12_LINEAR = 0,
-    NV12_TILE
+    NV12_TILE,
+    NV21_LINEAR,
 } SSBSIP_MFC_INSTRM_MODE_TYPE;
 
+#if SUPPORT_SLICE_ENCODING
 typedef enum {
-    NO_CACHE = 0,
-    CACHE = 1
+    FRAME = 0,
+    SLICE = 1,
+} SSBSIP_MFC_OUTSTRM_MODE_TYPE;
+#endif
+
+typedef enum {
+	NO_CACHE = 0,
+	CACHE = 1
 } SSBIP_MFC_BUFFER_TYPE;
 
 typedef enum {
@@ -245,6 +258,9 @@ typedef struct {
     int CbPadVal;                       /* [IN] CB pel value used to fill padding area */
     int CrPadVal;                       /* [IN] CR pel value used to fill padding area */
     int FrameMap;                       /* [IN] Encoding input mode(tile mode or linear mode) */
+#if SUPPORT_SLICE_ENCODING
+    int OutputMode;                     /* [IN] Output mode: Frame/Slice */
+#endif
 
     /* H.264 specific parameters */
     int ProfileIDC;                     /* [IN] profile */
@@ -288,6 +304,9 @@ typedef struct {
     int CbPadVal;                       /* [IN] CB pel value used to fill padding area */
     int CrPadVal;                       /* [IN] CR pel value used to fill padding area */
     int FrameMap;                       /* [IN] Encoding input mode(tile mode or linear mode) */
+#if SUPPORT_SLICE_ENCODING
+    int OutputMode;                     /* [IN] Output mode: Frame/Slice */
+#endif
 
     /* MPEG4 specific parameters */
     int ProfileIDC;                     /* [IN] profile */
@@ -320,6 +339,9 @@ typedef struct {
     int CbPadVal;                       /* [IN] CB pel value used to fill padding area */
     int CrPadVal;                       /* [IN] CR pel value used to fill padding area */
     int FrameMap;                       /* [IN] Encoding input mode(tile mode or linear mode) */
+#if SUPPORT_SLICE_ENCODING
+    int OutputMode;                     /* [IN] Output mode: Frame/Slice */
+#endif
 
     /* H.263 specific parameters */
     int FrameRate;                      /* [IN] rate control parameter(frame rate) */
@@ -361,6 +383,18 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*--------------------------------------------------------------------------------*/
+/* Format Conversion API                                                          */
+/*--------------------------------------------------------------------------------*/
+/* Format Conversion API */
+void Y_tile_to_linear_4x2(unsigned char *p_linear_addr, unsigned char *p_tiled_addr, unsigned int x_size, unsigned int y_size);
+void CbCr_tile_to_linear_4x2(unsigned char *p_linear_addr, unsigned char *p_tiled_addr, unsigned int x_size, unsigned int y_size);
+
+/* C210 specific feature */
+void tile_to_linear_64x32_4x2_neon(unsigned char *p_linear_addr, unsigned char *p_tiled_addr, unsigned int x_size, unsigned int y_size);
+void tile_to_linear_64x32_4x2_uv_neon(unsigned char *p_linear_addr, unsigned char *p_tiled_addr, unsigned int x_size, unsigned int y_size);
+void Convert_NV12_to_I420_NEON(unsigned char *YUV420p, unsigned char *YVU420sp,	unsigned int YSize, unsigned int UVPlaneSize);
 
 /*--------------------------------------------------------------------------------*/
 /* Decoding APIs                                                                  */
