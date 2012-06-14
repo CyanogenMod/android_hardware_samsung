@@ -169,14 +169,14 @@ static int set_light_leds(struct light_state_t const *state, int type)
             led.red = 0;
             led.green = 0;
             led.blue = 0;
-            snprintf(led.blink, MAX_WRITE_CMD, "0x00 0 0");
+            snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
         break;
     case LIGHT_FLASH_TIMED:
     case LIGHT_FLASH_HARDWARE:
             led.red = (colorRGB >> 16) & 0xFF;
             led.green = (colorRGB >> 8) & 0xFF;
             led.blue = colorRGB & 0xFF;
-            snprintf(led.blink, MAX_WRITE_CMD, "0xFF 80 2000");
+            snprintf(led.blink, MAX_WRITE_CMD, "0x%x 80 2000", colorRGB);
         break;
     default:
         return -EINVAL;
