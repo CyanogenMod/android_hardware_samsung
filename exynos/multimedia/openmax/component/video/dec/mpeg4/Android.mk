@@ -34,7 +34,7 @@ LOCAL_SHARED_LIBRARIES := libc libdl libcutils libutils libui \
 	libSEC_OMX_Resourcemanager
 
 ifeq ($(TARGET_SOC),exynos4x12)
-LOCAL_SHARED_LIBRARIES += libsecmfcdecapi
+LOCAL_SHARED_LIBRARIES += libsecmfcdecapi libsecmfcencapi
 else
 LOCAL_STATIC_LIBRARIES += libsecmfcapi
 endif
