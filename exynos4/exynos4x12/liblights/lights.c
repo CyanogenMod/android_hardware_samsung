@@ -191,6 +191,12 @@ static int set_light_leds_notifications(struct light_device_t *dev,
     return set_light_leds(state, 0);
 }
 
+static int set_light_battery(struct light_device_t *dev,
+            struct light_state_t const *state)
+{
+    return set_light_leds(state, 0);
+}
+
 static int set_light_leds_attention(struct light_device_t *dev,
             struct light_state_t const *state)
 {
@@ -209,6 +215,8 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         set_light = set_light_leds_notifications;
     else if (0 == strcmp(LIGHT_ID_ATTENTION, name))
         set_light = set_light_leds_attention;
+    else if (0 == strcmp(LIGHT_ID_BATTERY, name))
+        set_light = set_light_battery;
     else
         return -EINVAL;
 
