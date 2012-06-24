@@ -54,7 +54,6 @@ struct led_config {
     int red;
     int green;
     int blue;
-    char brightness[MAX_WRITE_CMD];
     char blink[MAX_WRITE_CMD];
 };
 
@@ -153,7 +152,6 @@ static int write_leds(struct led_config led)
     err = write_int(LED_RED, led.red);
     err = write_int(LED_GREEN, led.green);
     err = write_int(LED_BLUE, led.blue);
-    err = write_str(LED_BRIGHTNESS, led.brightness);
     err = write_str(LED_BLINK, led.blink);
     pthread_mutex_unlock(&g_lock);
 
@@ -172,7 +170,6 @@ static int set_light_leds(struct light_state_t const *state, int type)
             led.red = 0;
             led.green = 0;
             led.blue = 0;
-            snprintf(led.brightness, MAX_WRITE_CMD, "0x00");
             snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
         break;
     case LIGHT_FLASH_TIMED:
@@ -180,7 +177,6 @@ static int set_light_leds(struct light_state_t const *state, int type)
             led.red = (colorRGB >> 16) & 0xFF;
             led.green = (colorRGB >> 8) & 0xFF;
             led.blue = colorRGB & 0xFF;
-            snprintf(led.brightness, MAX_WRITE_CMD, "0xFF");
             snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
         break;
     default:
@@ -199,6 +195,7 @@ static int set_light_leds_notifications(struct light_device_t *dev,
 static int set_light_battery(struct light_device_t *dev,
             struct light_state_t const *state)
 {
+    int err = 0;
     struct led_config led;
     int brightness = rgb_to_brightness(state);
     unsigned int colorRGB;
@@ -209,17 +206,19 @@ static int set_light_battery(struct light_device_t *dev,
         led.red = 0;
         led.green = 0;
         led.blue = 0;
-        snprintf(led.brightness, MAX_WRITE_CMD, "0x00");
-        snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
     } else {
-        led.red = (colorRGB >> 16) & 0xFF;
-        led.green = (colorRGB >> 8) & 0xFF;
-        led.blue = colorRGB & 0xFF;
-        snprintf(led.brightness, MAX_WRITE_CMD, "0x00");
-        snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
+        led.red = (((colorRGB >> 16) & 0xFF) / 255) * 20;
+        led.green = (((colorRGB >> 8) & 0xFF) / 255) * 20;
+        led.blue = ((colorRGB & 0xFF) / 255) * 20;
     }
 
-    return write_leds(led);
+    pthread_mutex_lock(&g_lock);
+    err = write_int(LED_RED, led.red);
+    err = write_int(LED_GREEN, led.green);
+    err = write_int(LED_BLUE, led.blue);
+    pthread_mutex_unlock(&g_lock);
+    
+    return err;
 }
 
 static int set_light_leds_attention(struct light_device_t *dev,
