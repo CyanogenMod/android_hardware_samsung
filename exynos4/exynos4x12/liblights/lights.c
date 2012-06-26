@@ -57,6 +57,8 @@ struct led_config {
     char blink[MAX_WRITE_CMD];
 };
 
+struct led_config g_BatteryStore;
+
 void init_g_lock(void)
 {
     pthread_mutex_init(&g_lock, NULL);
@@ -167,10 +169,8 @@ static int set_light_leds(struct light_state_t const *state, int type)
 
     switch (state->flashMode) {
     case LIGHT_FLASH_NONE:
-            led.red = 0;
-            led.green = 0;
-            led.blue = 0;
-            snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
+            // use battery led state stored (black if nothing)
+            led = g_BatteryStore;
         break;
     case LIGHT_FLASH_TIMED:
     case LIGHT_FLASH_HARDWARE:
@@ -213,6 +213,7 @@ static int set_light_battery(struct light_device_t *dev,
     }
 
     pthread_mutex_lock(&g_lock);
+    g_BatteryStore = led;
     err = write_int(LED_RED, led.red);
     err = write_int(LED_GREEN, led.green);
     err = write_int(LED_BLUE, led.blue);
@@ -245,6 +246,10 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         return -EINVAL;
 
     pthread_once(&g_init, init_g_lock);
+
+    g_BatteryStore.red = 0;
+    g_BatteryStore.green = 0;
+    g_BatteryStore.blue = 0;
 
     struct light_device_t *dev = malloc(sizeof(struct light_device_t));
     memset(dev, 0, sizeof(*dev));
