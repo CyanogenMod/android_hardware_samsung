@@ -126,7 +126,7 @@ static int set_light_backlight(struct light_device_t *dev,
             struct light_state_t const *state)
 {
     int err = 0;
-    status int s_previous_brightness = -1;
+    static int s_previous_brightness = -1;
     int brightness = rgb_to_brightness(state);
 
     pthread_mutex_lock(&g_lock);
