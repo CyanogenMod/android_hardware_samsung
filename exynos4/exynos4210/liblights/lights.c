@@ -234,14 +234,17 @@ set_light_backlight(struct light_device_t* dev,
         load_settings();
 
     int err = 0;
+    static int s_previous_brightness = -1;
     int brightness = rgb_to_brightness(state);
 
     pthread_mutex_lock(&g_lock);
     err = write_int(PANEL_FILE, brightness);
 
 #ifndef EXYNOS4210_TABLET
-    if (g_enable_touchlight == -1 || g_enable_touchlight > 0)
-        err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 0);
+    if (!s_previous_brightness && (brightness > 0)) {
+        err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
+        s_previous_brightness = brightness;
+    }
 #endif
 
     pthread_mutex_unlock(&g_lock);
