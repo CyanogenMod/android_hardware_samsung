@@ -43,9 +43,6 @@ char const*const PANEL_FILE
         = "/sys/class/backlight/panel/brightness";
 
 #ifndef EXYNOS4210_TABLET
-char const*const BUTTON_POWER
-        = "/sys/class/sec/sec_touchkey/enable_disable";
-
 char const*const BUTTON_FILE
         = "/sys/class/sec/sec_touchkey/brightness";
 #endif
