@@ -89,6 +89,21 @@ static int write_int(char const *path, int value)
     }
 }
 
+static int read_int(char const *path)
+{
+    int fd;
+    char buffer[2];
+
+    fd = open(path, O_RDONLY);
+
+    if (fd >= 0) {
+        read(fd, buffer, 1);
+    }
+    close(fd);
+
+    return atoi(buffer);
+}
+
 static int write_str(char const *path, const char* value)
 {
     int fd;
@@ -126,14 +141,15 @@ static int set_light_backlight(struct light_device_t *dev,
             struct light_state_t const *state)
 {
     int err = 0;
-    static int s_previous_brightness = -1;
     int brightness = rgb_to_brightness(state);
+    int previous_brightness = read_int(PANEL_FILE);
 
     pthread_mutex_lock(&g_lock);
+
     err = write_int(PANEL_FILE, brightness);
-    if (!s_previous_brightness && (brightness > 0)) {
+    LOGE("XPLOD/ s_previous=%d, brightness=%d",previous_brightness,brightness);
+    if (!previous_brightness && (brightness > 0)) {
         err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
-        s_previous_brightness = brightness;
     }
     pthread_mutex_unlock(&g_lock);
 
