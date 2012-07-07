@@ -18,7 +18,7 @@
 
 
 #define LOG_TAG "lights"
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 
 #include <cutils/log.h>
 
@@ -122,6 +122,15 @@ static int rgb_to_brightness(struct light_state_t const *state)
         + (150*((color>>8) & 0x00ff)) + (29*(color & 0x00ff))) >> 8;
 }
 
+static int get_calibrated_color(struct light_state_t const *state, int brightness)
+{
+    int red = (state->color >> 16) & 0xFF;
+    int green = ((state->color >> 8) & 0xFF) * 0.7;
+    int blue = (state->color & 0x00FF) * 0.6;
+
+    return (((red * brightness) / 255) << 16) + (((green * brightness) / 255) << 8) + ((blue * brightness) / 255);
+}
+
 static int set_light_backlight(struct light_device_t *dev,
             struct light_state_t const *state)
 {
@@ -158,6 +167,17 @@ static int write_leds(struct led_config led)
     err = write_int(LED_RED, led.red);
     err = write_int(LED_GREEN, led.green);
     err = write_int(LED_BLUE, led.blue);
+    pthread_mutex_unlock(&g_lock);
+
+    return err;
+}
+
+/* Blink */
+static int write_led_blink(struct led_config led)
+{
+    int err = 0;
+
+    pthread_mutex_lock(&g_lock);
     err = write_str(LED_BLINK, led.blink);
     pthread_mutex_unlock(&g_lock);
 
@@ -167,9 +187,10 @@ static int write_leds(struct led_config led)
 static int set_light_leds(struct light_state_t const *state, int type)
 {
     struct led_config led;
+    int brightness = rgb_to_brightness(state);
     unsigned int colorRGB;
 
-    colorRGB = state->color;
+    colorRGB = get_calibrated_color(state, brightness);
 
     switch (state->flashMode) {
     case LIGHT_FLASH_NONE:
@@ -178,16 +199,14 @@ static int set_light_leds(struct light_state_t const *state, int type)
         break;
     case LIGHT_FLASH_TIMED:
     case LIGHT_FLASH_HARDWARE:
-            led.red = (colorRGB >> 16) & 0xFF;
-            led.green = (colorRGB >> 8) & 0xFF;
-            led.blue = colorRGB & 0xFF;
+            LOGI("set_light_leds 0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
             snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
         break;
     default:
         return -EINVAL;
     }
 
-    return write_leds(led);
+    return write_led_blink(led);
 }
 
 static int set_light_leds_notifications(struct light_device_t *dev,
@@ -199,31 +218,20 @@ static int set_light_leds_notifications(struct light_device_t *dev,
 static int set_light_battery(struct light_device_t *dev,
             struct light_state_t const *state)
 {
-    int err = 0;
     struct led_config led;
     int brightness = rgb_to_brightness(state);
     unsigned int colorRGB;
 
-    colorRGB = state->color;
+    colorRGB = get_calibrated_color(state, 20);
 
     if (brightness == 0) {
-        led.red = 0;
-        led.green = 0;
-        led.blue = 0;
+        snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
     } else {
-        led.red = (((colorRGB >> 16) & 0xFF) / 255) * 20;
-        led.green = (((colorRGB >> 8) & 0xFF) / 255) * 20;
-        led.blue = ((colorRGB & 0xFF) / 255) * 20;
+        snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
     }
 
-    pthread_mutex_lock(&g_lock);
     g_BatteryStore = led;
-    err = write_int(LED_RED, led.red);
-    err = write_int(LED_GREEN, led.green);
-    err = write_int(LED_BLUE, led.blue);
-    pthread_mutex_unlock(&g_lock);
-    
-    return err;
+    return write_led_blink(led);
 }
 
 static int set_light_leds_attention(struct light_device_t *dev,
