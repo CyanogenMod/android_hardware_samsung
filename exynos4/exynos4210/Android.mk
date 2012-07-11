@@ -15,7 +15,7 @@
 #
 
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-exynos4210_dirs := liblights libsensors
+exynos4210_dirs := liblights
 
 include $(call all-named-subdir-makefiles,$(exynos4210_dirs))
 
