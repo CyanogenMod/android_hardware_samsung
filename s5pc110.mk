@@ -12,17 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4210)
-include hardware/samsung/exynos4210.mk
-endif
-ifeq ($(TARGET_SOC),exynos4x12)
-include hardware/samsung/exynos4x12.mk
-endif
-endif
-
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
-ifneq ($(TARGET_BOOTLOADER_BOARD_NAME),herring)
-include hardware/samsung/s5pc110.mk
-endif
+
+include hardware/samsung/exynos3/s5pc110/Android.mk
+
 endif
