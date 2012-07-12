@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2012 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,18 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4210)
-include hardware/samsung/exynos4210.mk
-endif
-ifeq ($(TARGET_SOC),exynos4x12)
-include hardware/samsung/exynos4x12.mk
-endif
-endif
+#
 
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
-ifneq ($(TARGET_BOOTLOADER_BOARD_NAME),herring)
-include hardware/samsung/s5pc110.mk
-endif
+
+# audio, camera, sensor and light HALs are device specifc
+s5pc110_dirs := libhwcomposer libs3cjpeg libstagefrighthw sec_mm
+
+include $(call all-named-subdir-makefiles,$(s5pc110_dirs))
+
 endif
