@@ -25,6 +25,7 @@
  */
 
 #include "SecHWCUtils.h"
+#include "exynos_format.h"
 
 #ifdef BOARD_USE_V4L2_ION
 #define V4L2_BUF_TYPE_OUTPUT V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
@@ -59,7 +60,7 @@ void check_fps()
         memcpy(&tick_old, &tick, sizeof(timeval));
         if (cnt == (10 + CHK_FRAME_CNT)) {
             FPS = 1000*CHK_FRAME_CNT/total;
-            LOGE("[FPS]:%d\n", FPS);
+            ALOGE("[FPS]:%d\n", FPS);
             total = 0;
             cnt = 10;
         }
@@ -77,6 +78,7 @@ struct yuv_fmt_list yuv_list[] = {
     { "V4L2_PIX_FMT_NV21X",     "YUV420/2P/MSB_CBCR",   V4L2_PIX_FMT_NV21X,    12, 2 },
     { "V4L2_PIX_FMT_NV12X",     "YUV420/2P/MSB_CRCB",   V4L2_PIX_FMT_NV12X,    12, 2 },
     { "V4L2_PIX_FMT_YUV420",    "YUV420/3P",            V4L2_PIX_FMT_YUV420,   12, 3 },
+    { "V4L2_PIX_FMT_YVU420",    "YVU420/3P",            V4L2_PIX_FMT_YVU420,   12, 3 },
 #ifdef BOARD_USE_V4L2_ION
     { "V4L2_PIX_FMT_YUV420M",   "YUV420/3P",            V4L2_PIX_FMT_YUV420M,  12, 3 },
     { "V4L2_PIX_FMT_NV12M",     "YUV420/2P",            V4L2_PIX_FMT_NV12M,    12, 2 },
@@ -91,6 +93,23 @@ struct yuv_fmt_list yuv_list[] = {
     { "V4L2_PIX_FMT_UV21X",     "YUV422/2P/MSB_CRCB",   V4L2_PIX_FMT_NV61X,    16, 2 },
     { "V4L2_PIX_FMT_YUV422P",   "YUV422/3P",            V4L2_PIX_FMT_YUV422P,  16, 3 },
 };
+
+unsigned int get_yuv_planes(unsigned int fmt)
+{
+	int i, sel = -1;
+
+	for (i = 0; i < (int)(sizeof(yuv_list) / sizeof(struct yuv_fmt_list)); i++) {
+		if (yuv_list[i].fmt == fmt) {
+			sel = i;
+			break;
+		}
+	}
+
+	if (sel == -1)
+		return sel;
+	else
+		return yuv_list[sel].planes;
+}
 
 int window_open(struct hwc_win_info_t *win, int id)
 {
@@ -123,10 +142,13 @@ int window_open(struct hwc_win_info_t *win, int id)
         real_id = 4;
 #endif
         break;
+    case 2:
+        real_id = 0;
+        break;
     default:
         SEC_HWC_Log(HWC_LOG_ERROR, "%s::id(%d) is weird", __func__, id);
         goto error;
-}
+    }
 
 //  0/10
 //    snprintf(name, 64, device_template, id + 3);
@@ -296,8 +318,8 @@ int window_pan_display(struct hwc_win_info_t *win)
 int window_show(struct hwc_win_info_t *win)
 {
     if (win->power_state == 0) {
-        if (ioctl(win->fd, FBIOBLANK, FB_BLANK_UNBLANK) < 0) {
-            SEC_HWC_Log(HWC_LOG_ERROR, "%s::FBIOBLANK failed : (%d:%s)",
+        if (ioctl(win->fd, S3CFB_SET_WIN_ON, 0) < 0) {
+            SEC_HWC_Log(HWC_LOG_ERROR, "%s: S3CFB_SET_WIN_ON failed : (%d:%s)",
                 __func__, win->fd, strerror(errno));
             return -1;
         }
@@ -309,8 +331,8 @@ int window_show(struct hwc_win_info_t *win)
 int window_hide(struct hwc_win_info_t *win)
 {
     if (win->power_state == 1) {
-        if (ioctl(win->fd, FBIOBLANK, FB_BLANK_POWERDOWN) < 0) {
-            SEC_HWC_Log(HWC_LOG_ERROR, "%s::FBIOBLANK failed : (%d:%s)",
+        if (ioctl(win->fd, S3CFB_SET_WIN_OFF, 0) < 0) {
+            SEC_HWC_Log(HWC_LOG_ERROR, "%s::S3CFB_SET_WIN_OFF failed : (%d:%s)",
              __func__, win->fd, strerror(errno));
             return -1;
         }
@@ -823,17 +845,11 @@ static int get_src_phys_addr(struct hwc_context_t *ctx,
         sec_img *src_img, sec_rect *src_rect)
 {
     s5p_fimc_t *fimc = &ctx->fimc;
-    struct s3c_mem_alloc *ptr_mem_alloc = &ctx->s3c_mem.mem_alloc[0];
-    struct s3c_mem_dma_param s3c_mem_dma;
-#ifdef USE_HW_PMEM
-    sec_pmem_alloc_t *pm_alloc = &ctx->sec_pmem.sec_pmem_alloc[0];
-#endif
 
     unsigned int src_virt_addr  = 0;
     unsigned int src_phys_addr  = 0;
     unsigned int src_frame_size = 0;
 
-    struct pmem_region region;
     ADDRS * addr;
 
     // error check routine
@@ -896,67 +912,16 @@ static int get_src_phys_addr(struct hwc_context_t *ctx,
                 fimc->params.src.buf_addr_phy_cb = src_img->paddr + src_img->uoffset;
                 fimc->params.src.buf_addr_phy_cr = src_img->paddr + src_img->uoffset + src_img->voffset;
                 src_phys_addr = fimc->params.src.buf_addr_phy_rgb_y;
-             break;
-             }
-            // copy
-            src_frame_size = FRAME_SIZE(src_img->format, src_img->w, src_img->h);
-            if (src_frame_size == 0) {
-                SEC_HWC_Log(HWC_LOG_ERROR, "%s::FRAME_SIZE fail", __func__);
-                return 0;
-            }
-
-#ifdef USE_HW_PMEM
-            if (0 <= checkPmem(&ctx->sec_pmem, 0, src_frame_size)) {
-                src_virt_addr   = pm_alloc->virt_addr;
-                src_phys_addr   = pm_alloc->phys_addr;
-                pm_alloc->size  = src_frame_size;
-            } else
-#endif
-            if (0 <= checkMem(&ctx->s3c_mem, 0, src_frame_size)) {
-                src_virt_addr       = ptr_mem_alloc->vir_addr;
-                src_phys_addr       = ptr_mem_alloc->phy_addr;
-                ptr_mem_alloc->size = src_frame_size;
             } else {
-                SEC_HWC_Log(HWC_LOG_ERROR, "%s::check_mem fail", __func__);
-                return 0;
+                SEC_HWC_Log(HWC_LOG_ERROR, "%s::\nformat = 0x%x : Not "
+                        "GRALLOC_USAGE_HW_FIMC1 can not supported\n",
+                        __func__, src_img->format);
             }
-            if ((src_img->format == HAL_PIXEL_FORMAT_YCbCr_420_P) ||
-                (src_img->format == HAL_PIXEL_FORMAT_YV12) ||
-                (src_img->format == HAL_PIXEL_FORMAT_YCbCr_420_SP) ||
-                (src_img->format == HAL_PIXEL_FORMAT_YCrCb_420_SP)) {
-                if (memcpy_rect((void *)src_virt_addr, (void*)((unsigned int)src_img->base),
-                            src_img->f_w, src_img->f_h, src_rect->w, src_rect->h, src_img->format) != 0)
-                    return 0;
-            } else {
-                memcpy((void *)src_virt_addr, (void*)((unsigned int)src_img->base), src_frame_size);
-            }
-
-#ifdef USE_HW_PMEM
-            if (pm_alloc->size  == src_frame_size) {
-                region.offset = 0;
-                region.len = src_frame_size;
-                if (ioctl(ctx->sec_pmem.pmem_master_fd, PMEM_CACHE_FLUSH, &region) < 0)
-                    SEC_HWC_Log(HWC_LOG_ERROR, "%s::pmem cache flush fail ", __func__);
-            }
-#endif
             break;
         }
     }
 
     return src_phys_addr;
-}
-
-static int get_dst_phys_addr(struct hwc_context_t *ctx, sec_img *dst_img,
-        sec_rect *dst_rect, int *dst_memcpy_flag)
-{
-    unsigned int dst_phys_addr  = 0;
-
-    if (HWC_PHYS_MEM_TYPE == dst_img->mem_type && 0 != dst_img->base)
-        dst_phys_addr = dst_img->base;
-    else
-        dst_phys_addr = dst_img->base;
-
-    return dst_phys_addr;
 }
 
 static inline int rotateValueHAL2PP(unsigned char transform)
@@ -1067,6 +1032,7 @@ static inline int widthOfPP(unsigned int ver, int pp_color_format, int number)
         case V4L2_PIX_FMT_NV12:
         case V4L2_PIX_FMT_NV12T:
         case V4L2_PIX_FMT_YUV420:
+        case V4L2_PIX_FMT_YVU420:
             return multipleOf2(number);
 
         default :
@@ -1097,6 +1063,7 @@ static inline int widthOfPP(unsigned int ver, int pp_color_format, int number)
             return multipleOf8(number);
 
         case V4L2_PIX_FMT_YUV420:
+        case V4L2_PIX_FMT_YVU420:
             return multipleOf16(number);
 
         default :
@@ -1113,6 +1080,7 @@ static inline int heightOfPP(int pp_color_format, int number)
     case V4L2_PIX_FMT_NV12:
     case V4L2_PIX_FMT_NV12T:
     case V4L2_PIX_FMT_YUV420:
+    case V4L2_PIX_FMT_YVU420:
         return multipleOf2(number);
 
     default :
@@ -1122,41 +1090,7 @@ static inline int heightOfPP(int pp_color_format, int number)
     return number;
 }
 
-static unsigned int get_yuv_bpp(unsigned int fmt)
-{
-    int i, sel = -1;
-
-    for (i = 0; i < (int)(sizeof(yuv_list) / sizeof(struct yuv_fmt_list)); i++) {
-        if (yuv_list[i].fmt == fmt) {
-            sel = i;
-            break;
-        }
-    }
-
-    if (sel == -1)
-        return sel;
-    else
-        return yuv_list[sel].bpp;
-}
-
-static unsigned int get_yuv_planes(unsigned int fmt)
-{
-    int i, sel = -1;
-
-    for (i = 0; i < (int)(sizeof(yuv_list) / sizeof(struct yuv_fmt_list)); i++) {
-        if (yuv_list[i].fmt == fmt) {
-            sel = i;
-            break;
-        }
-    }
-
-    if (sel == -1)
-        return sel;
-    else
-        return yuv_list[sel].planes;
-}
-
-static int runcFimcCore(struct hwc_context_t *ctx,
+static int runFimcCore(struct hwc_context_t *ctx,
         unsigned int src_phys_addr, sec_img *src_img, sec_rect *src_rect,
         uint32_t src_color_space,
         unsigned int dst_phys_addr, sec_img *dst_img, sec_rect *dst_rect,
@@ -1178,8 +1112,8 @@ static int runcFimcCore(struct hwc_context_t *ctx,
 
     bool src_cbcr_order = true;
     int rotate_value = rotateValueHAL2PP(transform);
-    int hflip = hflipValueHAL2PP(transform);
-    int vflip = vflipValueHAL2PP(transform);
+    int hflip = 0;
+    int vflip = 0;
 
     /* 1. param(fimc config)->src information
      *    - src_img,src_rect => s_fw,s_fh,s_w,s_h,s_x,s_y
@@ -1224,6 +1158,8 @@ static int runcFimcCore(struct hwc_context_t *ctx,
      */
     switch (rotate_value) {
     case 0:
+        hflip = hflipValueHAL2PP(transform);
+        vflip = vflipValueHAL2PP(transform);
         params->dst.full_width  = dst_img->f_w;
         params->dst.full_height = dst_img->f_h;
 
@@ -1235,6 +1171,8 @@ static int runcFimcCore(struct hwc_context_t *ctx,
         params->dst.height      = heightOfPP(dst_color_space, dst_rect->h);
         break;
     case 90:
+        hflip = vflipValueHAL2PP(transform);
+        vflip = hflipValueHAL2PP(transform);
         params->dst.full_width  = dst_img->f_h;
         params->dst.full_height = dst_img->f_w;
 
@@ -1280,7 +1218,7 @@ static int runcFimcCore(struct hwc_context_t *ctx,
 #endif
 
     SEC_HWC_Log(HWC_LOG_DEBUG,
-            "runcFimcCore()::"
+            "runFimcCore()::"
             "SRC f.w(%d),f.h(%d),x(%d),y(%d),w(%d),h(%d)=>"
             "DST f.w(%d),f.h(%d),x(%d),y(%d),w(%d),h(%d)",
             params->src.full_width, params->src.full_height,
@@ -1370,7 +1308,6 @@ static int runcFimcCore(struct hwc_context_t *ctx,
 
     /* 5. Set input dma address (Y/RGB, Cb, Cr)
      *    - zero copy : mfc, camera
-     *    - memcpy to pmem : SW dec(420P), video editor(YV12)
      */
     switch (src_img->format) {
     case HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP:
@@ -1390,10 +1327,10 @@ static int runcFimcCore(struct hwc_context_t *ctx,
     case HAL_PIXEL_FORMAT_RGB_565:
     case HAL_PIXEL_FORMAT_YV12:
     default:
+#ifdef BOARD_USE_V4L2_ION
         if (src_img->format == HAL_PIXEL_FORMAT_YV12)
             src_cbcr_order = false;
 
-#ifdef BOARD_USE_V4L2_ION
         fimc_src_buf.base[0] = params->src.buf_addr_phy_rgb_y;
         if (src_cbcr_order == true) {
             fimc_src_buf.base[1] = params->src.buf_addr_phy_cb;
@@ -1412,6 +1349,8 @@ static int runcFimcCore(struct hwc_context_t *ctx,
         SEC_HWC_Log(HWC_LOG_DEBUG,
                 "runFimcCore - Y_length=%d, U_length=%d, V_length=%d\n",
                 fimc_src_buf.size[0], fimc_src_buf.size[1],fimc_src_buf.size[2]);
+
+        src_color_space = HAL_PIXEL_FORMAT_2_V4L2_PIX(src_img->format);
         src_planes = get_yuv_planes(src_color_space);
 
         break;
@@ -1419,52 +1358,14 @@ static int runcFimcCore(struct hwc_context_t *ctx,
 
         if (src_img->usage & GRALLOC_USAGE_HW_FIMC1) {
             fimc_src_buf.base[0] = params->src.buf_addr_phy_rgb_y;
-            if (src_cbcr_order == true) {
-                fimc_src_buf.base[1] = params->src.buf_addr_phy_cb;
-                fimc_src_buf.base[2] = params->src.buf_addr_phy_cr;
-            }
-            else {
-                fimc_src_buf.base[2] = params->src.buf_addr_phy_cb;
-                fimc_src_buf.base[1] = params->src.buf_addr_phy_cr;
-            }
+            fimc_src_buf.base[1] = params->src.buf_addr_phy_cb;
+            fimc_src_buf.base[2] = params->src.buf_addr_phy_cr;
+
             SEC_HWC_Log(HWC_LOG_DEBUG,
                     "runFimcCore - Y=0x%X, U=0x%X, V=0x%X\n",
                     fimc_src_buf.base[0], fimc_src_buf.base[1],fimc_src_buf.base[2]);
             break;
         }
-
-        /* set source Y image */
-        fimc_src_buf.base[0] = params->src.buf_addr_phy_rgb_y;
-        /* set source Cb,Cr images for 2 or 3 planes */
-        src_bpp    = get_yuv_bpp(src_color_space);
-        src_planes = get_yuv_planes(src_color_space);
-        if (2 == src_planes) {          /* 2 planes */
-            frame_size = params->src.full_width * params->src.full_height;
-            params->src.buf_addr_phy_cb =
-                params->src.buf_addr_phy_rgb_y + frame_size;
-            /* CbCr */
-            fimc_src_buf.base[1] = params->src.buf_addr_phy_cb;
-        } else if (3 == src_planes) {   /* 3 planes */
-            frame_size = params->src.full_width * params->src.full_height;
-            params->src.buf_addr_phy_cb =
-                params->src.buf_addr_phy_rgb_y + frame_size;
-            if (12 == src_bpp)
-                params->src.buf_addr_phy_cr =
-                    params->src.buf_addr_phy_cb + (frame_size >> 2);
-            else
-                params->src.buf_addr_phy_cr =
-                    params->src.buf_addr_phy_cb + (frame_size >> 1);
-            /* Cb, Cr */
-            if (src_cbcr_order == true) {
-                fimc_src_buf.base[1] = params->src.buf_addr_phy_cb;
-                fimc_src_buf.base[2] = params->src.buf_addr_phy_cr;
-            }
-            else {
-                fimc_src_buf.base[2] = params->src.buf_addr_phy_cb;
-                fimc_src_buf.base[1] = params->src.buf_addr_phy_cr;
-            }
-        }
-        break;
     }
 
     /* 6. Run FIMC
@@ -1503,36 +1404,6 @@ static int runcFimcCore(struct hwc_context_t *ctx,
 
     return 0;
 }
-
-#ifdef SUB_TITLES_HWC
-int createG2d(sec_g2d_t *g2d)
-{
-    g2d->dev_fd = open(SEC_G2D_DEV_NAME, O_RDWR);
-
-    if (g2d->dev_fd <= 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::G2d open error (%d)", __func__, errno);
-        goto err;
-    }
-
-    return 0;
-err:
-    if (0 < g2d->dev_fd)
-        close(g2d->dev_fd);
-    g2d->dev_fd =0;
-
-    return -1;
-}
-
-int destroyG2d(sec_g2d_t *g2d)
-{
-    // close
-    if (0 < g2d->dev_fd)
-        close(g2d->dev_fd);
-    g2d->dev_fd = 0;
-
-    return 0;
-}
-#endif
 
 int createFimc(s5p_fimc_t *fimc)
 {
@@ -1622,7 +1493,6 @@ int runFimc(struct hwc_context_t *ctx,
     unsigned int src_phys_addr  = 0;
     unsigned int dst_phys_addr  = 0;
     int          rotate_value   = 0;
-    int          flag_force_memcpy = 0;
     int32_t      src_color_space;
     int32_t      dst_color_space;
 
@@ -1632,7 +1502,7 @@ int runFimc(struct hwc_context_t *ctx,
         return -1;
 
     /* 2. destination address and size */
-    dst_phys_addr = get_dst_phys_addr(ctx, dst_img, dst_rect, &flag_force_memcpy);
+    dst_phys_addr = dst_img->base;
     if (0 == dst_phys_addr)
         return -2;
 
@@ -1645,433 +1515,10 @@ int runFimc(struct hwc_context_t *ctx,
         return -4;
 
     /* 4. FIMC: src_rect of src_img => dst_rect of dst_img */
-    if (runcFimcCore(ctx, src_phys_addr, src_img, src_rect,
+    if (runFimcCore(ctx, src_phys_addr, src_img, src_rect,
                 (uint32_t)src_color_space, dst_phys_addr, dst_img, dst_rect,
                 (uint32_t)dst_color_space, transform) < 0)
         return -5;
 
-    if (flag_force_memcpy == 1) {
-#ifdef USE_HW_PMEM
-        if (0 != ctx->sec_pmem.sec_pmem_alloc[1].size) {
-            struct s3c_mem_dma_param s3c_mem_dma;
-
-            s3c_mem_dma.src_addr =
-                (unsigned long)(ctx->sec_pmem.sec_pmem_alloc[1].virt_addr);
-            s3c_mem_dma.size     = ctx->sec_pmem.sec_pmem_alloc[1].size;
-
-            ioctl(ctx->s3c_mem.fd, S3C_MEM_CACHE_INVAL, &s3c_mem_dma);
-
-            memcpy((void*)((unsigned int)dst_img->base),
-                    (void *)(ctx->sec_pmem.sec_pmem_alloc[1].virt_addr),
-                    ctx->sec_pmem.sec_pmem_alloc[1].size);
-        } else
-#endif
-        {
-            struct s3c_mem_alloc *ptr_mem_alloc = &ctx->s3c_mem.mem_alloc[1];
-            struct s3c_mem_dma_param s3c_mem_dma;
-
-            s3c_mem_dma.src_addr = (unsigned long)ptr_mem_alloc->vir_addr;
-            s3c_mem_dma.size     = ptr_mem_alloc->size;
-
-            ioctl(ctx->s3c_mem.fd, S3C_MEM_CACHE_INVAL, &s3c_mem_dma);
-
-            memcpy((void*)((unsigned int)dst_img->base),
-                    (void *)ptr_mem_alloc->vir_addr, ptr_mem_alloc->size);
-        }
-    }
-
     return 0;
 }
-
-#ifdef SUB_TITLES_HWC
-static int get_g2d_src_phys_addr(struct hwc_context_t  *ctx, g2d_rect *src_rect)
-{
-    sec_g2d_t  *g2d = &ctx->g2d;
-    struct s3c_mem_alloc *ptr_mem_alloc = &ctx->s3c_mem.mem_alloc[0];
-#ifdef USE_HW_PMEM
-    sec_pmem_alloc_t *pm_alloc = &ctx->sec_pmem.sec_pmem_alloc[0];
-#endif
-
-    unsigned int src_virt_addr  = 0;
-    unsigned int src_phys_addr  = 0;
-    unsigned int src_frame_size = 0;
-
-    struct pmem_region region;
-
-    // error check routine
-    if (0 == src_rect->virt_addr) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s invalid src address\n", __func__);
-        return 0;
-    }
-
-    src_frame_size = FRAME_SIZE(src_rect->color_format,
-            src_rect->full_w, src_rect->full_h);
-    if (src_frame_size == 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::FRAME_SIZE fail", __func__);
-        return 0;
-    }
-
-#ifdef USE_HW_PMEM
-    if (0 <= checkPmem(&ctx->sec_pmem, 0, src_frame_size)) {
-        src_virt_addr   = pm_alloc->virt_addr;
-        src_phys_addr   = pm_alloc->phys_addr;
-        pm_alloc->size  = src_frame_size;
-    } else
-#endif
-    if (0 <= checkMem(&ctx->s3c_mem, 0, src_frame_size)) {
-        src_virt_addr       = ptr_mem_alloc->vir_addr;
-        src_phys_addr       = ptr_mem_alloc->phy_addr;
-        ptr_mem_alloc->size = src_frame_size;
-    } else {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::check_mem fail", __func__);
-        return 0;
-    }
-    memcpy((void *)src_virt_addr, (void*)((unsigned int)src_rect->virt_addr), src_frame_size);
-
-    return src_phys_addr;
-}
-
-int get_HAL_2_G2D_FORMAT(int format)
-{
-    switch (format) {
-    case    HAL_PIXEL_FORMAT_RGBA_8888:     return  G2D_ABGR_8888;
-    case    HAL_PIXEL_FORMAT_RGBX_8888:     return  G2D_XBGR_8888;
-    case    HAL_PIXEL_FORMAT_BGRA_8888:     return  G2D_ARGB_8888;
-    case    HAL_PIXEL_FORMAT_RGB_888:       return  G2D_PACKED_BGR_888;
-    case    HAL_PIXEL_FORMAT_RGB_565:       return  G2D_RGB_565;
-    case    HAL_PIXEL_FORMAT_RGBA_5551:     return  G2D_RGBA_5551;
-    case    HAL_PIXEL_FORMAT_RGBA_4444:     return  G2D_RGBA_4444;
-    default:
-        return -1;
-    }
-}
-
-static inline int rotateValueHAL2G2D(unsigned char transform)
-{
-    int rotate_flag = transform & 0x7;
-
-    switch (rotate_flag) {
-    case HAL_TRANSFORM_ROT_90:  return G2D_ROT_90;
-    case HAL_TRANSFORM_ROT_180: return G2D_ROT_180;
-    case HAL_TRANSFORM_ROT_270: return G2D_ROT_270;
-    default:
-        return G2D_ROT_0;
-    }
-}
-
-int runG2d(struct hwc_context_t *ctx, g2d_rect *src_rect, g2d_rect *dst_rect,
-            uint32_t transform)
-{
-    sec_g2d_t *  g2d = &ctx->g2d;
-    g2d_flag flag = {G2D_ROT_0, G2D_ALPHA_BLENDING_OPAQUE, 0, 0, 0, 0, 0, 0};
-    int          rotate_value   = 0;
-
-    // 1 : source address and size
-    src_rect->phys_addr = get_g2d_src_phys_addr(ctx, src_rect);
-    if (0 == src_rect->phys_addr)
-        return -1;
-
-    // 2 : destination address and size
-    if (0 == dst_rect->phys_addr)
-        return -2;
-
-    // check whether g2d supports the src format
-    src_rect->color_format = get_HAL_2_G2D_FORMAT(src_rect->color_format);
-    if (0 > src_rect->color_format)
-        return -3;
-
-    dst_rect->color_format = get_HAL_2_G2D_FORMAT(dst_rect->color_format);
-    if (0 > dst_rect->color_format)
-        return -4;
-
-    flag.rotate_val = rotateValueHAL2G2D(transform);
-
-   // scale and rotate and alpha with FIMG
-    if(stretchSecFimg(src_rect, dst_rect, &flag) < 0)
-        return -5;
-
-    return 0;
-}
-#endif
-
-int createMem(struct s3c_mem_t *mem, unsigned int index, unsigned int size)
-{
-    struct s3c_mem_alloc *ptr_mem_alloc;
-    struct s3c_mem_alloc mem_alloc_info;
-
-    if (index >= NUM_OF_MEM_OBJ) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::invalid index (%d >= %d)",
-                __func__, index, NUM_OF_MEM_OBJ);
-        goto err;
-    }
-
-    ptr_mem_alloc = &mem->mem_alloc[index];
-
-    if (mem->fd <= 0) {
-        mem->fd = open(S3C_MEM_DEV_NAME, O_RDWR);
-        if (mem->fd <= 0) {
-            SEC_HWC_Log(HWC_LOG_ERROR, "%s::open(%s) fail(%s)",
-                    __func__, S3C_MEM_DEV_NAME, strerror(errno));
-            goto err;
-        }
-    }
-
-    // kcoolsw : what the hell of this line??
-    if (0 == size)
-        return 0;
-
-    mem_alloc_info.size = size;
-
-    if (ioctl(mem->fd, S3C_MEM_CACHEABLE_ALLOC, &mem_alloc_info) < 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::S3C_MEM_ALLOC(size : %d) fail",
-                __func__, mem_alloc_info.size);
-        goto err;
-    }
-
-    ptr_mem_alloc->phy_addr = mem_alloc_info.phy_addr;
-    ptr_mem_alloc->vir_addr = mem_alloc_info.vir_addr;
-    ptr_mem_alloc->size     = mem_alloc_info.size;
-
-    return 0;
-
-err:
-    if (0 < mem->fd)
-        close(mem->fd);
-    mem->fd = 0;
-
-    return 0;
-}
-
-int destroyMem(struct s3c_mem_t *mem)
-{
-    int i;
-    struct s3c_mem_alloc *ptr_mem_alloc;
-
-    if (mem->fd <= 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::invalied fd(%d) fail", __func__, mem->fd);
-        return -1;
-    }
-
-    for (i = 0; i < NUM_OF_MEM_OBJ; i++) {
-        ptr_mem_alloc = &mem->mem_alloc[i];
-
-        if (0 != ptr_mem_alloc->vir_addr) {
-            if (ioctl(mem->fd, S3C_MEM_FREE, ptr_mem_alloc) < 0) {
-                SEC_HWC_Log(HWC_LOG_ERROR, "%s::S3C_MEM_FREE fail", __func__);
-                return -1;
-            }
-
-            ptr_mem_alloc->phy_addr = 0;
-            ptr_mem_alloc->vir_addr = 0;
-            ptr_mem_alloc->size     = 0;
-        }
-    }
-
-    close(mem->fd);
-    mem->fd = 0;
-
-    return 0;
-}
-
-int checkMem(struct s3c_mem_t *mem, unsigned int index, unsigned int size)
-{
-    int ret;
-    struct s3c_mem_alloc *ptr_mem_alloc;
-    struct s3c_mem_alloc mem_alloc_info;
-
-    if (index >= NUM_OF_MEM_OBJ) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "%s::invalid index (%d >= %d)", __func__,
-                index, NUM_OF_MEM_OBJ);
-        return -1;
-    }
-
-    if (mem->fd <= 0) {
-        ret = createMem(mem, index, size);
-        return ret;
-    }
-
-    ptr_mem_alloc = &mem->mem_alloc[index];
-
-    if (ptr_mem_alloc->size < (int)size) {
-        if (0 < ptr_mem_alloc->size) {
-            // free allocated mem
-            if (ioctl(mem->fd, S3C_MEM_FREE, ptr_mem_alloc) < 0) {
-                SEC_HWC_Log(HWC_LOG_ERROR, "%s::S3C_MEM_FREE fail", __func__);
-                return -1;
-            }
-        }
-
-        // allocate mem with requested size
-        mem_alloc_info.size = size;
-        if (ioctl(mem->fd, S3C_MEM_CACHEABLE_ALLOC, &mem_alloc_info) < 0) {
-            SEC_HWC_Log(HWC_LOG_ERROR, "%s::S3C_MEM_ALLOC(size : %d)  fail",
-                    __func__, mem_alloc_info.size);
-            return -1;
-        }
-
-        ptr_mem_alloc->phy_addr = mem_alloc_info.phy_addr;
-        ptr_mem_alloc->vir_addr = mem_alloc_info.vir_addr;
-        ptr_mem_alloc->size     = mem_alloc_info.size;
-    }
-
-    return 0;
-}
-
-#ifdef USE_HW_PMEM
-int createPmem(sec_pmem_t *pm, unsigned int buf_size)
-{
-    int    master_fd, err = 0, i;
-    void  *base;
-    unsigned int phys_base;
-    size_t size, sub_size[NUM_OF_MEM_OBJ];
-    struct pmem_region region;
-
-    master_fd = open(PMEM_DEVICE_DEV_NAME, O_RDWR, 0);
-    if (master_fd < 0) {
-        pm->pmem_master_fd = -1;
-        if (EACCES == errno) {
-            return 0;
-        } else {
-            SEC_HWC_Log(HWC_LOG_ERROR, "%s::open(%s) fail(%s)",
-                    __func__, PMEM_DEVICE_DEV_NAME, strerror(errno));
-            return -errno;
-        }
-    }
-
-    if (ioctl(master_fd, PMEM_GET_TOTAL_SIZE, &region) < 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "PMEM_GET_TOTAL_SIZE failed, default mode");
-        size = 8<<20;   // 8 MiB
-    } else {
-        size = region.len;
-    }
-
-    base = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, master_fd, 0);
-    if (base == MAP_FAILED) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "[%s] mmap failed : %d (%s)", __func__,
-                errno, strerror(errno));
-        base = 0;
-        close(master_fd);
-        master_fd = -1;
-        return -errno;
-    }
-
-    if (ioctl(master_fd, PMEM_GET_PHYS, &region) < 0) {
-        SEC_HWC_Log(HWC_LOG_ERROR, "PMEM_GET_PHYS failed, limp mode");
-        region.offset = 0;
-    }
-
-    pm->pmem_master_fd   = master_fd;
-    pm->pmem_master_base = base;
-    pm->pmem_total_size  = size;
-    //pm->pmem_master_phys_base = region.offset;
-    phys_base = region.offset;
-
-    // sec_pmem_alloc[0] for temporary buffer for source
-    sub_size[0] = buf_size;
-    sub_size[0] = roundUpToPageSize(sub_size[0]);
-
-    for (i = 0; i < NUM_OF_MEM_OBJ; i++) {
-        sec_pmem_alloc_t *pm_alloc = &(pm->sec_pmem_alloc[i]);
-        int fd, ret;
-        int offset = i ? sub_size[i-1] : 0;
-        struct pmem_region sub = { offset, sub_size[i] };
-
-        // create the "sub-heap"
-        if (0 > (fd = open(PMEM_DEVICE_DEV_NAME, O_RDWR, 0))) {
-            SEC_HWC_Log(HWC_LOG_ERROR,
-                    "[%s][index=%d] open failed (%dL) : %d (%s)",
-                    __func__, i, __LINE__, errno, strerror(errno));
-            return -errno;
-        }
-
-        // connect to it
-        if (0 != (ret = ioctl(fd, PMEM_CONNECT, pm->pmem_master_fd))) {
-            SEC_HWC_Log(HWC_LOG_ERROR,
-                    "[%s][index=%d] ioctl(PMEM_CONNECT) failed : %d (%s)",
-                    __func__, i, errno, strerror(errno));
-            close(fd);
-            return -errno;
-        }
-
-        // make it available to the client process
-        if (0 != (ret = ioctl(fd, PMEM_MAP, &sub))) {
-            SEC_HWC_Log(HWC_LOG_ERROR,
-                    "[%s][index=%d] ioctl(PMEM_MAP) failed : %d (%s)",
-                    __func__, i, errno, strerror(errno));
-            close(fd);
-            return -errno;
-        }
-
-        pm_alloc->fd         = fd;
-        pm_alloc->total_size = sub_size[i];
-        pm_alloc->offset     = offset;
-        pm_alloc->virt_addr  = (unsigned int)base + (unsigned int)offset;
-        pm_alloc->phys_addr  = (unsigned int)phys_base + (unsigned int)offset;
-
-#if defined (PMEM_DEBUG)
-        SEC_HWC_Log(HWC_LOG_DEBUG, "[%s] pm_alloc[%d] fd=%d total_size=%d "
-                "offset=0x%x virt_addr=0x%x phys_addr=0x%x",
-                __func__, i, pm_alloc->fd, pm_alloc->total_size,
-                pm_alloc->offset, pm_alloc->virt_addr, pm_alloc->phys_addr);
-#endif
-    }
-
-    return err;
-}
-
-int destroyPmem(sec_pmem_t *pm)
-{
-    int i, err;
-
-    for (i=0; i<NUM_OF_MEM_OBJ; i++) {
-        sec_pmem_alloc_t *pm_alloc = &(pm->sec_pmem_alloc[i]);
-
-        if (0 <= pm_alloc->fd) {
-            struct pmem_region sub = { pm_alloc->offset, pm_alloc->total_size };
-
-            if (0 > (err = ioctl(pm_alloc->fd, PMEM_UNMAP, &sub)))
-                SEC_HWC_Log(HWC_LOG_ERROR,
-                        "[%s][index=%d] ioctl(PMEM_UNMAP) failed : %d (%s)",
-                        __func__, i, errno, strerror(errno));
-#if defined (PMEM_DEBUG)
-            else
-                SEC_HWC_Log(HWC_LOG_DEBUG,
-                        "[%s] pm_alloc[%d] unmap fd=%d total_size=%d offset=0x%x",
-                        __func__, i, pm_alloc->fd, pm_alloc->total_size,
-                        pm_alloc->offset);
-#endif
-            close(pm_alloc->fd);
-
-            pm_alloc->fd         = -1;
-            pm_alloc->total_size = 0;
-            pm_alloc->offset     = 0;
-            pm_alloc->virt_addr  = 0;
-            pm_alloc->phys_addr  = 0;
-        }
-    }
-
-    if (0 <= pm->pmem_master_fd) {
-        munmap(pm->pmem_master_base, pm->pmem_total_size);
-        close(pm->pmem_master_fd);
-        pm->pmem_master_fd = -1;
-    }
-
-    pm->pmem_master_base = 0;
-    pm->pmem_total_size  = 0;
-
-    return 0;
-}
-
-int checkPmem(sec_pmem_t *pm, unsigned int index, unsigned int requested_size)
-{
-    sec_pmem_alloc_t *pm_alloc = &(pm->sec_pmem_alloc[index]);
-
-    if (0 < pm_alloc->virt_addr &&
-            requested_size <= (unsigned int)(pm_alloc->total_size))
-        return 0;
-
-    pm_alloc->size = 0;
-    return -1;
-}
-
-#endif
