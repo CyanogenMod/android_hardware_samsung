@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 
-ifeq ($(TARGET_SOC),exynos4x12)
-exynos4x12_dirs := libcamera liblights
-include $(call all-named-subdir-makefiles,$(exynos4x12_dirs))
+ifneq ($(filter exynos4 exynos5,$(TARGET_BOARD_PLATFORM)),)
+
+common_exynos_dirs := libexynosutils multimedia
+include $(call all-named-subdir-makefiles,$(common_exynos_dirs))
+
 endif
+

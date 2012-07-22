@@ -55,6 +55,7 @@ typedef struct {
 #ifdef BOARD_USE_V4L2_ION
 struct s3c_fb_user_ion_client {
     int fd;
+    int offset;
 };
 #endif
 
@@ -71,6 +72,8 @@ struct s3c_fb_user_ion_client {
 #define S3CFB_SET_RESUME_FIFO       _IOW ('F', 301, unsigned long)
 #define S3CFB_GET_LCD_WIDTH         _IOR ('F', 302, int)
 #define S3CFB_GET_LCD_HEIGHT        _IOR ('F', 303, int)
+#define S3CFB_SET_WIN_ON            _IOW ('F', 305, unsigned int)
+#define S3CFB_SET_WIN_OFF           _IOW ('F', 306, unsigned int)
 #define S3CFB_GET_FB_PHY_ADDR       _IOR ('F', 310, unsigned int)
 #define S3C_FB_GET_CURR_FB_INFO     _IOR ('F', 305, s3c_fb_next_info_t)
 #define S3CFB_GET_ION_USER_HANDLE   _IOWR('F', 208, struct s3c_fb_user_ion_client)
