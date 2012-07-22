@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2012 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,15 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4x12)
+ifneq ($(filter exynos4 exynos5,$(TARGET_BOARD_PLATFORM)),)
 
-include $(TARGET_HAL_PATH)/Android.mk
-
-include hardware/samsung/exynos/Android.mk
-include hardware/samsung/exynos4/exynos4x12/Android.mk
-include hardware/samsung/exynos4/ril/Android.mk
+common_exynos_dirs := libexynosutils multimedia
+include $(call all-named-subdir-makefiles,$(common_exynos_dirs))
 
 endif
-endif
+
