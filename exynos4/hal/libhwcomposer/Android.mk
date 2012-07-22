@@ -21,18 +21,20 @@ include $(CLEAR_VARS)
 LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_SHARED_LIBRARIES := liblog libcutils libEGL \
-			  libGLESv1_CM
+			  libGLESv1_CM libexynosutils libhardware_legacy
 
 ifeq ($(BOARD_USE_V4L2_ION),true)
-LOCAL_SHARED_LIBRARIES += libion
+LOCAL_SHARED_LIBRARIES += libsamsungion
 endif
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../include
+	$(TARGET_HAL_PATH)/include
 
 LOCAL_SRC_FILES := SecHWCLog.cpp SecHWCUtils.cpp SecHWC.cpp
 
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libfimg
+LOCAL_C_INCLUDES += \
+	$(TARGET_HAL_PATH)/libfimg \
+	$(TOP)/hardware/samsung/exynos/libexynosutils
 
 ifeq ($(TARGET_SOC),exynos4210)
 LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4210
@@ -40,6 +42,9 @@ endif
 
 ifeq ($(TARGET_SOC),exynos4x12)
 LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4x12
+LOCAL_CFLAGS += -DBOARD_USE_V4L2
+LOCAL_CFLAGS += -DBOARD_USE_V4L2_ION
+LOCAL_SHARED_LIBRARIES += libsamsungion
 endif
 
 ifeq ($(BOARD_USES_HDMI),true)
