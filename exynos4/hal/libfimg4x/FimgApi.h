@@ -26,12 +26,12 @@
 #include "sec_g2d_4x.h"
 
 #define REAL_DEBUG
-#define ANDROID_LOG
+#define ANDROID_ALOG
 
 #if defined(REAL_DEBUG)
-#ifdef ANDROID_LOG
-#define PRINT  LOGE
-#define PRINTD LOGD
+#ifdef ANDROID_ALOG
+#define PRINT  ALOGE
+#define PRINTD ALOGD
 #else
 #define PRINT  printf
 #define PRINTD printf

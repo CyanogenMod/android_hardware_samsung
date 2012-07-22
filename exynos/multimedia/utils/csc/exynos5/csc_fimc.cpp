@@ -67,21 +67,21 @@ void *csc_fimc_open()
 
     hdl = dlopen("libfimc.so", RTLD_NOW);
     if (hdl == NULL) {
-        LOGE("%s:: load libfimc.so failed", __func__);
+        ALOGE("%s:: load libfimc.so failed", __func__);
         return NULL;
     }
 
     create_instance = (SecFimc *(*)())dlsym(hdl, "create_instance");
     handle_fimc = (SecFimc *)create_instance();
     if (handle_fimc == NULL) {
-        LOGE("%s:: create handle_fimc failed", __func__);
+        ALOGE("%s:: create handle_fimc failed", __func__);
         return NULL;
     }
 
     if (!handle_fimc->create(SecFimc::DEV_1, SecFimc::MODE_MULTI_BUF, 1)) {
         destroy_instance = (void (*)(void *))dlsym(hdl, "destroy_instance");
         destroy_instance(handle_fimc);
-        LOGE("%s:: create() failed", __func__);
+        ALOGE("%s:: create() failed", __func__);
         return NULL;
     }
     return (void *)handle_fimc;
@@ -103,13 +103,13 @@ CSC_FIMC_ERROR_CODE csc_fimc_close(void *handle)
     void* hdl = NULL;
 
     if (!handle_fimc->destroy()) {
-        LOGE("%s:: destroy() failed", __func__);
+        ALOGE("%s:: destroy() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
     hdl = dlopen("libfimc.so", RTLD_NOW);
     if (hdl == NULL) {
-        LOGE("%s:: load libfimc.so failed", __func__);
+        ALOGE("%s:: load libfimc.so failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
@@ -172,7 +172,7 @@ CSC_FIMC_ERROR_CODE csc_fimc_convert_nv12t(
     if (!handle_fimc->setSrcParams(width, height, src_crop_x, src_crop_y,
                                    &src_crop_width, &src_crop_height,
                                    HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP_TILED)) {
-        LOGE("%s:: setSrcParms() failed", __func__);
+        ALOGE("%s:: setSrcParms() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
@@ -180,19 +180,19 @@ CSC_FIMC_ERROR_CODE csc_fimc_convert_nv12t(
                                  (unsigned int)src_addr[1],
                                  (unsigned int)src_addr[1],
                                  HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP_TILED)) {
-        LOGE("%s:: setSrcPhyAddr() failed", __func__);
+        ALOGE("%s:: setSrcPhyAddr() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
     if (!handle_fimc->setRotVal(rotate_value)) {
-        LOGE("%s:: setRotVal() failed", __func__);
+        ALOGE("%s:: setRotVal() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
     if (!handle_fimc->setDstParams(width, height, dst_crop_x, dst_crop_y,
                                    &dst_crop_width, &dst_crop_height,
                                    HarPixelformat)) {
-        LOGE("%s:: setDstParams() failed", __func__);
+        ALOGE("%s:: setDstParams() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 
@@ -201,7 +201,7 @@ CSC_FIMC_ERROR_CODE csc_fimc_convert_nv12t(
         if (!handle_fimc->setDstAddr((unsigned int)(dst_addr[0]),
                                      (unsigned int)(dst_addr[1]),
                                      (unsigned int)(dst_addr[1]))) {
-            LOGE("%s:: setDstPhyAddr() failed", __func__);
+            ALOGE("%s:: setDstPhyAddr() failed", __func__);
             return CSC_FIMC_RET_FAIL;
         }
         break;
@@ -210,14 +210,14 @@ CSC_FIMC_ERROR_CODE csc_fimc_convert_nv12t(
         if (!handle_fimc->setDstAddr((unsigned int)(dst_addr[0]),
                                      (unsigned int)(dst_addr[1]),
                                      (unsigned int)(dst_addr[2]))) {
-            LOGE("%s:: setDstPhyAddr() failed", __func__);
+            ALOGE("%s:: setDstPhyAddr() failed", __func__);
             return CSC_FIMC_RET_FAIL;
         }
         break;
     }
 
     if (!handle_fimc->draw(0, 0)) {
-        LOGE("%s:: handleOneShot() failed", __func__);
+        ALOGE("%s:: handleOneShot() failed", __func__);
         return CSC_FIMC_RET_FAIL;
     }
 

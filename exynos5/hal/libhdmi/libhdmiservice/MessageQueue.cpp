@@ -107,7 +107,7 @@ sp<MessageBase> MessageQueue::waitMessage(nsecs_t timeout)
             }
 
             if (nextEventTime >= 0) {
-                //LOGD("nextEventTime = %lld ms", nextEventTime);
+                //ALOGD("nextEventTime = %lld ms", nextEventTime);
                 if (nextEventTime > 0) {
                     // we're about to wait, flush the binder command buffer
                     IPCThreadState::self()->flushCommands();
@@ -117,7 +117,7 @@ sp<MessageBase> MessageQueue::waitMessage(nsecs_t timeout)
                     }
                 }
             } else {
-                //LOGD("going to wait");
+                //ALOGD("going to wait");
                 // we're about to wait, flush the binder command buffer
                 IPCThreadState::self()->flushCommands();
                 mCondition.wait(mLock);
@@ -160,7 +160,7 @@ status_t MessageQueue::queueMessage(
     message->when = systemTime() + relTime;
     mMessages.insert(message);
 
-    //LOGD("MessageQueue::queueMessage time = %lld ms", message->when);
+    //ALOGD("MessageQueue::queueMessage time = %lld ms", message->when);
     //dumpLocked(message);
 
     mCondition.signal();
@@ -180,7 +180,7 @@ void MessageQueue::dumpLocked(const sp<MessageBase>& message)
     int c = 0;
     while (cur != end) {
         const char tick = (*cur == message) ? '>' : ' ';
-        LOGD("%c %d: msg{.what=%08x, when=%lld}",
+        ALOGD("%c %d: msg{.what=%08x, when=%lld}",
                 tick, c, (*cur)->what, (*cur)->when);
         ++cur;
         c++;

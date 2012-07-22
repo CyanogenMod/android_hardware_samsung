@@ -52,7 +52,7 @@ void *csc_fimc_open()
     if (hw_converter->bHWconvert_flag == 0) {
         delete hw_converter;
         hw_converter = NULL;
-        LOGE("%s LINE = %d HardwareConverter failed", __func__, __LINE__);
+        ALOGE("%s LINE = %d HardwareConverter failed", __func__, __LINE__);
     }
 
     return (void *)hw_converter;

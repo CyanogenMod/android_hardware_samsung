@@ -40,14 +40,14 @@ LOCAL_SRC_FILES := \
 
 ifeq ($(TARGET_PRODUCT), armboard_v7a)
 # Support for ARM platforms
-LOCAL_CFLAGS:= -DLOG_TAG=\"gralloc\" -DGRALLOC_16_BITS -DSTANDARD_LINUX_SCREEN \
+LOCAL_CFLAGS:= -DALOG_TAG=\"gralloc\" -DGRALLOC_16_BITS -DSTANDARD_LINUX_SCREEN \
 	-march=armv7-a \
 	-mfloat-abi=softfp
 LOCAL_MODULE := gralloc.default
 
 else
 #Default to goldfish
-LOCAL_CFLAGS:= -DLOG_TAG=\"gralloc\" -DSTANDARD_LINUX_SCREEN \
+LOCAL_CFLAGS:= -DALOG_TAG=\"gralloc\" -DSTANDARD_LINUX_SCREEN \
 	-march=armv7-a \
 	-mfloat-abi=softfp \
 	-DVITHAR_HACK

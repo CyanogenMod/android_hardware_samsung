@@ -55,7 +55,7 @@
 #include "s3c_mem.h"
 #include "sec_format.h"
 
-//#define HWC_DEBUG
+#define HWC_DEBUG
 #if defined(BOARD_USES_FIMGAPI)
 #include "sec_g2d.h"
 //#define SUB_TITLES_HWC

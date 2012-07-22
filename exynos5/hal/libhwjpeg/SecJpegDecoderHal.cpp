@@ -36,7 +36,7 @@
 
 #include "SecJpegCodecHal.h"
 
-#define JPEG_ERROR_LOG(fmt,...)
+#define JPEG_ERROR_ALOG(fmt,...)
 
 #define NUM_PLANES (1)
 #define NUM_BUFFERS (1)
@@ -66,19 +66,19 @@ int SecJpegDecoderHal::create(void)
 
     if (t_iJpegFd < 0) {
         t_iJpegFd = -1;
-        JPEG_ERROR_LOG("[%s]: JPEG_DEC_NODE open failed", __func__);
+        JPEG_ERROR_ALOG("[%s]: JPEG_DEC_NODE open failed", __func__);
         return ERROR_CANNOT_OPEN_JPEG_DEVICE;
     }
 
     if (t_iJpegFd <= 0) {
         t_iJpegFd = -1;
-        JPEG_ERROR_LOG("ERR(%s):JPEG device was closed\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):JPEG device was closed\n", __func__);
         return ERROR_JPEG_DEVICE_ALREADY_CLOSED;
     }
 
     iRet = t_v4l2Querycap(t_iJpegFd);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s]: QUERYCAP failed", __func__);
+        JPEG_ERROR_ALOG("[%s]: QUERYCAP failed", __func__);
         close(t_iJpegFd);
         return ERROR_CANNOT_OPEN_JPEG_DEVICE;
     }
@@ -127,7 +127,7 @@ int SecJpegDecoderHal::destroy(void)
 
         iRet = close(t_iJpegFd);
         if (iRet < 0) {
-            JPEG_ERROR_LOG("[%s:%d]: JPEG_DEC_NODE close failed", __func__, iRet);
+            JPEG_ERROR_ALOG("[%s:%d]: JPEG_DEC_NODE close failed", __func__, iRet);
         }
     }
 
@@ -278,7 +278,7 @@ int SecJpegDecoderHal::setCache(int iValue)
     }
 
     if (t_v4l2SetCtrl(t_iJpegFd, V4L2_CID_CACHEABLE, iValue)<0) {
-        JPEG_ERROR_LOG("%s::cache setting failed\n", __func__);
+        JPEG_ERROR_ALOG("%s::cache setting failed\n", __func__);
         return ERROR_CANNOT_CHANGE_CACHE_SETTING;
     }
 
@@ -293,7 +293,7 @@ int SecJpegDecoderHal::getSize(int *piW, int *piH)
 
     int iRet = t_v4l2GetFmt(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &t_stJpegConfig);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s,%d]: get image size failed", __func__,iRet);
+        JPEG_ERROR_ALOG("[%s,%d]: get image size failed", __func__,iRet);
         return ERROR_GET_SIZE_FAIL;
     }
 
@@ -366,7 +366,7 @@ int SecJpegDecoderHal::updateConfig(void)
 
     iRet = t_v4l2SetFmt(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, &t_stJpegConfig);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s,%d]: jpeg input S_FMT failed", __func__,iRet);
+        JPEG_ERROR_ALOG("[%s,%d]: jpeg input S_FMT failed", __func__,iRet);
         return ERROR_INVALID_JPEG_CONFIG;
     }
 
@@ -378,14 +378,14 @@ int SecJpegDecoderHal::updateConfig(void)
 
     iRet = t_v4l2Reqbufs(t_iJpegFd, NUM_BUFFERS, &stBufInfo);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Input REQBUFS failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Input REQBUFS failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
 
     t_stJpegConfig.numOfPlanes = t_iPlaneNum;
     iRet = t_v4l2SetFmt(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &t_stJpegConfig);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s,%d]: jpeg output S_FMT failed", __func__,iRet);
+        JPEG_ERROR_ALOG("[%s,%d]: jpeg output S_FMT failed", __func__,iRet);
         return ERROR_INVALID_JPEG_CONFIG;
     }
 
@@ -394,7 +394,7 @@ int SecJpegDecoderHal::updateConfig(void)
 
     iRet = t_v4l2Reqbufs(t_iJpegFd, NUM_BUFFERS, &stBufInfo);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Output REQBUFS failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Output REQBUFS failed", __func__, iRet);
         return ERROR_REQBUF_FAIL;
     }
 
@@ -454,7 +454,7 @@ int SecJpegDecoderHal::decode(void)
 
     iRet = t_v4l2Qbuf(t_iJpegFd, &stBufInfo, &t_stJpegInbuf);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Input QBUF failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Input QBUF failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
 
@@ -463,33 +463,33 @@ int SecJpegDecoderHal::decode(void)
 
     iRet = t_v4l2Qbuf(t_iJpegFd, &stBufInfo, &t_stJpegOutbuf);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Output QBUF failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Output QBUF failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
 
     stBufInfo.numOfPlanes = NUM_PLANES;
     iRet = t_v4l2StreamOn(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: input stream on failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: input stream on failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
     stBufInfo.numOfPlanes = t_iPlaneNum;
     iRet = t_v4l2StreamOn(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: output stream on failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: output stream on failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
 
     stBufInfo.numOfPlanes = NUM_PLANES;
     iRet = t_v4l2Dqbuf(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_MMAP);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Intput DQBUF failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Intput DQBUF failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
     stBufInfo.numOfPlanes = t_iPlaneNum;
     iRet = t_v4l2Dqbuf(t_iJpegFd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, V4L2_MEMORY_MMAP);
     if (iRet < 0) {
-        JPEG_ERROR_LOG("[%s:%d]: Output DQBUF failed", __func__, iRet);
+        JPEG_ERROR_ALOG("[%s:%d]: Output DQBUF failed", __func__, iRet);
         return ERROR_EXCUTE_FAIL;
     }
 

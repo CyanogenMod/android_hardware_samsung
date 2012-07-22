@@ -21,7 +21,7 @@
 
 static const char ExifAsciiPrefix[] = { 0x41, 0x53, 0x43, 0x49, 0x49, 0x0, 0x0, 0x0 };
 
-#define JPEG_ERROR_LOG(fmt,...)
+#define JPEG_ERROR_ALOG(fmt,...)
 
 #define JPEG_MAIN_DUMP  (0)
 #define JPEG_THUMB_DUMP (0)
@@ -71,7 +71,7 @@ int SecJpegEncoder::create(void)
         m_jpegMain = new SecJpegEncoderHal;
 
         if (m_jpegMain == NULL) {
-            JPEG_ERROR_LOG("ERR(%s):Cannot create SecJpegEncoderHal class\n", __func__);
+            JPEG_ERROR_ALOG("ERR(%s):Cannot create SecJpegEncoderHal class\n", __func__);
             return ERROR_CANNOT_CREATE_SEC_JPEG_ENC_HAL;
         }
 
@@ -189,7 +189,7 @@ char *SecJpegEncoder::getInBuf(int *input_size)
     char *inBuf = *(m_jpegMain->getInBuf(&inSize));
 
     if (inBuf == NULL) {
-        JPEG_ERROR_LOG("%s::Fail to JPEG input buffer!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::Fail to JPEG input buffer!!\n", __func__);
         return NULL;
     }
 
@@ -208,7 +208,7 @@ char *SecJpegEncoder::getOutBuf(int *output_size)
     char *outBuf = m_jpegMain->getOutBuf(&outSize);
 
     if (outBuf == NULL) {
-        JPEG_ERROR_LOG("%s::Fail to JPEG input buffer!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::Fail to JPEG input buffer!!\n", __func__);
         return NULL;
     }
 
@@ -241,7 +241,7 @@ int  SecJpegEncoder::setInBuf(char *buf, int size)
     if (m_ionJpegClient == 0) {
         m_ionJpegClient = ion_client_create();
         if (m_ionJpegClient < 0) {
-            JPEG_ERROR_LOG("[%s]src ion client create failed, value = %d\n", __func__, size);
+            JPEG_ERROR_ALOG("[%s]src ion client create failed, value = %d\n", __func__, size);
             m_ionJpegClient = 0;
             return ret;
         }
@@ -254,7 +254,7 @@ int  SecJpegEncoder::setInBuf(char *buf, int size)
 
     ret = m_jpegMain->setInBuf(&m_pJpegInputBuffer, &size);
     if (ret) {
-        JPEG_ERROR_LOG("%s::Fail to JPEG input buffer!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::Fail to JPEG input buffer!!\n", __func__);
         return ret;
     }
     m_iInBufSize = size;
@@ -264,7 +264,7 @@ int  SecJpegEncoder::setInBuf(char *buf, int size)
 #else // NO JPEG_WA_FOR_PAGEFAULT
     ret = m_jpegMain->setInBuf(&buf, &size);
     if (ret) {
-        JPEG_ERROR_LOG("%s::Fail to JPEG input buffer!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::Fail to JPEG input buffer!!\n", __func__);
         return ret;
     }
 #endif // JPEG_WA_FOR_PAGEFAULT
@@ -289,7 +289,7 @@ int  SecJpegEncoder::setOutBuf(char *buf, int size)
     int ret = ERROR_NONE;
     ret = m_jpegMain->setOutBuf(buf, size);
     if (ret) {
-        JPEG_ERROR_LOG("%s::Fail to JPEG output buffer!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::Fail to JPEG output buffer!!\n", __func__);
         return ret;
     }
 
@@ -311,14 +311,14 @@ int SecJpegEncoder::encode(int *size, exif_attribute_t *exifInfo)
 
     ret = m_jpegMain->encode();
     if (ret) {
-        JPEG_ERROR_LOG("encode failed\n");
+        JPEG_ERROR_ALOG("encode failed\n");
         return ret;
     }
 
     int iJpegSize = m_jpegMain->getJpegSize();
 
     if (iJpegSize<=0) {
-        JPEG_ERROR_LOG("%s:: output_size is too small(%d)!!\n", __func__, iJpegSize);
+        JPEG_ERROR_ALOG("%s:: output_size is too small(%d)!!\n", __func__, iJpegSize);
         return ERROR_OUT_BUFFER_SIZE_TOO_SMALL;
     }
 
@@ -326,7 +326,7 @@ int SecJpegEncoder::encode(int *size, exif_attribute_t *exifInfo)
     char *pcJpegBuffer = m_jpegMain->getOutBuf(&iOutputSize);
 
     if (pcJpegBuffer == NULL) {
-        JPEG_ERROR_LOG("%s::buffer is null!!\n", __func__);
+        JPEG_ERROR_ALOG("%s::buffer is null!!\n", __func__);
         return ERROR_OUT_BUFFER_CREATE_FAIL;
     }
 
@@ -354,14 +354,14 @@ int SecJpegEncoder::encode(int *size, exif_attribute_t *exifInfo)
 
         exifOut = new unsigned char[bufSize];
         if (exifOut == NULL) {
-            JPEG_ERROR_LOG("%s::Failed to allocate for exifOut", __func__);
+            JPEG_ERROR_ALOG("%s::Failed to allocate for exifOut", __func__);
             delete[] exifOut;
             return ERROR_EXIFOUT_ALLOC_FAIL;
         }
         memset(exifOut, 0, bufSize);
 
         if (makeExif (exifOut, exifInfo, &exifLen)) {
-            JPEG_ERROR_LOG("%s::Failed to make EXIF", __func__);
+            JPEG_ERROR_ALOG("%s::Failed to make EXIF", __func__);
             delete[] exifOut;
             return ERROR_MAKE_EXIF_FAIL;
         }
@@ -773,44 +773,44 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
         m_jpegThumb = new SecJpegEncoderHal;
 
         if (m_jpegThumb == NULL) {
-            JPEG_ERROR_LOG("ERR(%s):Cannot open a jpeg device file\n", __func__);
+            JPEG_ERROR_ALOG("ERR(%s):Cannot open a jpeg device file\n", __func__);
             return ERROR_CANNOT_CREATE_SEC_THUMB;
         }
     }
 
     ret = m_jpegThumb->create();
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail create\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail create\n", __func__);
         return ret;
     }
 
         ret = m_jpegThumb->setCache(JPEG_CACHE_ON);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail cache set\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail cache set\n", __func__);
         return ret;
     }
 
     void *pConfig = m_jpegMain->getJpegConfig();
     if (pConfig == NULL) {
-        JPEG_ERROR_LOG("ERR(%s):Fail getJpegConfig\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail getJpegConfig\n", __func__);
         return ERROR_BUFFR_IS_NULL;
     }
 
     ret = m_jpegThumb->setJpegConfig(pConfig);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail setJpegConfig\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail setJpegConfig\n", __func__);
         return ret;
     }
 
     ret = m_jpegThumb->setQuality(JPEG_THUMBNAIL_QUALITY);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail setQuality\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail setQuality\n", __func__);
         return ret;
     }
 
     ret = m_jpegThumb->setSize(m_thumbnailW, m_thumbnailH);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail setSize\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail setSize\n", __func__);
         return ret;
     }
 
@@ -825,7 +825,7 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
     if (m_ionJpegClient == 0) {
         m_ionJpegClient = ion_client_create();
         if (m_ionJpegClient < 0) {
-            JPEG_ERROR_LOG("[%s]src ion client create failed, value = %d\n", __func__, m_ionJpegClient);
+            JPEG_ERROR_ALOG("[%s]src ion client create failed, value = %d\n", __func__, m_ionJpegClient);
             m_ionJpegClient = 0;
             return ret;
         }
@@ -838,7 +838,7 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
 
     ret = m_jpegThumb->setInBuf(&m_pThumbInputBuffer, &iThumbSize);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail setInBuf\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail setInBuf\n", __func__);
         return ret;
     }
 
@@ -849,13 +849,13 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
 
     ret = m_jpegThumb->setOutBuf((char *)m_pThumbOutputBuffer, iThumbSize);
     if (ret) {
-        JPEG_ERROR_LOG("ERR(%s):Fail setOutBuf\n", __func__);
+        JPEG_ERROR_ALOG("ERR(%s):Fail setOutBuf\n", __func__);
         return ret;
     }
 
     ret = m_jpegThumb->updateConfig();
     if (ret) {
-        JPEG_ERROR_LOG("update config failed\n");
+        JPEG_ERROR_ALOG("update config failed\n");
         return ret;
     }
 
@@ -866,7 +866,7 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
 
         ret = m_jpegMain->getSize(&iW, &iH);
         if (ret) {
-            JPEG_ERROR_LOG("ERR(%s):Fail setJpegConfig\n", __func__);
+            JPEG_ERROR_ALOG("ERR(%s):Fail setJpegConfig\n", __func__);
             return ret;
         }
 
@@ -877,7 +877,7 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
                               m_thumbnailW,
                               m_thumbnailH);
         if (ret) {
-            JPEG_ERROR_LOG("%s::m_scaleDownYuv422(%d, %d, %d, %d) fail", __func__, iW, iH, m_thumbnailW, m_thumbnailH);
+            JPEG_ERROR_ALOG("%s::m_scaleDownYuv422(%d, %d, %d, %d) fail", __func__, iW, iH, m_thumbnailW, m_thumbnailH);
             return ret;
         }
     }
@@ -889,13 +889,13 @@ int SecJpegEncoder::encodeThumbnail(unsigned int *size, bool useMain)
 
     ret = m_jpegThumb->encode();
     if (ret) {
-        JPEG_ERROR_LOG("encode failed\n");
+        JPEG_ERROR_ALOG("encode failed\n");
         return ret;
     }
 
     outSizeThumb = m_jpegThumb->getJpegSize();
     if (outSizeThumb<=0) {
-        JPEG_ERROR_LOG("jpeg size is too small\n");
+        JPEG_ERROR_ALOG("jpeg size is too small\n");
         return ERROR_THUMB_JPEG_SIZE_TOO_SMALL;
     }
 
@@ -910,20 +910,20 @@ int SecJpegEncoder::allocJpegIonMemory(ion_client ionClient, ion_buffer *ionBuff
     int ret = ERROR_NONE;
 
     if (ionClient == 0) {
-        JPEG_ERROR_LOG("[%s]ionClient is zero (%d)\n", __func__, ionClient);
+        JPEG_ERROR_ALOG("[%s]ionClient is zero (%d)\n", __func__, ionClient);
         return ERROR_BUFFR_IS_NULL;
     }
 
     *ionBuffer = ion_alloc(ionClient, size, 0, ION_HEAP_SYSTEM_MASK);
     if (*ionBuffer == -1) {
-        JPEG_ERROR_LOG("[%s]ion_alloc(%d) failed\n", __func__, size);
+        JPEG_ERROR_ALOG("[%s]ion_alloc(%d) failed\n", __func__, size);
         *ionBuffer = 0;
         return ret;
     }
 
     *buffer = (char *)ion_map(*ionBuffer, size, 0);
     if (*buffer == MAP_FAILED) {
-        JPEG_ERROR_LOG("[%s]src ion map failed(%d)\n", __func__, size);
+        JPEG_ERROR_ALOG("[%s]src ion map failed(%d)\n", __func__, size);
         ion_free(*ionBuffer);
         *ionBuffer = 0;
         *buffer = NULL;

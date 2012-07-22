@@ -39,8 +39,8 @@
 #include "ion.h"
 #endif
 
-/* #define LOG_NDEBUG 0 */
-#define LOG_TAG "MFC_DEC_APP"
+/* #define ALOG_NDEBUG 0 */
+#define ALOG_TAG "MFC_DEC_APP"
 #include <utils/Log.h>
 
 #ifdef CONFIG_MFC_FPS
@@ -85,22 +85,22 @@ int v4l2_mfc_querycap(int fd)
 
     ret = ioctl(fd, VIDIOC_QUERYCAP, &cap);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_QUERYCAP failed", __func__);
+        ALOGE("[%s] VIDIOC_QUERYCAP failed", __func__);
         return ret;
     }
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-        LOGE("[%s] Device does not support capture", __func__);
+        ALOGE("[%s] Device does not support capture", __func__);
         return -1;
     }
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_OUTPUT)) {
-        LOGE("[%s] Device does not support output", __func__);
+        ALOGE("[%s] Device does not support output", __func__);
         return -1;
     }
 
     if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-        LOGE("[%s] Device does not support streaming", __func__);
+        ALOGE("[%s] Device does not support streaming", __func__);
         return -1;
     }
 
@@ -158,7 +158,7 @@ int v4l2_mfc_s_fmt(int fd, enum v4l2_buf_type type,
             fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_VP8;
             break;
         default:
-            LOGE("[%s] Does NOT support the codec type (%d)", __func__, pixelformat);
+            ALOGE("[%s] Does NOT support the codec type (%d)", __func__, pixelformat);
             return -1;
         }
         fmt.fmt.pix_mp.plane_fmt[0].sizeimage = sizeimage;
@@ -174,11 +174,11 @@ int v4l2_mfc_s_fmt(int fd, enum v4l2_buf_type type,
             fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV21M;
             break;
         default:
-            LOGE("[%s] Does NOT support the pixel format (%d)", __func__, pixelformat);
+            ALOGE("[%s] Does NOT support the pixel format (%d)", __func__, pixelformat);
             return -1;
         }
     } else {
-        LOGE("[%s] Wrong buffer type", __func__);
+        ALOGE("[%s] Wrong buffer type", __func__);
         return -1;
     }
 
@@ -377,20 +377,20 @@ static int isPBPacked(_MFCLIB *pCtx, int Frameleng)
     while (1) {
         while (startCode != USR_DATA_START_CODE) {
             if ((startCode == VOP_START_CODE) || (leng_idx == Frameleng)) {
-                LOGI("[%s] VOP START Found !!.....return",__func__);
-                LOGW("[%s] Non Packed PB",__func__);
+                ALOGI("[%s] VOP START Found !!.....return",__func__);
+                ALOGW("[%s] Non Packed PB",__func__);
                 return 0;
             }
             getAByte(strmBuffer, &startCode);
-            LOGV(">> StartCode = 0x%08x <<\n", startCode);
+            ALOGV(">> StartCode = 0x%08x <<\n", startCode);
             strmBuffer++;
             leng_idx++;
         }
-        LOGI("[%s] User Data Found !!",__func__);
+        ALOGI("[%s] User Data Found !!",__func__);
 
         do {
             if (*strmBuffer == 'p') {
-                LOGW("[%s] Packed PB",__func__);
+                ALOGW("[%s] Packed PB",__func__);
                 return 1;
             }
             getAByte(strmBuffer, &startCode);
@@ -401,7 +401,7 @@ static int isPBPacked(_MFCLIB *pCtx, int Frameleng)
             break;
     }
 
-    LOGW("[%s] Non Packed PB",__func__);
+    ALOGW("[%s] Non Packed PB",__func__);
 
     return 0;
 }
@@ -434,7 +434,7 @@ void *SsbSipMfcDecOpen(void)
     struct v4l2_buffer buf;
     struct v4l2_plane planes[MFC_DEC_NUM_PLANES];
 
-    LOGI("[%s] MFC Library Ver %d.%02d",__func__, MFC_LIB_VER_MAJOR, MFC_LIB_VER_MINOR);
+    ALOGI("[%s] MFC Library Ver %d.%02d",__func__, MFC_LIB_VER_MAJOR, MFC_LIB_VER_MINOR);
 
 #ifdef CONFIG_MFC_FPS
     framecount = 0;
@@ -444,23 +444,23 @@ void *SsbSipMfcDecOpen(void)
 
     pCTX = (_MFCLIB *)malloc(sizeof(_MFCLIB));
     if (pCTX == NULL) {
-        LOGE("[%s] malloc failed.",__func__);
+        ALOGE("[%s] malloc failed.",__func__);
         return NULL;
     }
 
     memset(pCTX, 0, sizeof(_MFCLIB));
 
     getMFCName(mfc_dev_name, 64);
-    LOGI("[%s] dev name is %s",__func__,mfc_dev_name);
+    ALOGI("[%s] dev name is %s",__func__,mfc_dev_name);
 
     if (access(mfc_dev_name, F_OK) != 0) {
-        LOGE("[%s] MFC device node not exists",__func__);
+        ALOGE("[%s] MFC device node not exists",__func__);
         goto error_case1;
     }
 
     hMFCOpen = open(mfc_dev_name, O_RDWR|O_NONBLOCK, 0);
     if (hMFCOpen < 0) {
-        LOGE("[%s] Failed to open MFC device",__func__);
+        ALOGE("[%s] Failed to open MFC device",__func__);
         goto error_case1;
     }
 
@@ -468,7 +468,7 @@ void *SsbSipMfcDecOpen(void)
 
     ret = v4l2_mfc_querycap(pCTX->hMFC);
     if (ret != 0) {
-        LOGE("[%s] QUERYCAP failed", __func__);
+        ALOGE("[%s] QUERYCAP failed", __func__);
         goto error_case2;
     }
 
@@ -476,7 +476,7 @@ void *SsbSipMfcDecOpen(void)
     ret = v4l2_mfc_s_fmt(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                                 H264_DEC, MAX_DECODER_INPUT_BUFFER_SIZE, 0, 0);
     if (ret != 0) {
-        LOGE("[%s] S_FMT failed",__func__);
+        ALOGE("[%s] S_FMT failed",__func__);
         goto error_case2;
     }
 
@@ -486,7 +486,7 @@ void *SsbSipMfcDecOpen(void)
     ret = v4l2_mfc_reqbufs(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                             V4L2_MEMORY_MMAP, &req_count);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_REQBUFS failed",__func__);
+        ALOGE("[%s] VIDIOC_REQBUFS failed",__func__);
         goto error_case2;
     }
 
@@ -496,14 +496,14 @@ void *SsbSipMfcDecOpen(void)
         ret = v4l2_mfc_querybuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                                 V4L2_MEMORY_MMAP, i, planes);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QUERYBUF failed",__func__);
+            ALOGE("[%s] VIDIOC_QUERYBUF failed",__func__);
             goto error_case3;
         }
 
         pCTX->v4l2_dec.mfc_src_bufs[i] = mmap(NULL, buf.m.planes[0].length,
         PROT_READ | PROT_WRITE, MAP_SHARED, pCTX->hMFC, buf.m.planes[0].m.mem_offset);
         if (pCTX->v4l2_dec.mfc_src_bufs[i] == MAP_FAILED) {
-            LOGE("[%s] mmap failed (%d)",__func__,i);
+            ALOGE("[%s] mmap failed (%d)",__func__,i);
             goto error_case3;
         }
     }
@@ -546,10 +546,10 @@ void *SsbSipMfcDecOpenExt(void *value)
 
     if (NO_CACHE == (*(SSBIP_MFC_BUFFER_TYPE *)value)) {
         pCTX->cacheablebuffer = NO_CACHE;
-        LOGI("[%s] non cacheable buffer",__func__);
+        ALOGI("[%s] non cacheable buffer",__func__);
     } else {
         pCTX->cacheablebuffer = CACHE;
-        LOGI("[%s] cacheable buffer",__func__);
+        ALOGI("[%s] cacheable buffer",__func__);
     }
 
     return (void *)pCTX;
@@ -561,15 +561,15 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecClose(void *openHandle)
     _MFCLIB  *pCTX;
 
 #ifdef CONFIG_MFC_FPS
-    LOGI(">>> MFC");
+    ALOGI(">>> MFC");
     gettimeofday(&mTS2, NULL);
-    LOGI(">>> time=%d", mTS2.tv_sec-mTS1.tv_sec);
-    LOGI(">>> framecount=%d", framecount);
-    LOGI(">>> 30ms over=%d", over30ms);
+    ALOGI(">>> time=%d", mTS2.tv_sec-mTS1.tv_sec);
+    ALOGI(">>> framecount=%d", framecount);
+    ALOGI(">>> 30ms over=%d", over30ms);
 #endif
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -578,7 +578,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecClose(void *openHandle)
     if (pCTX->inter_buff_status & MFC_USE_DST_STREAMON) {
         ret = v4l2_mfc_streamoff(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_STREAMOFF failed (destination buffers)",__func__);
+            ALOGE("[%s] VIDIOC_STREAMOFF failed (destination buffers)",__func__);
             return MFC_RET_CLOSE_FAIL;
         }
         pCTX->inter_buff_status &= ~(MFC_USE_DST_STREAMON);
@@ -587,7 +587,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecClose(void *openHandle)
     if (pCTX->inter_buff_status & MFC_USE_SRC_STREAMON) {
         ret = v4l2_mfc_streamoff(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_STREAMOFF failed (source buffers)",__func__);
+            ALOGE("[%s] VIDIOC_STREAMOFF failed (source buffers)",__func__);
             return MFC_RET_CLOSE_FAIL;
         }
         pCTX->inter_buff_status &= ~(MFC_USE_SRC_STREAMON);
@@ -631,7 +631,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
     int poll_state, poll_revents;
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -654,7 +654,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
     ret = v4l2_mfc_s_fmt(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, pCTX->codecType,
                             MAX_DECODER_INPUT_BUFFER_SIZE, width, height);
     if (ret != 0) {
-        LOGE("[%s] S_FMT failed", __func__);
+        ALOGE("[%s] S_FMT failed", __func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -663,7 +663,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
     ret = v4l2_mfc_s_fmt(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, NV12MT_FMT,
                             0, width, height);
     if (ret != 0) {
-        LOGE("[%s] S_FMT failed",__func__);
+        ALOGE("[%s] S_FMT failed",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -672,7 +672,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
     if (packedPB) {
         ret = v4l2_mfc_s_ctrl(pCTX->hMFC, V4L2_CID_CODEC_PACKED_PB, 1);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_S_CTRL failed of PACKED_PB\n", __func__);
+            ALOGE("[%s] VIDIOC_S_CTRL failed of PACKED_PB\n", __func__);
             return MFC_RET_DEC_SET_CONF_FAIL;
         }
     }
@@ -680,7 +680,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
     ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                     V4L2_MEMORY_MMAP, pCTX->v4l2_dec.beingUsedIndex, planes, Frameleng);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
+        ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -689,7 +689,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
      on OUTPUT queue */
     ret = v4l2_mfc_streamon(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_STREAMON failed",__func__);
+        ALOGE("[%s] VIDIOC_STREAMON failed",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -707,7 +707,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
 
     ret = v4l2_mfc_s_ctrl(pCTX->hMFC, V4L2_CID_CACHEABLE, ctrl_value);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_S_CTRL failed, V4L2_CID_CACHEABLE", __func__);
+        ALOGE("[%s] VIDIOC_S_CTRL failed, V4L2_CID_CACHEABLE", __func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -715,7 +715,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
 #ifdef USE_ION
     pCTX->ion_fd = ion_client_create();
     if (pCTX->ion_fd < 3) {
-        LOGE("[%s] Failed to get ion_fd : %d", __func__, pCTX->ion_fd);
+        ALOGE("[%s] Failed to get ion_fd : %d", __func__, pCTX->ion_fd);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -727,7 +727,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
 
     ret = v4l2_mfc_streamon(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_STREAMON failed (destination buffers)", __func__);
+        ALOGE("[%s] VIDIOC_STREAMON failed (destination buffers)", __func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -741,10 +741,10 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit(void *openHandle, SSBSIP_MFC_CODEC_TYPE c
                 if (ret == 0)
                     break;
             } else if (poll_revents & POLLERR) {
-                LOGE("[%s] POLLERR\n", __func__);
+                ALOGE("[%s] POLLERR\n", __func__);
                 return MFC_GETOUTBUF_STATUS_NULL;
             } else {
-                LOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
+                ALOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
                 return MFC_GETOUTBUF_STATUS_NULL;
             }
         } else if (poll_state < 0) {
@@ -772,7 +772,7 @@ int read_header_data(void *openHandle)
 
     ret = v4l2_mfc_g_fmt(pCTX->hMFC, &fmt, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_G_FMT failed",__func__);
+        ALOGE("[%s] VIDIOC_G_FMT failed",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case;
     }
@@ -787,7 +787,7 @@ int read_header_data(void *openHandle)
 
     ret = v4l2_mfc_g_crop(pCTX->hMFC, &crop, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_G_CROP failed",__func__);
+        ALOGE("[%s] VIDIOC_G_CROP failed",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case;
     }
@@ -801,14 +801,14 @@ int read_header_data(void *openHandle)
 
     ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_REQ_NUM_BUFS, &ctrl_value);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_G_CTRL failed",__func__);
+        ALOGE("[%s] VIDIOC_G_CTRL failed",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case;
     }
 
     pCTX->v4l2_dec.mfc_num_dst_bufs = ctrl_value + pCTX->dec_numextradpb;
 
-    LOGV("[%s] Num of allocated buffers: %d\n",__func__, pCTX->v4l2_dec.mfc_num_dst_bufs);
+    ALOGV("[%s] Num of allocated buffers: %d\n",__func__, pCTX->v4l2_dec.mfc_num_dst_bufs);
 
     return 0;
 
@@ -829,7 +829,7 @@ int init_mfc_output_stream(void *openHandle)
     ret = v4l2_mfc_reqbufs(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
                     V4L2_MEMORY_MMAP, (int *)&pCTX->v4l2_dec.mfc_num_dst_bufs);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_REQBUFS failed (destination buffers)",__func__);
+        ALOGE("[%s] VIDIOC_REQBUFS failed (destination buffers)",__func__);
         ret = MFC_RET_DEC_INIT_FAIL;
         goto error_case1;
     }
@@ -838,7 +838,7 @@ int init_mfc_output_stream(void *openHandle)
         ret = v4l2_mfc_querybuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
                         V4L2_MEMORY_MMAP, i, planes);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QUERYBUF failed (destination buffers)",__func__);
+            ALOGE("[%s] VIDIOC_QUERYBUF failed (destination buffers)",__func__);
             ret = MFC_RET_DEC_INIT_FAIL;
             goto error_case1;
         }
@@ -864,7 +864,7 @@ int init_mfc_output_stream(void *openHandle)
         pCTX->v4l2_dec.mfc_dst_bufs[i][0] = mmap(NULL, buf.m.planes[0].length,
              PROT_READ | PROT_WRITE, MAP_SHARED, pCTX->hMFC, buf.m.planes[0].m.mem_offset);
         if (pCTX->v4l2_dec.mfc_dst_bufs[i][0] == MAP_FAILED) {
-            LOGE("[%s] mmap failed (destination buffers (Y))",__func__);
+            ALOGE("[%s] mmap failed (destination buffers (Y))",__func__);
             ret = MFC_RET_DEC_INIT_FAIL;
             goto error_case2;
         }
@@ -872,7 +872,7 @@ int init_mfc_output_stream(void *openHandle)
         pCTX->v4l2_dec.mfc_dst_bufs[i][1] = mmap(NULL, buf.m.planes[1].length,
         PROT_READ | PROT_WRITE, MAP_SHARED, pCTX->hMFC, buf.m.planes[1].m.mem_offset);
         if (pCTX->v4l2_dec.mfc_dst_bufs[i][1] == MAP_FAILED) {
-            LOGE("[%s] mmap failed (destination buffers (UV))",__func__);
+            ALOGE("[%s] mmap failed (destination buffers (UV))",__func__);
             ret = MFC_RET_DEC_INIT_FAIL;
             goto error_case2;
         }
@@ -881,7 +881,7 @@ int init_mfc_output_stream(void *openHandle)
         ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
                         V4L2_MEMORY_MMAP, i, planes, 0);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE",__func__);
+            ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE",__func__);
             ret = MFC_RET_DEC_INIT_FAIL;
             goto error_case2;
         }
@@ -954,12 +954,12 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
     framecount++;
 #endif
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
     if ((lengthBufFill < 0) || (lengthBufFill > MAX_DECODER_INPUT_BUFFER_SIZE)) {
-        LOGE("[%s] lengthBufFill is invalid. (lengthBufFill=%d)",__func__, lengthBufFill);
+        ALOGE("[%s] lengthBufFill is invalid. (lengthBufFill=%d)",__func__, lengthBufFill);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -973,7 +973,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
         ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                             V4L2_MEMORY_MMAP, pCTX->v4l2_dec.beingUsedIndex, planes, lengthBufFill);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
+            ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
             return MFC_RET_DEC_EXE_ERR;
         }
 
@@ -996,10 +996,10 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
                         break;
                     }
                 } else if (poll_revents & POLLERR) {
-                    LOGE("[%s] POLLERR\n",__func__);
+                    ALOGE("[%s] POLLERR\n",__func__);
                     return MFC_RET_DEC_EXE_ERR;
                 } else {
-                    LOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
+                    ALOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
                     return MFC_RET_DEC_EXE_ERR;
                 }
             } else if (poll_state < 0) {
@@ -1019,7 +1019,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
         } else {
             ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_DISPLAY_STATUS, &ctrl_value);
             if (ret != 0) {
-                LOGE("[%s] VIDIOC_G_CTRL failed", __func__);
+                ALOGE("[%s] VIDIOC_G_CTRL failed", __func__);
                 return MFC_RET_DEC_GET_CONF_FAIL;
             }
 
@@ -1060,7 +1060,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
         ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                             V4L2_MEMORY_MMAP, pCTX->v4l2_dec.beingUsedIndex, planes, 0);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
+            ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
             return MFC_RET_DEC_EXE_ERR;
         }
 
@@ -1072,7 +1072,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
                 usleep(1000);
             loop_count++;
             if (loop_count >= 1000) {
-                LOGE("[%s] Error in do-while loop",__func__);
+                ALOGE("[%s] Error in do-while loop",__func__);
                 break;
             }
         } while (ret != 0);
@@ -1092,7 +1092,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExe(void *openHandle, int lengthBufFill)
                 usleep(1000);
             loop_count++;
             if (loop_count >= 1000) {
-                LOGE("[%s] Error in do-while loop",__func__);
+                ALOGE("[%s] Error in do-while loop",__func__);
                 break;
             }
         } while (ret != 0);
@@ -1151,12 +1151,12 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExeNb(void *openHandle, int lengthBufFill)
     framecount++;
 #endif
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
     if ((lengthBufFill < 0) || (lengthBufFill > MAX_DECODER_INPUT_BUFFER_SIZE)) {
-        LOGE("[%s] lengthBufFill is invalid. (lengthBufFill=%d)",__func__, lengthBufFill);
+        ALOGE("[%s] lengthBufFill is invalid. (lengthBufFill=%d)",__func__, lengthBufFill);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -1167,7 +1167,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExeNb(void *openHandle, int lengthBufFill)
         ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                             V4L2_MEMORY_MMAP, pCTX->v4l2_dec.beingUsedIndex, planes, lengthBufFill);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
+            ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
             return MFC_RET_DEC_EXE_ERR;
         }
     } else if (pCTX->v4l2_dec.bBeingFinalized == 0) {
@@ -1175,7 +1175,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecExeNb(void *openHandle, int lengthBufFill)
         ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
                             V4L2_MEMORY_MMAP, pCTX->v4l2_dec.beingUsedIndex, planes, 0);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
+            ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE",__func__);
             return MFC_RET_DEC_EXE_ERR;
         }
     }
@@ -1198,15 +1198,15 @@ int isBreak_loop(void *openHandle)
 
     ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_CHECK_STATE, &ctrl_value);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_G_CTRL failed", __func__);
+        ALOGE("[%s] VIDIOC_G_CTRL failed", __func__);
         return 0;
     }
 
     if (ctrl_value == MFCSTATE_DEC_RES_DETECT) {
-        LOGV("[%s] Resolution Change detect",__func__);
+        ALOGV("[%s] Resolution Change detect",__func__);
         return 1;
     } else if (ctrl_value == MFCSTATE_DEC_TERMINATING) {
-        LOGV("[%s] Decoding Finish!!!",__func__);
+        ALOGV("[%s] Decoding Finish!!!",__func__);
         return 1;
     }
 
@@ -1243,10 +1243,10 @@ SSBSIP_MFC_DEC_OUTBUF_STATUS SsbSipMfcDecWaitForOutBuf(void *openHandle, SSBSIP_
                         break;
                     }
                 } else if (poll_revents & POLLERR) {
-                    LOGE("[%s] POLLERR\n",__func__);
+                    ALOGE("[%s] POLLERR\n",__func__);
                     return MFC_GETOUTBUF_STATUS_NULL;
                 } else {
-                    LOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
+                    ALOGE("[%s] poll() returns 0x%x\n", __func__, poll_revents);
                     return MFC_GETOUTBUF_STATUS_NULL;
                 }
             } else if (poll_state < 0) {
@@ -1266,7 +1266,7 @@ SSBSIP_MFC_DEC_OUTBUF_STATUS SsbSipMfcDecWaitForOutBuf(void *openHandle, SSBSIP_
         } else {
             ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_DISPLAY_STATUS, &ctrl_value);
             if (ret != 0) {
-                LOGE("[%s] VIDIOC_G_CTRL failed", __func__);
+                ALOGE("[%s] VIDIOC_G_CTRL failed", __func__);
                 return MFC_RET_DEC_GET_CONF_FAIL;
             }
 
@@ -1310,7 +1310,7 @@ SSBSIP_MFC_DEC_OUTBUF_STATUS SsbSipMfcDecWaitForOutBuf(void *openHandle, SSBSIP_
                 usleep(1000);
             loop_count++;
             if (loop_count >= 1000) {
-                LOGE("[%s] Error in do-while loop",__func__);
+                ALOGE("[%s] Error in do-while loop",__func__);
                 break;
             }
         } while (ret != 0);
@@ -1330,7 +1330,7 @@ SSBSIP_MFC_DEC_OUTBUF_STATUS SsbSipMfcDecWaitForOutBuf(void *openHandle, SSBSIP_
                 usleep(1000);
             loop_count++;
             if (loop_count >= 1000) {
-                LOGE("[%s] Error in do-while loop",__func__);
+                ALOGE("[%s] Error in do-while loop",__func__);
                 break;
             }
         } while (ret != 0);
@@ -1379,12 +1379,12 @@ void  *SsbSipMfcDecGetInBuf(void *openHandle, void **phyInBuf, int inputBufferSi
     int i;
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return NULL;
     }
 
     if ((inputBufferSize < 0) || (inputBufferSize > MAX_DECODER_INPUT_BUFFER_SIZE)) {
-        LOGE("[%s] inputBufferSize = %d is invalid",__func__, inputBufferSize);
+        ALOGE("[%s] inputBufferSize = %d is invalid",__func__, inputBufferSize);
         return NULL;
     }
 
@@ -1395,7 +1395,7 @@ void  *SsbSipMfcDecGetInBuf(void *openHandle, void **phyInBuf, int inputBufferSi
             break;
 
     if (i == MFC_DEC_NUM_SRC_BUFS) {
-        LOGV("[%s] No buffer is available.",__func__);
+        ALOGV("[%s] No buffer is available.",__func__);
         return NULL;
     } else {
         pCTX->virStrmBuf = (unsigned int)pCTX->v4l2_dec.mfc_src_bufs[i];
@@ -1413,9 +1413,9 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetInBuf(void *openHandle, void *phyInBuf, voi
     _MFCLIB *pCTX;
     int i;
 
-    LOGV("[%s] Enter",__func__);
+    ALOGV("[%s] Enter",__func__);
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -1427,14 +1427,14 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetInBuf(void *openHandle, void *phyInBuf, voi
     }
 
     if (i == MFC_DEC_NUM_SRC_BUFS) {
-        LOGE("[%s] Can not use the buffer",__func__);
+        ALOGE("[%s] Can not use the buffer",__func__);
         return MFC_RET_INVALID_PARAM;
     } else {
         pCTX->virStrmBuf = (unsigned int)virInBuf;
         pCTX->v4l2_dec.beingUsedIndex = i;
         pCTX->v4l2_dec.mfc_src_buf_flags[i] = BUF_ENQUEUED;
     }
-    LOGV("[%s] Exit idx %d",__func__,pCTX->v4l2_dec.beingUsedIndex);
+    ALOGV("[%s] Exit idx %d",__func__,pCTX->v4l2_dec.beingUsedIndex);
     return MFC_RET_OK;
 }
 
@@ -1443,7 +1443,7 @@ SSBSIP_MFC_DEC_OUTBUF_STATUS SsbSipMfcDecGetOutBuf(void *openHandle, SSBSIP_MFC_
     _MFCLIB *pCTX;
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_GETOUTBUF_DISPLAY_END;
     }
 
@@ -1495,12 +1495,12 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
     int id, ctrl_value;
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
     if ((value == NULL) && (MFC_DEC_SETCONF_IS_LAST_FRAME !=conf_type)) {
-        LOGE("[%s] value is NULL",__func__);
+        ALOGE("[%s] value is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -1514,8 +1514,8 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
 
     case MFC_DEC_SETCONF_FIMV1_WIDTH_HEIGHT: /* be set before calling SsbSipMfcDecInit */
          fimv1_res = (struct mfc_dec_fimv1_info *)value;
-         LOGI("fimv1->width  = %d\n", fimv1_res->width);
-         LOGI("fimv1->height = %d\n", fimv1_res->height);
+         ALOGI("fimv1->width  = %d\n", fimv1_res->width);
+         ALOGI("fimv1->height = %d\n", fimv1_res->height);
          pCTX->fimv1_res.width  = (int)(fimv1_res->width);
          pCTX->fimv1_res.height = (int)(fimv1_res->height);
          return MFC_RET_OK;
@@ -1531,7 +1531,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
     case MFC_DEC_SETCONF_DPB_FLUSH:
         ret = v4l2_mfc_streamoff(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_STREAMOFF failed (destination buffers)",__func__);
+            ALOGE("[%s] VIDIOC_STREAMOFF failed (destination buffers)",__func__);
             return MFC_RET_DEC_SET_CONF_FAIL;
         }
         pCTX->inter_buff_status &= ~(MFC_USE_DST_STREAMON);
@@ -1540,14 +1540,14 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
             ret = v4l2_mfc_qbuf(pCTX->hMFC, &buf, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
                         V4L2_MEMORY_MMAP, i, planes, 0);
             if (ret != 0) {
-                LOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE",__func__);
+                ALOGE("[%s] VIDIOC_QBUF failed, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE",__func__);
                 return MFC_RET_DEC_SET_CONF_FAIL;
             }
         }
 
         ret = v4l2_mfc_streamon(pCTX->hMFC, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_STREAMON failed (destination buffers)",__func__);
+            ALOGE("[%s] VIDIOC_STREAMON failed (destination buffers)",__func__);
             return MFC_RET_DEC_SET_CONF_FAIL;
         }
         pCTX->inter_buff_status |= MFC_USE_DST_STREAMON;
@@ -1585,13 +1585,13 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecSetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
         break;
 
     default:
-        LOGE("[%s] conf_type(%d) is NOT supported",__func__, conf_type);
+        ALOGE("[%s] conf_type(%d) is NOT supported",__func__, conf_type);
         return MFC_RET_INVALID_PARAM;
     }
 
     ret = v4l2_mfc_s_ctrl(pCTX->hMFC, id, ctrl_value);
     if (ret != 0) {
-        LOGE("[%s] VIDIOC_S_CTRL failed (conf_type = %d)",__func__, conf_type);
+        ALOGE("[%s] VIDIOC_S_CTRL failed (conf_type = %d)",__func__, conf_type);
         return MFC_RET_DEC_SET_CONF_FAIL;
     }
 
@@ -1608,12 +1608,12 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecGetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
     SSBSIP_MFC_CROP_INFORMATION *crop_information;
 
     if (openHandle == NULL) {
-        LOGE("[%s] openHandle is NULL",__func__);
+        ALOGE("[%s] openHandle is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
     if (value == NULL) {
-        LOGE("[%s] value is NULL",__func__);
+        ALOGE("[%s] value is NULL",__func__);
         return MFC_RET_INVALID_PARAM;
     }
 
@@ -1631,7 +1631,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecGetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
     case MFC_DEC_GETCONF_FRAME_TAG:
         ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_FRAME_TAG, (int*)value);
         if (ret != 0)
-            LOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_FRAME_TAG", __func__);
+            ALOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_FRAME_TAG", __func__);
         break;
 
     case MFC_DEC_GETCONF_CRC_DATA:
@@ -1639,17 +1639,17 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecGetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
 
         ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_CRC_DATA_LUMA, &crc_data->luma0);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_CRC_DATA_LUMA",__func__);
+            ALOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_CRC_DATA_LUMA",__func__);
             return MFC_RET_DEC_GET_CONF_FAIL;
         }
 
         ret = v4l2_mfc_g_ctrl(pCTX->hMFC, V4L2_CID_CODEC_CRC_DATA_CHROMA, &crc_data->chroma0);
         if (ret != 0) {
-            LOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_CRC_DATA_CHROMA",__func__);
+            ALOGE("[%s] VIDIOC_G_CTRL failed, V4L2_CID_CODEC_CRC_DATA_CHROMA",__func__);
             return MFC_RET_DEC_GET_CONF_FAIL;
         }
-        LOGI("[%s] crc_data->luma0=0x%x\n", __func__, crc_data->luma0);
-        LOGI("[%s] crc_data->chroma0=0x%x\n", __func__, crc_data->chroma0);
+        ALOGI("[%s] crc_data->luma0=0x%x\n", __func__, crc_data->luma0);
+        ALOGI("[%s] crc_data->chroma0=0x%x\n", __func__, crc_data->chroma0);
         break;
 
     case MFC_DEC_GETCONF_CROP_INFO:
@@ -1661,7 +1661,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecGetConfig(void *openHandle, SSBSIP_MFC_DEC_CON
         break;
 
     default:
-        LOGE("[%s] conf_type(%d) is NOT supported",__func__, conf_type);
+        ALOGE("[%s] conf_type(%d) is NOT supported",__func__, conf_type);
         return MFC_RET_INVALID_PARAM;
     }
 

@@ -47,15 +47,15 @@ static int gralloc_map(gralloc_module_t const* module,
             void *mappedAddress = ion_map(hnd->fd, size, 0);
 
             if (mappedAddress == MAP_FAILED) {
-                LOGE("Could not ion_map %s fd(%d)", strerror(errno), hnd->fd);
+                ALOGE("Could not ion_map %s fd(%d)", strerror(errno), hnd->fd);
                 return -errno;
             }
 
             hnd->base = intptr_t(mappedAddress) + hnd->offset;
-            LOGD("gralloc_map() succeeded fd=%d, off=%d, size=%d, vaddr=%p",
+            ALOGD("gralloc_map() succeeded fd=%d, off=%d, size=%d, vaddr=%p",
                     hnd->fd, hnd->offset, hnd->size, mappedAddress);
         } else {
-            LOGE("In case of ION, It could not reach here!");
+            ALOGE("In case of ION, It could not reach here!");
         }
     }
     *vaddr = (void*)hnd->base;
@@ -72,10 +72,10 @@ static int gralloc_unmap(gralloc_module_t const* module,
         if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
             void* base = (void*)hnd->base;
             size_t size = hnd->size;
-            LOGD("unmapping from %p, size=%d", base, size);
+            ALOGD("unmapping from %p, size=%d", base, size);
 
             if (ion_unmap(base, size) < 0)
-                LOGE("Could not ion_unmap %s", strerror(errno));
+                ALOGE("Could not ion_unmap %s", strerror(errno));
 
             ion_client_destroy(hnd->ion_client);
         }
@@ -88,7 +88,7 @@ static int gralloc_device_open(const hw_module_t* module, const char* name, hw_d
 {
     int status = -EINVAL;
 
-    LOGI("Opening ARM Gralloc device");
+    ALOGI("Opening ARM Gralloc device");
 
     if (!strcmp(name, GRALLOC_HARDWARE_GPU0))
         status = alloc_device_open(module, name, device);
@@ -103,14 +103,14 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
     int retval = -EINVAL;
     void *vaddr;
     if (private_handle_t::validate(handle) < 0) {
-        LOGE("Registering invalid buffer, returning error");
+        ALOGE("Registering invalid buffer, returning error");
         return -EINVAL;
     }
 
     // if this handle was created in this process, then we keep it as is.
     private_handle_t* hnd = (private_handle_t*)handle;
     if (hnd->pid == getpid()) {
-        LOGE("Invalid Process ID from Private_Handle");
+        ALOGE("Invalid Process ID from Private_Handle");
         return 0;
     }
 
@@ -119,7 +119,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         ump_result res = ump_open();
         if (res != UMP_OK) {
             pthread_mutex_unlock(&s_map_lock);
-            LOGE("Failed to open UMP library");
+            ALOGE("Failed to open UMP library");
             return retval;
         }
         s_ump_is_open = 1;
@@ -137,18 +137,18 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
                 pthread_mutex_unlock(&s_map_lock);
                 return 0;
             } else {
-                LOGE("Failed to map UMP handle");
+                ALOGE("Failed to map UMP handle");
             }
 
             ump_release(hnd->ump_mem_handle);
         } else {
-            LOGE("Failed to create UMP handle");
+            ALOGE("Failed to create UMP handle");
         }
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
         hnd->ump_mem_handle = ump_handle_create_from_secure_id(hnd->ump_id);
         retval = gralloc_map(module, handle, &vaddr);
     } else {
-        LOGE("registering non-UMP&ION buffer not supported");
+        ALOGE("registering non-UMP&ION buffer not supported");
     }
 
     pthread_mutex_unlock(&s_map_lock);
@@ -159,13 +159,13 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
 static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_handle_t handle)
 {
     if (private_handle_t::validate(handle) < 0) {
-        LOGE("unregistering invalid buffer, returning error");
+        ALOGE("unregistering invalid buffer, returning error");
         return -EINVAL;
     }
 
     private_handle_t* hnd = (private_handle_t*)handle;
 
-    LOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
+    ALOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
                 "[unregister] handle %p still locked (state=%08x)", hnd, hnd->lockState);
 
     /* never unmap buffers that were created in this process */
@@ -189,7 +189,7 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
             hnd->lockState  = 0;
             hnd->writeOwner = 0;
         } else {
-            LOGE("unregistering non-UMP buffer not supported");
+            ALOGE("unregistering non-UMP buffer not supported");
         }
 
         hnd->base = 0;
@@ -206,7 +206,7 @@ static int gralloc_lock(gralloc_module_t const* module, buffer_handle_t handle,
                         int usage, int l, int t, int w, int h, void** vaddr)
 {
     if (private_handle_t::validate(handle) < 0) {
-        LOGE("Locking invalid buffer, returning error");
+        ALOGE("Locking invalid buffer, returning error");
         return -EINVAL;
     }
 
@@ -233,7 +233,7 @@ static int gralloc_lock(gralloc_module_t const* module, buffer_handle_t handle,
 static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle)
 {
     if (private_handle_t::validate(handle) < 0) {
-        LOGE("Unlocking invalid buffer, returning error");
+        ALOGE("Unlocking invalid buffer, returning error");
         return -EINVAL;
     }
 

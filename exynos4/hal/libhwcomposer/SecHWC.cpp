@@ -75,7 +75,7 @@ hwc_module_t HAL_MODULE_INFO_SYM = {
 /*****************************************************************************/
 
 static void dump_layer(hwc_layer_t const* l) {
-    LOGD("\ttype=%d, flags=%08x, handle=%p, tr=%02x, blend=%04x, "
+    ALOGD("\ttype=%d, flags=%08x, handle=%p, tr=%02x, blend=%04x, "
             "{%d,%d,%d,%d}, {%d,%d,%d,%d}",
             l->compositionType, l->flags, l->handle, l->transform, l->blending,
             l->sourceCrop.left,
@@ -486,7 +486,7 @@ static int hwc_prepare(hwc_composer_device_t *dev, hwc_layer_list_t* list)
             } else {
                 ret = assign_overlay_window(ctx, cur, overlay_win_cnt, i);
                 if (ret != 0) {
-                    LOGE("assign_overlay_window fail, change to frambuffer");
+                    ALOGE("assign_overlay_window fail, change to frambuffer");
                     cur->compositionType = HWC_FRAMEBUFFER;
                     ctx->num_of_fb_layer++;
                     continue;
@@ -603,7 +603,7 @@ static int hwc_set(hwc_composer_device_t *dev,
                      * double buffered (2 or more) this buffer is already rendered.
                      * It is the redundant src buffer for FIMC rendering.
                      */
-                    LOGD("SKIP FIMC rendering for Layer%d", win->layer_index);
+                    ALOGD("SKIP FIMC rendering for Layer%d", win->layer_index);
 #if defined(BOARD_USES_HDMI)
                     skip_hdmi_rendering = 1;
 #endif
@@ -776,7 +776,7 @@ g2d_error:
                                     android::SecHdmiClient::HDMI_MODE_VIDEO,
                                     ctx->num_of_hwc_layer);
         } else {
-            LOGE("%s: Unsupported format = %d", __func__, src_img.format);
+            ALOGE("%s: Unsupported format = %d", __func__, src_img.format);
         }
     }
 #endif

@@ -52,7 +52,7 @@ void check_fps()
         memcpy(&tick_old, &tick, sizeof(timeval));
         if (cnt == (10 + CHK_FRAME_CNT)) {
             FPS = 1000*CHK_FRAME_CNT/total;
-            LOGE("[FPS]:%d\n", FPS);
+            ALOGE("[FPS]:%d\n", FPS);
             total = 0;
             cnt = 10;
         }

@@ -16,7 +16,7 @@
  */
 
 //#define DEBUG_LIB_FIMC
-#define LOG_TAG "libgscaler"
+#define ALOG_TAG "libgscaler"
 //#define USE_GSC_USERPTR
 #include <cutils/log.h>
 #include "../libhdmi/SecHdmi/SecGscaler.h"
@@ -49,34 +49,34 @@ struct yuv_fmt_list yuv_list[] = {
 
 void dump_pixfmt_mp(struct v4l2_pix_format_mplane *pix_mp)
 {
-    LOGI("w: %d", pix_mp->width);
-    LOGI("h: %d", pix_mp->height);
-    LOGI("color: %x", pix_mp->colorspace);
+    ALOGI("w: %d", pix_mp->width);
+    ALOGI("h: %d", pix_mp->height);
+    ALOGI("color: %x", pix_mp->colorspace);
 
     switch (pix_mp->pixelformat) {
     case V4L2_PIX_FMT_YUYV:
-        LOGI ("YUYV");
+        ALOGI ("YUYV");
         break;
     case V4L2_PIX_FMT_UYVY:
-        LOGI ("UYVY");
+        ALOGI ("UYVY");
         break;
     case V4L2_PIX_FMT_RGB565:
-        LOGI ("RGB565");
+        ALOGI ("RGB565");
         break;
     case V4L2_PIX_FMT_RGB565X:
-        LOGI ("RGB565X");
+        ALOGI ("RGB565X");
         break;
     default:
-        LOGI("not supported");
+        ALOGI("not supported");
     }
 }
 
 void dump_crop(struct v4l2_rect *rect)
 {
-    LOGI("crop l: %d", rect->left);
-    LOGI("crop t: %d", rect->top);
-    LOGI("crop w: %d", rect->width);
-    LOGI("crop h: %d", rect->height);
+    ALOGI("crop l: %d", rect->left);
+    ALOGI("crop t: %d", rect->top);
+    ALOGI("crop w: %d", rect->width);
+    ALOGI("crop h: %d", rect->height);
 }
 
 void gsc_v4l2_dump_state(int fd)
@@ -89,14 +89,14 @@ void gsc_v4l2_dump_state(int fd)
     if (ioctl(fd, VIDIOC_G_FMT, &format) < 0)
         return;
 
-    LOGI("dumping driver state:");
+    ALOGI("dumping driver state:");
     dump_pixfmt_mp(&format.fmt.pix_mp);
 
     crop.type = format.type;
     if (ioctl(fd, VIDIOC_G_CROP, &crop) < 0)
         return;
 
-    LOGI("input image crop:");
+    ALOGI("input image crop:");
     dump_crop(&(crop.c));
 
     sCrop.pad   = GSC_SUBDEV_PAD_SOURCE;
@@ -104,7 +104,7 @@ void gsc_v4l2_dump_state(int fd)
     if (ioctl(fd, VIDIOC_SUBDEV_G_CROP, &sCrop) < 0)
         return;
 
-    LOGI("output image crop:");
+    ALOGI("output image crop:");
     dump_crop(&(sCrop.rect));
 
 }
@@ -112,22 +112,22 @@ void gsc_v4l2_dump_state(int fd)
 int gsc_v4l2_querycap(int fd, char *node)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_capability v4l2cap;
 
     if (ioctl(fd, VIDIOC_QUERYCAP, &v4l2cap) < 0) {
-        LOGE("%s::VIDIOC_QUERYCAP failed", __func__);
+        ALOGE("%s::VIDIOC_QUERYCAP failed", __func__);
         return -1;
     }
 
     if (!(v4l2cap.capabilities & V4L2_CAP_STREAMING)) {
-        LOGE("%s::%s is not support streaming", __func__, node);
+        ALOGE("%s::%s is not support streaming", __func__, node);
         return -1;
     }
 
     if (!(v4l2cap.capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE)) {
-        LOGE("%s::%s is not support video output mplane", __func__, node);
+        ALOGE("%s::%s is not support video output mplane", __func__, node);
         return -1;
     }
 
@@ -137,7 +137,7 @@ int gsc_v4l2_querycap(int fd, char *node)
 int gsc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int buf_index, int num_plane)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_GSCALER];
@@ -148,7 +148,7 @@ int gsc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum 
         memset(&planes[i], 0, sizeof(struct v4l2_plane));
 
     if (MAX_BUFFERS_GSCALER <= buf_index || MAX_PLANES_GSCALER < num_plane) {
-        LOGE("%s::exceed MAX! : buf_index=%d, num_plane=%d", __func__, buf_index, num_plane);
+        ALOGE("%s::exceed MAX! : buf_index=%d, num_plane=%d", __func__, buf_index, num_plane);
         return -1;
     }
 
@@ -159,24 +159,24 @@ int gsc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum 
     buf.m.planes = planes;
 
     if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0) {
-        LOGE("%s::VIDIOC_QUERYBUF failed, plane_cnt=%d", __func__, buf.length);
+        ALOGE("%s::VIDIOC_QUERYBUF failed, plane_cnt=%d", __func__, buf.length);
         return -1;
     }
 
     for (int i = 0; i < num_plane; i++) {
         if ((secBuf->virt.extP[i] = (char *)mmap(0, buf.m.planes[i].length,
                  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.planes[i].m.mem_offset)) < 0) {
-            LOGE("%s::mmap failed", __func__);
-            LOGE("%s::Offset = 0x%x", __func__, buf.m.planes[i].m.mem_offset);
-            LOGE("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
-            LOGE("%s::vaddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
+            ALOGE("%s::mmap failed", __func__);
+            ALOGE("%s::Offset = 0x%x", __func__, buf.m.planes[i].m.mem_offset);
+            ALOGE("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
+            ALOGE("%s::vaddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
             return -1;
         }
         secBuf->size.extS[i] = buf.m.planes[i].length;
 
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::vaddr[bufindex=%d][planeindex=%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
-    LOGD("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
+    ALOGD("%s::vaddr[bufindex=%d][planeindex=%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
+    ALOGD("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
 #endif
     }
 
@@ -186,7 +186,7 @@ int gsc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum 
 int gsc_v4l2_req_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int num_bufs)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_requestbuffers reqbuf;
 
@@ -195,20 +195,20 @@ int gsc_v4l2_req_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, u
     reqbuf.count  = num_bufs;
 
 #ifdef DEBUG_LIB_FIMC
-    LOGI("%d buffers needed", reqbuf.count);
+    ALOGI("%d buffers needed", reqbuf.count);
 #endif
 
     if (ioctl(fd, VIDIOC_REQBUFS, &reqbuf) < 0) {
-        LOGE("%s::VIDIOC_REQBUFS failed, reqbuf.count=%d", __func__, reqbuf.count);
+        ALOGE("%s::VIDIOC_REQBUFS failed, reqbuf.count=%d", __func__, reqbuf.count);
         return -1;
     }
 
 #ifdef DEBUG_LIB_FIMC
-    LOGI("%d buffers allocated", reqbuf.count);
+    ALOGI("%d buffers allocated", reqbuf.count);
 #endif
 
     if (reqbuf.count < num_bufs) {
-        LOGE("%s::VIDIOC_REQBUFS failed ((reqbuf.count(%d) < num_bufs(%d))",
+        ALOGE("%s::VIDIOC_REQBUFS failed ((reqbuf.count(%d) < num_bufs(%d))",
             __func__, reqbuf.count, num_bufs);
         return -1;
     }
@@ -219,7 +219,7 @@ int gsc_v4l2_req_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, u
 int gsc_v4l2_s_ctrl(int fd, int id, int value)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_control vc;
 
@@ -227,7 +227,7 @@ int gsc_v4l2_s_ctrl(int fd, int id, int value)
     vc.value = value;
 
     if (ioctl(fd, VIDIOC_S_CTRL, &vc) < 0) {
-        LOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, id, value);
+        ALOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, id, value);
         return -1;
     }
 
@@ -237,17 +237,17 @@ int gsc_v4l2_s_ctrl(int fd, int id, int value)
 int gsc_v4l2_set_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field, s5p_fimc_img_info *img_info)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_format  fmt;
     struct v4l2_crop    crop;
 
     fmt.type = type;
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::fmt.type=%d", __func__, fmt.type);
+    ALOGD("%s::fmt.type=%d", __func__, fmt.type);
 #endif
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0) {
-        LOGE("%s::VIDIOC_G_FMT failed", __func__);
+        ALOGE("%s::VIDIOC_G_FMT failed", __func__);
         return -1;
     }
 
@@ -268,14 +268,14 @@ int gsc_v4l2_set_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field, s5p
         fmt.fmt.pix_mp.num_planes  = img_info->planes;
         break;
     default:
-        LOGE("%s::invalid buffer type", __func__);
+        ALOGE("%s::invalid buffer type", __func__);
         return -1;
         break;
     }
 
 #ifdef DEBUG_LIB_FIMC
 for (int i = 0; i < 3; i++) {
-    LOGD("%s::fmt.fmt.pix_mp. w=%d, h=%d, pixelformat=0x%08x, filed=%d, num_planes=%d",
+    ALOGD("%s::fmt.fmt.pix_mp. w=%d, h=%d, pixelformat=0x%08x, filed=%d, num_planes=%d",
                __func__,
                fmt.fmt.pix_mp.width, fmt.fmt.pix_mp.height,
                fmt.fmt.pix_mp.pixelformat, fmt.fmt.pix_mp.field,
@@ -284,14 +284,14 @@ for (int i = 0; i < 3; i++) {
 #endif
 
     if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
-        LOGE("%s::VIDIOC_S_FMT failed", __func__);
+        ALOGE("%s::VIDIOC_S_FMT failed", __func__);
         return -1;
     }
 
 #ifdef DEBUG_LIB_FIMC
 for (int i = 0; i < 3; i++) {
-    LOGD("%s::pix_mp.pix_mp.plane_fmt[%d].sizeimage   =0x%08x", __func__, i, fmt.fmt.pix_mp.plane_fmt[i].sizeimage);
-    LOGD("%s::pix_mp.pix_mp.plane_fmt[%d].bytesperline=0x%08x", __func__, i, fmt.fmt.pix_mp.plane_fmt[i].bytesperline);
+    ALOGD("%s::pix_mp.pix_mp.plane_fmt[%d].sizeimage   =0x%08x", __func__, i, fmt.fmt.pix_mp.plane_fmt[i].sizeimage);
+    ALOGD("%s::pix_mp.pix_mp.plane_fmt[%d].bytesperline=0x%08x", __func__, i, fmt.fmt.pix_mp.plane_fmt[i].bytesperline);
 }
 #endif
 
@@ -302,7 +302,7 @@ for (int i = 0; i < 3; i++) {
     crop.c.height = img_info->height;
 
     if (ioctl(fd, VIDIOC_S_CROP, &crop) < 0) {
-        LOGE("%s::VIDIOC_S_CROP (x=%d, y=%d, w=%d, h=%d) failed",
+        ALOGE("%s::VIDIOC_S_CROP (x=%d, y=%d, w=%d, h=%d) failed",
             __func__,
             img_info->start_x,
             img_info->start_y,
@@ -312,9 +312,9 @@ for (int i = 0; i < 3; i++) {
     }
 
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::pix_mp pixelformat=0x%08x", __func__, fmt.fmt.pix_mp.pixelformat);
-    LOGD("%s::pix_mp w=%d, h=%d, planes=%d", __func__, fmt.fmt.pix_mp.width, fmt.fmt.pix_mp.height, fmt.fmt.pix_mp.num_planes);
-    LOGD("%s::crop   x=%d, y=%d, w=%d, h=%d", __func__, crop.c.left, crop.c.top, crop.c.width, crop.c.height);
+    ALOGD("%s::pix_mp pixelformat=0x%08x", __func__, fmt.fmt.pix_mp.pixelformat);
+    ALOGD("%s::pix_mp w=%d, h=%d, planes=%d", __func__, fmt.fmt.pix_mp.width, fmt.fmt.pix_mp.height, fmt.fmt.pix_mp.num_planes);
+    ALOGD("%s::crop   x=%d, y=%d, w=%d, h=%d", __func__, crop.c.left, crop.c.top, crop.c.width, crop.c.height);
 #endif
 
     return 0;
@@ -323,10 +323,10 @@ for (int i = 0; i < 3; i++) {
 int gsc_v4l2_stream_on(int fd, enum v4l2_buf_type type)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
-        LOGE("%s::VIDIOC_STREAMON failed", __func__);
+        ALOGE("%s::VIDIOC_STREAMON failed", __func__);
         return -1;
     }
 
@@ -336,8 +336,8 @@ int gsc_v4l2_stream_on(int fd, enum v4l2_buf_type type)
 int gsc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int index, int num_plane)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
-    LOGD("%s::num_plane=%d", __func__, num_plane);
+    ALOGD("%s", __func__);
+    ALOGD("%s::num_plane=%d", __func__, num_plane);
 #endif
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_GSCALER];
@@ -358,15 +358,15 @@ int gsc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l2
         buf.m.planes[i].length    = secBuf->size.extS[i];
         buf.m.planes[i].bytesused = buf.m.planes[i].length;
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::buf.index=%d", __func__, buf.index);
-    LOGD("%s::buf.m.planes[%d].m.userptr=0x%08x", __func__, i, (unsigned int)buf.m.planes[i].m.userptr);
-    LOGD("%s::buf.m.planes[%d].length   =0x%08x", __func__, i, buf.m.planes[i].length);
-    LOGD("%s::buf.m.planes[%d].bytesused=0x%08x", __func__, i, buf.m.planes[i].bytesused);
+    ALOGD("%s::buf.index=%d", __func__, buf.index);
+    ALOGD("%s::buf.m.planes[%d].m.userptr=0x%08x", __func__, i, (unsigned int)buf.m.planes[i].m.userptr);
+    ALOGD("%s::buf.m.planes[%d].length   =0x%08x", __func__, i, buf.m.planes[i].length);
+    ALOGD("%s::buf.m.planes[%d].bytesused=0x%08x", __func__, i, buf.m.planes[i].bytesused);
 #endif
     }
 
     if (ioctl(fd, VIDIOC_QBUF, &buf) < 0) {
-        LOGE("%s::VIDIOC_QBUF failed", __func__);
+        ALOGE("%s::VIDIOC_QBUF failed", __func__);
         return -1;
     }
 
@@ -376,7 +376,7 @@ int gsc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l2
 int gsc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int *index, int num_plane)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_GSCALER];
@@ -393,14 +393,14 @@ int gsc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, u
     buf.m.planes = planes;
 
     if (ioctl(fd, VIDIOC_DQBUF, &buf) < 0) {
-        LOGE("%s::VIDIOC_DQBUF failed", __func__);
+        ALOGE("%s::VIDIOC_DQBUF failed", __func__);
         return -1;
     }
 
     *index = buf.index;
 
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::buf.index=%d", __func__, buf.index);
+    ALOGD("%s::buf.index=%d", __func__, buf.index);
 #endif
 
     return 0;
@@ -409,10 +409,10 @@ int gsc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, u
 int gsc_v4l2_stream_off(int fd, enum v4l2_buf_type type)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0) {
-        LOGE("%s::VIDIOC_STREAMOFF failed", __func__);
+        ALOGE("%s::VIDIOC_STREAMOFF failed", __func__);
         return -1;
     }
 
@@ -422,7 +422,7 @@ int gsc_v4l2_stream_off(int fd, enum v4l2_buf_type type)
 int gsc_v4l2_clr_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_requestbuffers req;
 
@@ -431,7 +431,7 @@ int gsc_v4l2_clr_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory)
     req.memory  = memory;
 
     if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0) {
-        LOGE("%s::VIDIOC_REQBUFS failed", __func__);
+        ALOGE("%s::VIDIOC_REQBUFS failed", __func__);
         return -1;
     }
 
@@ -441,7 +441,7 @@ int gsc_v4l2_clr_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory)
 int gsc_subdev_set_fmt(int fd, unsigned int pad, enum v4l2_mbus_pixelcode code, s5p_fimc_img_info *img_info)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     struct v4l2_subdev_format fmt;
     struct v4l2_subdev_crop   crop;
@@ -453,7 +453,7 @@ int gsc_subdev_set_fmt(int fd, unsigned int pad, enum v4l2_mbus_pixelcode code, 
     fmt.format.code   = code;
 
     if (ioctl(fd, VIDIOC_SUBDEV_S_FMT, &fmt) < 0) {
-        LOGE("%s::VIDIOC_SUBDEV_S_FMT failed", __func__);
+        ALOGE("%s::VIDIOC_SUBDEV_S_FMT failed", __func__);
         return -1;
     }
 
@@ -465,12 +465,12 @@ int gsc_subdev_set_fmt(int fd, unsigned int pad, enum v4l2_mbus_pixelcode code, 
     crop.rect.height = img_info->height;
 
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::pix_mp w=%d, h=%d", __func__, fmt.format.width, fmt.format.height);
-    LOGD("%s::crop   x=%d, y=%d, w=%d, h=%d", __func__, crop.rect.left, crop.rect.top, crop.rect.width, crop.rect.height);
+    ALOGD("%s::pix_mp w=%d, h=%d", __func__, fmt.format.width, fmt.format.height);
+    ALOGD("%s::crop   x=%d, y=%d, w=%d, h=%d", __func__, crop.rect.left, crop.rect.top, crop.rect.width, crop.rect.height);
 #endif
 
     if (ioctl(fd, VIDIOC_SUBDEV_S_CROP, &crop) < 0) {
-        LOGE("%s::VIDIOC_SUBDEV_S_CROP failed", __func__);
+        ALOGE("%s::VIDIOC_SUBDEV_S_CROP failed", __func__);
         return -1;
     }
 
@@ -507,10 +507,10 @@ SecGscaler::SecGscaler()
 SecGscaler::~SecGscaler()
 {
     if (mFlagCreate == true) {
-        LOGE("%s::this is not Destroyed fail", __func__);
+        ALOGE("%s::this is not Destroyed fail", __func__);
 
         if (destroy() == false)
-            LOGE("%s::destroy failed", __func__);
+            ALOGE("%s::destroy failed", __func__);
     }
 }
 
@@ -523,10 +523,10 @@ bool SecGscaler::create(enum DEV dev, enum MODE mode, unsigned int numOfBuf)
 bool SecGscaler::create(enum DEV dev, unsigned int numOfBuf)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
     if (mFlagCreate == true) {
-        LOGE("%s::Already Created", __func__);
+        ALOGE("%s::Already Created", __func__);
         return true;
     }
 
@@ -576,7 +576,7 @@ bool SecGscaler::create(enum DEV dev, unsigned int numOfBuf)
         mSubdevNodeNum = 3; // need to modify //carrotsm
         break;
     default:
-        LOGE("%s::invalid mDev(%d)", __func__, mDev);
+        ALOGE("%s::invalid mDev(%d)", __func__, mDev);
         goto err;
         break;
     }
@@ -585,7 +585,7 @@ bool SecGscaler::create(enum DEV dev, unsigned int numOfBuf)
     mMediadevFd = open(node, O_RDONLY);
 
     if (mMediadevFd < 0) {
-        LOGE("%s::open(%s) failed : O_RDONLY", __func__, node);
+        ALOGE("%s::open(%s) failed : O_RDONLY", __func__, node);
         goto err;
     }
 
@@ -597,15 +597,15 @@ bool SecGscaler::create(enum DEV dev, unsigned int numOfBuf)
 
         if (ioctl(mMediadevFd, MEDIA_IOC_ENUM_ENTITIES, &entity_desc) < 0) {
             if (errno == EINVAL) {
-                LOGD("%s::MEDIA_IOC_ENUM_ENTITIES ended", __func__);
+                ALOGD("%s::MEDIA_IOC_ENUM_ENTITIES ended", __func__);
                 break;
             }
-            LOGE("%s::MEDIA_IOC_ENUM_ENTITIES failed", __func__);
+            ALOGE("%s::MEDIA_IOC_ENUM_ENTITIES failed", __func__);
             goto err;
         }
 
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s::entity_desc.id=%d, .minor=%d .name=%s", __func__, entity_desc.id, entity_desc.v4l.minor, entity_desc.name);
+    ALOGD("%s::entity_desc.id=%d, .minor=%d .name=%s", __func__, entity_desc.id, entity_desc.v4l.minor, entity_desc.name);
 #endif
 
         if (strncmp(entity_desc.name, subdevname, strlen(subdevname)) == 0)
@@ -622,20 +622,20 @@ bool SecGscaler::create(enum DEV dev, unsigned int numOfBuf)
     sprintf(node, "%s%d", PFX_NODE_SUBDEV, mSubdevNodeNum);
     mSubdevFd = open(node, O_RDWR);
     if (mSubdevFd < 0) {
-        LOGE("%s::open(%s) failed", __func__, node);
+        ALOGE("%s::open(%s) failed", __func__, node);
         goto err;
     }
 
     sprintf(node, "%s%d", PFX_NODE_VIDEODEV, mVideoNodeNum);
     mVideodevFd = open(node, O_RDWR);
     if (mVideodevFd < 0) {
-        LOGE("%s::open(%s) failed", __func__, node);
+        ALOGE("%s::open(%s) failed", __func__, node);
         goto err;
     }
 
     /* check capability */
     if (gsc_v4l2_querycap(mVideodevFd, node) < 0 ) {
-        LOGE("%s::tvout_std_v4l2_querycap failed", __func__);
+        ALOGE("%s::tvout_std_v4l2_querycap failed", __func__);
         goto err;
     }
 
@@ -665,18 +665,18 @@ bool SecGscaler::destroy()
     s5p_fimc_params_t *params = &(mS5pFimc.params);
 
     if (mFlagCreate == false) {
-        LOGE("%s::Already Destroyed", __func__);
+        ALOGE("%s::Already Destroyed", __func__);
         return true;
     }
 
     if (mFlagStreamOn == true) {
         if (streamOff() == false) {
-            LOGE("%s::streamOff() failed", __func__);
+            ALOGE("%s::streamOff() failed", __func__);
             return false;
         }
 
         if (closeVideodevFd() == false) {
-            LOGE("%s::closeVideodevFd() failed", __func__);
+            ALOGE("%s::closeVideodevFd() failed", __func__);
             return false;
         }
 
@@ -720,7 +720,7 @@ bool SecGscaler::openVideodevFd(void)
     sprintf(node, "%s%d", PFX_NODE_VIDEODEV, mVideoNodeNum);
     mVideodevFd = open(node, O_RDWR);
     if (mVideodevFd < 0) {
-        LOGE("%s::open(%s) failed", __func__, node);
+        ALOGE("%s::open(%s) failed", __func__, node);
         return false;
     }
 
@@ -731,14 +731,14 @@ bool SecGscaler::closeVideodevFd(void)
 {
     if (mFlagSetSrcParam == true) {
         if (gsc_v4l2_clr_buf(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE) < 0) {
-            LOGE("%s::gsc_v4l2_clr_buf() failed", __func__);
+            ALOGE("%s::gsc_v4l2_clr_buf() failed", __func__);
             return false;
         }
     }
 
     if (0 < mVideodevFd) {
         if (close(mVideodevFd) < 0) {
-            LOGE("%s::close Videodev failed", __func__);
+            ALOGE("%s::close Videodev failed", __func__);
             return false;
         }
     }
@@ -770,7 +770,7 @@ bool  SecGscaler::getFlagSteamOn(void)
 SecBuffer * SecGscaler::getSrcBufferAddr(int index)
 {
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
@@ -784,17 +784,17 @@ bool SecGscaler::setSrcParams(unsigned int width, unsigned int height,
                               bool forceChange)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     int v4l2ColorFormat = HAL_PIXEL_FORMAT_2_V4L2_PIX(colorFormat);
     if (v4l2ColorFormat < 0) {
-        LOGE("%s::not supported color format", __func__);
+        ALOGE("%s::not supported color format", __func__);
         return false;
     }
 
@@ -809,18 +809,18 @@ bool SecGscaler::setSrcParams(unsigned int width, unsigned int height,
 
     if (m_checkSrcSize(width, height, cropX, cropY,
                    &fimcWidth, &fimcHeight, v4l2ColorFormat, false) == false) {
-        LOGE("%s::::size align error!", __func__);
+        ALOGE("%s::::size align error!", __func__);
         return false;
     }
 
     if (fimcWidth != *cropWidth || fimcHeight != *cropHeight) {
         if (forceChange == true) {
 #ifdef DEBUG_LIB_FIMC
-            LOGD("size is changed from [w=%d, h=%d] to [w=%d, h=%d]",
+            ALOGD("size is changed from [w=%d, h=%d] to [w=%d, h=%d]",
                     *cropWidth, *cropHeight, fimcWidth, fimcHeight);
 #endif
         } else {
-            LOGE("%s::invalid source params", __func__);
+            ALOGE("%s::invalid source params", __func__);
             return false;
         }
     }
@@ -874,7 +874,7 @@ bool SecGscaler::setSrcParams(unsigned int width, unsigned int height,
                 mSrcBuffer[buf_index].size.extS[0] = (frame_size * 3) >> 1;
                 break;
             default:
-                LOGE("%s::invalid color type", __func__);
+                ALOGE("%s::invalid color type", __func__);
                 return false;
                 break;
             }
@@ -888,7 +888,7 @@ bool SecGscaler::setSrcParams(unsigned int width, unsigned int height,
             mSrcBuffer[buf_index].size.extS[2] = frame_size / frame_ratio;
             break;
         default:
-            LOGE("%s::invalid color foarmt", __func__);
+            ALOGE("%s::invalid color foarmt", __func__);
             return false;
             break;
         }
@@ -900,25 +900,25 @@ bool SecGscaler::setSrcParams(unsigned int width, unsigned int height,
 
     if (mFlagSetSrcParam == true) {
         if (gsc_v4l2_clr_buf(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE) < 0) {
-            LOGE("%s::gsc_v4l2_clr_buf() failed", __func__);
+            ALOGE("%s::gsc_v4l2_clr_buf() failed", __func__);
             return false;
         }
     }
 
     if (gsc_v4l2_set_fmt(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_FIELD_NONE, &(params->src)) < 0) {
-        LOGE("%s::fimc_v4l2_set_fmt()[src] failed", __func__);
+        ALOGE("%s::fimc_v4l2_set_fmt()[src] failed", __func__);
         return false;
     }
 
     if (gsc_v4l2_req_buf(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE, mNumOfBuf) < 0) {
-        LOGE("%s::fimc_v4l2_req_buf()[src] failed", __func__);
+        ALOGE("%s::fimc_v4l2_req_buf()[src] failed", __func__);
         return false;
     }
 #ifdef USE_GSC_USERPTR
 #else
     for (unsigned int buf_index = 0; buf_index < MAX_BUFFERS_GSCALER; buf_index++) {
         if (gsc_v4l2_query_buf(mVideodevFd, &mSrcBuffer[buf_index], V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_MMAP, buf_index, params->src.planes) < 0) {
-            LOGE("%s::gsc_v4l2_query_buf() failed", __func__);
+            ALOGE("%s::gsc_v4l2_query_buf() failed", __func__);
             return false;
         }
     }
@@ -943,7 +943,7 @@ bool SecGscaler::getSrcParams(unsigned int *width, unsigned int *height,
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 
     if (ioctl(mVideodevFd, VIDIOC_G_FMT, &fmt) < 0) {
-        LOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
+        ALOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
         return false;
     }
 
@@ -962,14 +962,14 @@ bool SecGscaler::getSrcParams(unsigned int *width, unsigned int *height,
         *v4l2colorFormat = fmt.fmt.pix_mp.pixelformat;
         break;
     default:
-        LOGE("%s::Invalid buffer type", __func__);
+        ALOGE("%s::Invalid buffer type", __func__);
         return false;
         break;
     }
 
     crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     if (ioctl(mVideodevFd, VIDIOC_G_CROP, &crop) < 0) {
-        LOGE("%s::VIDIOC_G_CROP failed", __func__);
+        ALOGE("%s::VIDIOC_G_CROP failed", __func__);
         return false;
     }
 
@@ -987,16 +987,16 @@ bool SecGscaler::setSrcAddr(unsigned int YAddr,
                             int colorFormat)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagSetSrcParam == false) {
-        LOGE("%s::mFlagSetSrcParam == false", __func__);
+        ALOGE("%s::mFlagSetSrcParam == false", __func__);
         return false;
     }
 
@@ -1026,11 +1026,11 @@ bool SecGscaler::setDstParams(unsigned int width, unsigned int height,
                               bool forceChange)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
@@ -1044,7 +1044,7 @@ bool SecGscaler::setDstParams(unsigned int width, unsigned int height,
     if( m_checkDstSize(width, height, cropX, cropY,
                    &fimcWidth, &fimcHeight, V4L2_PIX_FMT_YUV444,
                    mRotVal, true) == false) {
-        LOGE("%s::size align error!", __func__);
+        ALOGE("%s::size align error!", __func__);
         return false;
     }
 
@@ -1052,11 +1052,11 @@ bool SecGscaler::setDstParams(unsigned int width, unsigned int height,
     if (fimcWidth != *cropWidth || fimcHeight != *cropHeight) {
         if (forceChange == true) {
 #ifdef DEBUG_LIB_FIMC
-            LOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
+            ALOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
                     *cropWidth, *cropHeight, fimcWidth, fimcHeight);
 #endif
         } else {
-            LOGE("%s::Invalid destination params", __func__);
+            ALOGE("%s::Invalid destination params", __func__);
             return false;
         }
     }
@@ -1095,7 +1095,7 @@ bool SecGscaler::setDstParams(unsigned int width, unsigned int height,
     }
 
     if (gsc_subdev_set_fmt(mSubdevFd, GSC_SUBDEV_PAD_SOURCE, V4L2_MBUS_FMT_YUV8_1X24, &(params->dst)) < 0) {
-        LOGE("%s::gsc_subdev_set_fmt()[dst] failed", __func__);
+        ALOGE("%s::gsc_subdev_set_fmt()[dst] failed", __func__);
         return false;
     }
 
@@ -1116,7 +1116,7 @@ bool SecGscaler::getDstParams(unsigned int *width, unsigned int *height,
     fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
     if (ioctl(mSubdevFd, VIDIOC_SUBDEV_G_FMT, &fmt) < 0) {
-        LOGE("%s::VIDIOC_SUBDEV_S_FMT", __func__);
+        ALOGE("%s::VIDIOC_SUBDEV_S_FMT", __func__);
         return -1;
     }
 
@@ -1128,7 +1128,7 @@ bool SecGscaler::getDstParams(unsigned int *width, unsigned int *height,
     crop.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
     if (ioctl(mSubdevFd, VIDIOC_SUBDEV_G_CROP, &crop) < 0) {
-        LOGE("%s::VIDIOC_SUBDEV_S_CROP", __func__);
+        ALOGE("%s::VIDIOC_SUBDEV_S_CROP", __func__);
         return -1;
     }
 
@@ -1143,11 +1143,11 @@ bool SecGscaler::getDstParams(unsigned int *width, unsigned int *height,
 bool SecGscaler::setDstAddr(unsigned int YAddr, unsigned int CbAddr, unsigned int CrAddr, int buf_index)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
@@ -1159,12 +1159,12 @@ bool SecGscaler::setRotVal(unsigned int rotVal)
     struct v4l2_control vc;
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (gsc_v4l2_s_ctrl(mVideodevFd, V4L2_CID_ROTATE, rotVal) < 0) {
-        LOGE("%s::fimc_v4l2_s_ctrl(V4L2_CID_ROTATE) failed", __func__);
+        ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_CID_ROTATE) failed", __func__);
         return false;
     }
 
@@ -1175,12 +1175,12 @@ bool SecGscaler::setRotVal(unsigned int rotVal)
 bool SecGscaler::setGlobalAlpha(bool enable, int alpha)
 {
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagStreamOn == true) {
-        LOGE("%s::mFlagStreamOn == true", __func__);
+        ALOGE("%s::mFlagStreamOn == true", __func__);
         return false;
     }
 
@@ -1194,12 +1194,12 @@ bool SecGscaler::setGlobalAlpha(bool enable, int alpha)
 bool SecGscaler::setLocalAlpha(bool enable)
 {
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagStreamOn == true) {
-        LOGE("%s::mFlagStreamOn == true", __func__);
+        ALOGE("%s::mFlagStreamOn == true", __func__);
         return false;
     }
 
@@ -1212,12 +1212,12 @@ bool SecGscaler::setLocalAlpha(bool enable)
 bool SecGscaler::setColorKey(bool enable, int colorKey)
 {
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagStreamOn == true) {
-        LOGE("%s::mFlagStreamOn == true", __func__);
+        ALOGE("%s::mFlagStreamOn == true", __func__);
         return false;
     }
 
@@ -1230,21 +1230,21 @@ bool SecGscaler::setColorKey(bool enable, int colorKey)
 bool SecGscaler::run()
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagSetSrcParam == false) {
-        LOGE("%s::faild : Need to set source parameters of Gscaler", __func__);
+        ALOGE("%s::faild : Need to set source parameters of Gscaler", __func__);
         return false;
     }
 
     if (mFlagSetDstParam == false) {
-        LOGE("%s::faild : Need to set destination parameters of Gscaler", __func__);
+        ALOGE("%s::faild : Need to set destination parameters of Gscaler", __func__);
         return false;
     }
 
@@ -1254,7 +1254,7 @@ bool SecGscaler::run()
     src_planes     = (src_planes == -1) ? 1 : src_planes;
 
     if (gsc_v4l2_queue(mVideodevFd, &(mSrcBuffer[mSrcIndex]), V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE, mSrcIndex, src_planes) < 0) {
-        LOGE("%s::fimc_v4l2_queue[src](mNumOfBuf : %d,mSrcIndex=%d) failed", __func__, mNumOfBuf, mSrcIndex);
+        ALOGE("%s::fimc_v4l2_queue[src](mNumOfBuf : %d,mSrcIndex=%d) failed", __func__, mNumOfBuf, mSrcIndex);
         return false;
     }
 
@@ -1264,7 +1264,7 @@ bool SecGscaler::run()
     }
 
     if (gsc_v4l2_dequeue(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE, &dqIndex, src_planes) < 0) {
-        LOGE("%s::fimc_v4l2_dequeue[src](mNumOfBuf : %d, dqIndex=%d) failed", __func__, mNumOfBuf, dqIndex);
+        ALOGE("%s::fimc_v4l2_dequeue[src](mNumOfBuf : %d, dqIndex=%d) failed", __func__, mNumOfBuf, dqIndex);
         return false;
     }
 
@@ -1274,16 +1274,16 @@ bool SecGscaler::run()
 bool SecGscaler::streamOn(void)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagStreamOn == true) {
-        LOGE("%s::already streamon", __func__);
+        ALOGE("%s::already streamon", __func__);
         return true;
     }
 
@@ -1292,14 +1292,14 @@ bool SecGscaler::streamOn(void)
     src_planes     = (src_planes == -1) ? 1 : src_planes;
 
     if (gsc_v4l2_queue(mVideodevFd, &(mSrcBuffer[mSrcIndex]), V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, V4L2_MEMORY_TYPE, mSrcIndex, src_planes) < 0) {
-        LOGE("%s::fimc_v4l2_queue[src](mNumOfBuf : %d,mSrcIndex=%d) failed", __func__, mNumOfBuf, mSrcIndex);
+        ALOGE("%s::fimc_v4l2_queue[src](mNumOfBuf : %d,mSrcIndex=%d) failed", __func__, mNumOfBuf, mSrcIndex);
         return false;
     }
 
     mSrcIndex++;
     if (mSrcIndex == MAX_BUFFERS_GSCALER - 1) {
         if (gsc_v4l2_stream_on(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) < 0) {
-            LOGE("%s::fimc_v4l2_stream_on() failed", __func__);
+            ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
             return false;
         }
         mFlagStreamOn = true;
@@ -1315,21 +1315,21 @@ bool SecGscaler::streamOn(void)
 bool SecGscaler::streamOff(void)
 {
 #ifdef DEBUG_LIB_FIMC
-    LOGD("%s", __func__);
+    ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        LOGE("%s::Not yet created", __func__);
+        ALOGE("%s::Not yet created", __func__);
         return false;
     }
 
     if (mFlagStreamOn == false) {
-        LOGE("%s::already streamoff", __func__);
+        ALOGE("%s::already streamoff", __func__);
         return true;
     }
 
     if (gsc_v4l2_stream_off(mVideodevFd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) < 0) {
-        LOGE("%s::fimc_v4l2_stream_off() failed", __func__);
+        ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
         return false;
     }
 

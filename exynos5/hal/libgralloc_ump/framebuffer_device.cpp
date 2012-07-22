@@ -73,7 +73,7 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 
 #ifdef STANDARD_LINUX_SCREEN
         if (ioctl(m->framebuffer->fd, FBIOPAN_DISPLAY, &m->info) == -1) {
-            LOGE("FBIOPAN_DISPLAY failed");
+            ALOGE("FBIOPAN_DISPLAY failed");
             m->base.unlock(&m->base, buffer);
             return 0;
         }
@@ -81,13 +81,13 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
         /* wait for VSYNC */
         int crtc = 0;
         if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC, &crtc) < 0) {
-            LOGE("FBIO_WAITFORVSYNC failed");
+            ALOGE("FBIO_WAITFORVSYNC failed");
             return 0;
         }
 #else
         /* Standard Android way */
         if (ioctl(m->framebuffer->fd, FBIOPUT_VSCREENINFO, &m->info) == -1) {
-            LOGE("FBIOPUT_VSCREENINFO failed");
+            ALOGE("FBIOPUT_VSCREENINFO failed");
             m->base.unlock(&m->base, buffer);
             return -errno;
         }
@@ -135,19 +135,19 @@ int init_frame_buffer_locked(struct private_module_t* module)
     }
 
     if (fd < 0) {
-        LOGE("/dev/graphics/fb, /dev/fb Open fail");
+        ALOGE("/dev/graphics/fb, /dev/fb Open fail");
         return -errno;
     }
 
     struct fb_fix_screeninfo finfo;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &finfo) == -1) {
-        LOGE("Fail to get FB Screen Info");
+        ALOGE("Fail to get FB Screen Info");
         return -errno;
     }
 
     struct fb_var_screeninfo info;
     if (ioctl(fd, FBIOGET_VSCREENINFO, &info) == -1) {
-        LOGE("First, Fail to get FB VScreen Info");
+        ALOGE("First, Fail to get FB VScreen Info");
         return -errno;
     }
 
@@ -195,19 +195,19 @@ int init_frame_buffer_locked(struct private_module_t* module)
     if (ioctl(fd, FBIOPUT_VSCREENINFO, &info) == -1) {
         info.yres_virtual = info.yres;
         flags &= ~PAGE_FLIP;
-        LOGW("FBIOPUT_VSCREENINFO failed, page flipping not supported");
+        ALOGW("FBIOPUT_VSCREENINFO failed, page flipping not supported");
     }
 
     if (info.yres_virtual < info.yres * 2) {
         /* we need at least 2 for page-flipping */
         info.yres_virtual = info.yres;
         flags &= ~PAGE_FLIP;
-        LOGW("page flipping not supported (yres_virtual=%d, requested=%d)",
+        ALOGW("page flipping not supported (yres_virtual=%d, requested=%d)",
                 info.yres_virtual, info.yres*2);
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &info) == -1) {
-        LOGE("Second, Fail to get FB VScreen Info");
+        ALOGE("Second, Fail to get FB VScreen Info");
         return -errno;
     }
 
@@ -231,7 +231,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
     float ydpi = (info.yres * 25.4f) / info.height;
     float fps  = refreshRate / 1000.0f;
 
-    LOGI("using (fd=%d)\n"
+    ALOGI("using (fd=%d)\n"
          "id           = %s\n"
          "xres         = %d px\n"
          "yres         = %d px\n"
@@ -252,7 +252,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
          info.green.offset, info.green.length,
          info.blue.offset, info.blue.length);
 
-    LOGI("width        = %d mm (%f dpi)\n"
+    ALOGI("width        = %d mm (%f dpi)\n"
          "height       = %d mm (%f dpi)\n"
          "refresh rate = %.2f Hz\n",
          info.width,  xdpi,
@@ -260,12 +260,12 @@ int init_frame_buffer_locked(struct private_module_t* module)
          fps);
 
     if (ioctl(fd, FBIOGET_FSCREENINFO, &finfo) == -1) {
-        LOGE("Fail to get FScreen Info");
+        ALOGE("Fail to get FScreen Info");
         return -errno;
     }
 
     if (finfo.smem_len <= 0) {
-        LOGE("Invalid Value : finfo.smem_len");
+        ALOGE("Invalid Value : finfo.smem_len");
         return -errno;
     }
 
@@ -282,7 +282,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
     size_t fbSize = round_up_to_page_size(finfo.line_length * info.yres_virtual);
     void* vaddr = mmap(0, fbSize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if (vaddr == MAP_FAILED) {
-        LOGE("Error mapping the framebuffer (%s)", strerror(errno));
+        ALOGE("Error mapping the framebuffer (%s)", strerror(errno));
         return -errno;
     }
 
@@ -346,14 +346,14 @@ int framebuffer_device_open(hw_module_t const* module, const char* name, hw_devi
     alloc_device_t* gralloc_device;
     status = gralloc_open(module, &gralloc_device);
     if (status < 0) {
-        LOGE("Fail to Open gralloc device");
+        ALOGE("Fail to Open gralloc device");
         return status;
     }
 
     private_module_t* m = (private_module_t*)module;
     status = init_frame_buffer(m);
     if (status < 0) {
-        LOGE("Fail to init framebuffer");
+        ALOGE("Fail to init framebuffer");
         gralloc_close(gralloc_device);
         return status;
     }

@@ -68,13 +68,13 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
         ion_fd = ion_alloc(m->ion_client, size, 0, ION_HEAP_EXYNOS_MASK);
         if (ion_fd < 0) {
-            LOGE("Failed to ion_alloc");
+            ALOGE("Failed to ion_alloc");
             return -1;
         }
 
         cpu_ptr = ion_map(ion_fd, size, 0);
         if (NULL == cpu_ptr) {
-            LOGE("Failed to ion_map");
+            ALOGE("Failed to ion_map");
             ion_free(ion_fd);
             return -1;
         }
@@ -83,7 +83,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
             priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_ION;
         } else {
-            LOGE("gralloc_alloc_buffer() failed to import ION memory");
+            ALOGE("gralloc_alloc_buffer() failed to import ION memory");
             ion_unmap(cpu_ptr, size);
             ion_free(ion_fd);
             return -1;
@@ -120,7 +120,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle)
             cpu_ptr = ump_map(ump_mem_handle, 0, size);
         else
-            LOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
+            ALOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
     }
 
     if (NULL != cpu_ptr) {
@@ -144,15 +144,15 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                 hnd->voffset = ((EXYNOS_ALIGN((hnd->width >> 1), 8) * EXYNOS_ALIGN((hnd->height >> 1), 8)));
                 return 0;
             } else {
-                LOGE("gralloc_alloc_buffer() failed to allocate handle");
+                ALOGE("gralloc_alloc_buffer() failed to allocate handle");
             }
         } else {
-            LOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
+            ALOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
         }
 
         ump_unmap(ump_mem_handle, cpu_ptr, size);
     } else {
-        LOGE("gralloc_alloc_buffer() failed to map UMP memory");
+        ALOGE("gralloc_alloc_buffer() failed to map UMP memory");
     }
 
     ump_release(ump_mem_handle);
@@ -187,13 +187,13 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, in
          */
         int newUsage = (usage & ~GRALLOC_USAGE_HW_FB) | GRALLOC_USAGE_HW_2D;
 
-        LOGD("fallback to single buffering");
+        ALOGD("fallback to single buffering");
 
         return gralloc_alloc_buffer(dev, bufferSize, newUsage, pHandle, w, h, format, bpp, 0, 0);
     }
 
     if (bufferMask >= ((1LU<<numBuffers)-1)) {
-        LOGE("Ran out of buffers");
+        ALOGE("Ran out of buffers");
         return -ENOMEM;
     }
 
@@ -236,7 +236,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
                               int usage, buffer_handle_t* pHandle, int* pStride)
 {
     if (!pHandle || !pStride) {
-        LOGE("Invalid Handle, Stride value");
+        ALOGE("Invalid Handle, Stride value");
         return -EINVAL;
     }
 
@@ -269,7 +269,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         bpp = 4;
         break;
     default:
-        LOGE("Not Support Pixel Format");
+        ALOGE("Not Support Pixel Format");
         return -EINVAL;
     }
 
@@ -289,7 +289,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
                     format, 0, (int)stride_raw, (int)stride);
 
     if (err < 0) {
-        LOGE("Fail to alloc Gralloc memory");
+        ALOGE("Fail to alloc Gralloc memory");
         return err;
     }
 
@@ -300,7 +300,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
 static int alloc_device_free(alloc_device_t* dev, buffer_handle_t handle)
 {
     if (private_handle_t::validate(handle) < 0) {
-        LOGE("Invalid Value : private_handle");
+        ALOGE("Invalid Value : private_handle");
         return -EINVAL;
     }
 
@@ -346,19 +346,19 @@ int alloc_device_open(hw_module_t const* module, const char* name, hw_device_t**
 
     dev = new alloc_device_t;
     if (NULL == dev) {
-        LOGE("Fail to create alloc_device");
+        ALOGE("Fail to create alloc_device");
         return -1;
     }
 
     dev->common.module = const_cast<hw_module_t*>(module);
     private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
     m->ion_client=ion_client_create();
-    LOGI("gralloc create ion_client %d", m->ion_client);
+    ALOGI("gralloc create ion_client %d", m->ion_client);
 
     ump_result ump_res = ump_open();
 
     if ((UMP_OK != ump_res) || (0 > m->ion_client)) {
-        LOGE("UMP open failed, ump_res %d, ion_client %d", ump_res, m->ion_client);
+        ALOGE("UMP open failed, ump_res %d, ion_client %d", ump_res, m->ion_client);
         delete dev;
         return -1;
     }

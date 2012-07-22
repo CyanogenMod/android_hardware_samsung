@@ -17,8 +17,8 @@
 #ifndef __HDMI_HAL_V4L2_UTILS_H__
 #define __HDMI_HAL_V4L2_UTILS_H__
 
-//#define LOG_NDEBUG 0
-//#define LOG_TAG "libhdmi"
+//#define ALOG_NDEBUG 0
+//#define ALOG_TAG "libhdmi"
 
 #include "fimd_api.h"
 #include "SecBuffer.h"

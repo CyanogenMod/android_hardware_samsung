@@ -29,13 +29,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ui/android_native_buffer.h>
+
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferMapper.h>
 #include <ui/Rect.h>
-#include <media/stagefright/HardwareAPI.h>
+#include <media/hardware/HardwareAPI.h>
 #include <hardware/hardware.h>
-#include <media/stagefright/MetadataBufferType.h>
+#include <media/hardware/MetadataBufferType.h>
 
 #include "SEC_OSAL_Semaphore.h"
 #include "SEC_OMX_Baseport.h"
