@@ -15,10 +15,18 @@
 #
 
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-#common_exynos4_dirs := libgralloc_ump libhdmi libfimc libhwcomposer libcamera libhwconverter
-common_exynos4_dirs := libgralloc_ump libhdmi libfimc libhwcomposer libhwconverter
-exynos4210_dirs := $(common_exynos4_dirs) libs5pjpeg libfimg3x
 
+common_exynos4_dirs := libgralloc_ump libhdmi libhwcomposer libhwconverter
+
+ifneq ($(BOARD_USES_PROPRIETARY_LIBCAMERA),true)
+common_exynos4_dirs += libcamera
+endif
+
+ifneq ($(BOARD_USES_PROPRIETARY_LIBFIMC),true)
+common_exynos4_dirs += libfimc
+endif
+
+exynos4210_dirs := $(common_exynos4_dirs) libs5pjpeg libfimg3x
 exynos4x12_dirs := $(common_exynos4_dirs) libhwjpeg libfimg4x
 
 ifeq ($(TARGET_SOC),exynos4210)
