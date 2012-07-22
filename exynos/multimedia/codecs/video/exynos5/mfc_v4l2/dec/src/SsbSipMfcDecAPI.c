@@ -39,8 +39,8 @@
 #include "ion.h"
 #endif
 
-/* #define ALOG_NDEBUG 0 */
-#define ALOG_TAG "MFC_DEC_APP"
+/* #define LOG_NDEBUG 0 */
+#define LOG_TAG "MFC_DEC_APP"
 #include <utils/Log.h>
 
 #ifdef CONFIG_MFC_FPS

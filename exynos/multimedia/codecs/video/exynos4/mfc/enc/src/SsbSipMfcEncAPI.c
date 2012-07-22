@@ -30,9 +30,9 @@
 #include "SsbSipMfcApi.h"
 
 #include <utils/Log.h>
-/* #define ALOG_NDEBUG 0 */
-#undef  ALOG_TAG
-#define ALOG_TAG "MFC_ENC_APP"
+/* #define LOG_NDEBUG 0 */
+#undef  LOG_TAG
+#define LOG_TAG "MFC_ENC_APP"
 
 #define _MFCLIB_MAGIC_NUMBER	0x92241001
 

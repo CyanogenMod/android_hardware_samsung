@@ -29,7 +29,7 @@
  *   Adjust V4L2 architecture \n
  */
 
-#define ALOG_TAG "libfimc"
+#define LOG_TAG "libfimc"
 #include <cutils/log.h>
 
 #include "SecFimc.h"

@@ -17,8 +17,8 @@
 **
 */
 
-#define ALOG_NDEBUG 0
-#define ALOG_TAG "SKIA"
+#define LOG_NDEBUG 0
+#define LOG_TAG "SKIA"
 #include <utils/Log.h>
 
 #include "FimgApi.h"

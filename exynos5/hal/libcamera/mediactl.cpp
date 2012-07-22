@@ -20,8 +20,8 @@
  */
 
 //#include "config.h"
-#define ALOG_NDEBUG 0
-#define ALOG_TAG "Mediactl"
+#define LOG_NDEBUG 0
+#define LOG_TAG "Mediactl"
 
 #include <utils/Log.h>
 #include <sys/ioctl.h>

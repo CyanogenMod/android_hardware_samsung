@@ -16,7 +16,7 @@
  */
 
 //#define DEBUG_LIB_FIMC
-#define ALOG_TAG "libgscaler"
+#define LOG_TAG "libgscaler"
 //#define USE_GSC_USERPTR
 #include <cutils/log.h>
 #include "../libhdmi/SecHdmi/SecGscaler.h"

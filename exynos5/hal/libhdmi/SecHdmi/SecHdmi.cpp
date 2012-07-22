@@ -15,8 +15,8 @@
  */
 
 //#define DEBUG_MSG_ENABLE
-//#define ALOG_NDEBUG 0
-//#define ALOG_TAG "libhdmi"
+//#define LOG_NDEBUG 0
+//#define LOG_TAG "libhdmi"
 #include <cutils/log.h>
 #include "ion.h"
 #include "SecHdmi.h"

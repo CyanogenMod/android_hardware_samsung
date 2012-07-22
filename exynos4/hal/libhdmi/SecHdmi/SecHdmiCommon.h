@@ -18,8 +18,8 @@
 **
 */
 
-//#define ALOG_NDEBUG 0
-//#define ALOG_TAG "libhdmi"
+//#define LOG_NDEBUG 0
+//#define LOG_TAG "libhdmi"
 #include <cutils/log.h>
 
 #include "videodev2.h"

@@ -15,8 +15,8 @@
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
 */
-//#define ALOG_NDEBUG 0
-#define ALOG_TAG "CameraHardwareSec"
+//#define LOG_NDEBUG 0
+#define LOG_TAG "CameraHardwareSec"
 #include <utils/Log.h>
 
 #include "SecCameraHWInterface.h"

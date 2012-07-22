@@ -23,8 +23,8 @@
 *************************************
 */
 
-//#define ALOG_NDEBUG 0
-#define ALOG_TAG "SecCamera"
+//#define LOG_NDEBUG 0
+#define LOG_TAG "SecCamera"
 
 #include <utils/Log.h>
 #include <string.h>

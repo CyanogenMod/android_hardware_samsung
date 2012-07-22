@@ -7,7 +7,7 @@
 
 #include "srp_api_ctrl.h"
 
-#define ALOG_TAG "libsa_jni"
+#define LOG_TAG "libsa_jni"
 #include <cutils/log.h>
 
 void Java_com_android_music_SetSACtrlJNI_set(JNIEnv * env, jobject obj, int effect_num)

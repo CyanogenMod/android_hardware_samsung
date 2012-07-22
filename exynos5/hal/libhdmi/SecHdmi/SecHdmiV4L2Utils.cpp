@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-//#define ALOG_NDEBUG 0
-//#define ALOG_TAG "libhdmi"
+//#define LOG_NDEBUG 0
+//#define LOG_TAG "libhdmi"
 //#define DEBUG_HDMI_HW_LEVEL
 #include <cutils/log.h>
 

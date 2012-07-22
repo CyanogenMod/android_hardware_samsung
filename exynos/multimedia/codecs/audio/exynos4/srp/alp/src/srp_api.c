@@ -12,8 +12,8 @@
 
 #include "srp_api.h"
 
-#define ALOG_NDEBUG 1
-#define ALOG_TAG "libsrpapi"
+#define LOG_NDEBUG 1
+#define LOG_TAG "libsrpapi"
 #include <utils/Log.h>
 
 static struct srp_buf_info ibuf_info;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define ALOG_TAG "libhwjpeg"
+#define LOG_TAG "libhwjpeg"
 
 #include <stdio.h>
 #include <stdlib.h>

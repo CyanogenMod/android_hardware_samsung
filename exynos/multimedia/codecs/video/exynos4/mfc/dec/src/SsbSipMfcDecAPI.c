@@ -34,9 +34,9 @@
 #include "SsbSipMfcApi.h"
 
 #include <utils/Log.h>
-/*#define ALOG_NDEBUG 0*/
-#undef  ALOG_TAG
-#define ALOG_TAG "MFC_DEC_APP"
+/*#define LOG_NDEBUG 0*/
+#undef  LOG_TAG
+#define LOG_TAG "MFC_DEC_APP"
 
 #ifdef CONFIG_MFC_FPS
 #include <sys/time.h>

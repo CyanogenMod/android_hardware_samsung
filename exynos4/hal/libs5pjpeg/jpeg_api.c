@@ -16,8 +16,8 @@
 ** limitations under the License.
 */
 
-//#define ALOG_NDEBUG 0
-#define ALOG_TAG "Jpeg-api"
+//#define LOG_NDEBUG 0
+#define LOG_TAG "Jpeg-api"
 
 #include <utils/Log.h>
 #include <stdio.h>

@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define ALOG_TAG "SecTVOutService"
+#define LOG_TAG "SecTVOutService"
 
 #include <binder/IServiceManager.h>
 #include <utils/RefBase.h>

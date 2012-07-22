@@ -13,7 +13,7 @@
 #include "srp_api_ctrl.h"
 #include "srp_ioctl.h"
 
-#define ALOG_TAG "libsrpapi"
+#define LOG_TAG "libsrpapi"
 #include <cutils/log.h>
 
 /* Disable ALOGD message */

@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define ALOG_TAG "libhdmiclient"
+#define LOG_TAG "libhdmiclient"
 
 #include "SecHdmiClient.h"
 

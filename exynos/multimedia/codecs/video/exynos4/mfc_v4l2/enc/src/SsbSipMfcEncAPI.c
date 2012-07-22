@@ -31,8 +31,8 @@
 #include "mfc_interface.h"
 #include "SsbSipMfcApi.h"
 
-/* #define ALOG_NDEBUG 0 */
-#define ALOG_TAG "MFC_ENC_APP"
+/* #define LOG_NDEBUG 0 */
+#define LOG_TAG "MFC_ENC_APP"
 #include <utils/Log.h>
 
 #define POLL_ENC_WAIT_TIMEOUT 25
