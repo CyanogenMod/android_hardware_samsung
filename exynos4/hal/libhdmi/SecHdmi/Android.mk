@@ -79,7 +79,7 @@ endif
 
 ifeq ($(BOARD_USE_V4L2_ION),true)
 LOCAL_CFLAGS += -DBOARD_USE_V4L2_ION
-LOCAL_SHARED_LIBRARIES += libsamsungion
+LOCAL_SHARED_LIBRARIES += libsecion
 endif
 
 LOCAL_MODULE := libhdmi
