@@ -24,6 +24,7 @@
  *
  */
 
+#include "videodev2.h"
 #include "SecHWCUtils.h"
 
 #ifdef BOARD_USE_V4L2_ION
