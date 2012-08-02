@@ -137,11 +137,11 @@ static int rgb_to_brightness(struct light_state_t const *state)
         + (150*((color>>8) & 0x00ff)) + (29*(color & 0x00ff))) >> 8;
 }
 
-static int get_calibrated_color(struct light_state_t const *state, int brightness)
+static int get_dimmed_color(struct light_state_t const *state, int brightness)
 {
     int red = (state->color >> 16) & 0xFF;
     int green = ((state->color >> 8) & 0xFF) * 0.7;
-    int blue = (state->color & 0x00FF) * 0.8;
+    int blue = (state->color & 0x00FF) * 0.7;
 
     return (((red * brightness) / 255) << 16) + (((green * brightness) / 255) << 8) + ((blue * brightness) / 255);
 }
@@ -191,10 +191,9 @@ static int write_leds(struct led_config led)
 static int set_light_leds(struct light_state_t const *state, int type)
 {
     struct led_config led;
-    int brightness = rgb_to_brightness(state);
     unsigned int colorRGB;
 
-    colorRGB = get_calibrated_color(state, brightness);
+    colorRGB = get_dimmed_color(state, 200);
 
     switch (state->flashMode) {
     case LIGHT_FLASH_NONE:
@@ -235,7 +234,7 @@ static int set_light_battery(struct light_device_t *dev,
     int brightness = rgb_to_brightness(state);
     unsigned int colorRGB;
 
-    colorRGB = get_calibrated_color(state, 20);
+    colorRGB = get_dimmed_color(state, 20);
 
     if (brightness == 0) {
         led.red = 0;
