@@ -21,7 +21,7 @@ LOCAL_MODULE_TAGS := eng
 
 LOCAL_PRELINK_MODULE := false
 #LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_SHARED_LIBRARIES := libutils liblog libedid libcec
+LOCAL_SHARED_LIBRARIES := libutils liblog libedid libcec libexynosutils
 
 LOCAL_SRC_FILES := \
 	SecHdmiV4L2Utils.cpp \
@@ -29,7 +29,9 @@ LOCAL_SRC_FILES := \
 	fimd_api.c
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../include
+LOCAL_C_INCLUDES += \
+	$(TARGET_HAL_PATH)/include \
+	$(TOP)/hardware/samsung/exynos/libexynosutils
 
 ifeq ($(TARGET_SOC),exynos4210)
 LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4210

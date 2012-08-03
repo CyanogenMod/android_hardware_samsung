@@ -27,16 +27,20 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/../../../include
 
-ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_7)
-LOCAL_CFLAGS  += -DDDC_CH_I2C_7
-endif
-
 ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_1)
 LOCAL_CFLAGS  += -DDDC_CH_I2C_1
 endif
 
 ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_2)
 LOCAL_CFLAGS  += -DDDC_CH_I2C_2
+endif
+
+ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_5)
+LOCAL_CFLAGS  += -DDDC_CH_I2C_5
+endif
+
+ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_7)
+LOCAL_CFLAGS  += -DDDC_CH_I2C_7
 endif
 
 LOCAL_MODULE := libddc

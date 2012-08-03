@@ -18,7 +18,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils
+LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libexynosutils
 ifeq ($(BOARD_SUPPORT_SYSMMU),true)
 LOCAL_SHARED_LIBRARIES+= libMali
 endif
@@ -44,7 +44,8 @@ LOCAL_CFLAGS  += \
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../include \
-	framework/base/include
+	framework/base/include \
+	$(TOP)/hardware/samsung/exynos/libexynosutils
 
 LOCAL_SRC_FILES := SecFimc.cpp
 
