@@ -26,10 +26,10 @@
 #include "../include/sec_g2d.h"
 //#include <sec_g2d.h>
 #define REAL_DEBUG
-#define ANDROID_LOG
+#define ANDROID_ALOG
 
 #if defined(REAL_DEBUG)
-#ifdef ANDROID_LOG
+#ifdef ANDROID_ALOG
     #define PRINT  ALOGE
     #define PRINTD ALOGD
 #else

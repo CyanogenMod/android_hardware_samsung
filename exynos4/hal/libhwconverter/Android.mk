@@ -18,19 +18,19 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libfimc
+LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libfimc libexynosutils
 
 LOCAL_SRC_FILES := HardwareConverter.cpp
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../include \
-	$(TOP)/$(TARGET_HAL_PATH)/include \
-	$(TOP)/$(TARGET_OMX_PATH)/include/khronos \
-	$(TOP)/$(TARGET_OMX_PATH)/include/sec
+	$(TARGET_HAL_PATH)/include \
+	$(TARGET_OMX_PATH)/include/khronos \
+	$(TARGET_OMX_PATH)/include/sec \
+	$(TOP)/hardware/samsung/exynos/libexynosutils
 
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libhwconverter
-
 include $(BUILD_SHARED_LIBRARY)
 
 endif

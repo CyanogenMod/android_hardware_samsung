@@ -34,8 +34,8 @@
 #include <cutils/log.h>
 #include <binder/IBinder.h>
 #include <binder/IServiceManager.h>
-#include <surfaceflinger/ISurfaceComposer.h>
-#include <surfaceflinger/SurfaceComposerClient.h>
+#include <gui/ISurfaceComposer.h>
+#include <gui/SurfaceComposerClient.h>
 #include "ISecTVOut.h"
 
 #define GETSERVICETIMEOUT (5)
@@ -52,6 +52,13 @@ public:
         HDMI_MODE_VIDEO,
     };
 
+    enum HDMI_S3D_MODE
+    {
+        HDMI_2D = 0,
+        HDMI_S3D_TB,
+        HDMI_S3D_SBS,
+    };
+
 private:
     SecHdmiClient();
     virtual ~SecHdmiClient();
@@ -61,12 +68,15 @@ public:
         static SecHdmiClient * getInstance(void);
         void setHdmiCableStatus(int status);
         void setHdmiMode(int mode);
-        void setHdmiResolution(int resolution);
+        void setHdmiResolution(int resolution, enum HDMI_S3D_MODE s3dMode);
         void setHdmiHdcp(int enHdcp);
         void setHdmiRotate(int rotVal, uint32_t hwcLayer);
         void setHdmiHwcLayer(uint32_t hwcLayer);
         void setHdmiEnable(uint32_t enable);
-        virtual void blit2Hdmi(uint32_t w, uint32_t h,
+	unsigned int getHdmiResolution();
+	void setHdmiResolution(int);
+	void disableLayer(unsigned int);
+	virtual void blit2Hdmi(uint32_t w, uint32_t h,
                                         uint32_t colorFormat,
                                         uint32_t physYAddr,
                                         uint32_t physCbAddr,

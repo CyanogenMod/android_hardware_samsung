@@ -29,14 +29,16 @@
  *   Adjust V4L2 architecture \n
  */
 
-#define LOG_TAG "libfimc"
+#define ALOG_TAG "libfimc"
 #include <cutils/log.h>
+#include "exynos_format.h"
 
 #include "SecFimc.h"
 
 #define  FIMC2_DEV_NAME  "/dev/video2"
 
 //#define DEBUG_LIB_FIMC
+
 
 #ifdef BOARD_USE_V4L2
 #define V4L2_BUF_TYPE_OUTPUT  V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
@@ -92,19 +94,19 @@ void dump_pixfmt_mp(struct v4l2_pix_format_mplane *pix_mp)
 
     switch (pix_mp->pixelformat) {
     case V4L2_PIX_FMT_YUYV:
-        ALOGI ("YUYV");
-        break;
+	ALOGI ("YUYV");
+	break;
     case V4L2_PIX_FMT_UYVY:
-        ALOGI ("UYVY");
-        break;
+	ALOGI ("UYVY");
+	break;
     case V4L2_PIX_FMT_RGB565:
-        ALOGI ("RGB565");
-        break;
+	ALOGI ("RGB565");
+	break;
     case V4L2_PIX_FMT_RGB565X:
-        ALOGI ("RGB565X");
-        break;
+	ALOGI ("RGB565X");
+	break;
     default:
-        ALOGI("not supported");
+	ALOGI("not supported");
     }
 }
 #endif
@@ -117,19 +119,19 @@ void dump_pixfmt(struct v4l2_pix_format *pix)
 
     switch (pix->pixelformat) {
     case V4L2_PIX_FMT_YUYV:
-        ALOGI ("YUYV");
-        break;
+	ALOGI ("YUYV");
+	break;
     case V4L2_PIX_FMT_UYVY:
-        ALOGI ("UYVY");
-        break;
+	ALOGI ("UYVY");
+	break;
     case V4L2_PIX_FMT_RGB565:
-        ALOGI ("RGB565");
-        break;
+	ALOGI ("RGB565");
+	break;
     case V4L2_PIX_FMT_RGB565X:
-        ALOGI ("RGB565X");
-        break;
+	ALOGI ("RGB565X");
+	break;
     default:
-        ALOGI("not supported");
+	ALOGI("not supported");
     }
 }
 
@@ -156,7 +158,7 @@ void v4l2_overlay_dump_state(int fd)
 
     format.type = V4L2_BUF_TYPE_OUTPUT;
     if (ioctl(fd, VIDIOC_G_FMT, &format) < 0)
-        return;
+	return;
 
     ALOGI("dumping driver state:");
 #ifdef BOARD_USE_V4L2
@@ -167,14 +169,14 @@ void v4l2_overlay_dump_state(int fd)
 
     crop.type = format.type;
     if (ioctl(fd, VIDIOC_G_CROP, &crop) < 0)
-        return;
+	return;
 
     ALOGI("input window(crop):");
     dump_crop(&crop);
 
     crop.type = V4L2_BUF_TYPE_CAPTURE;
     if (ioctl(fd, VIDIOC_G_CROP, &crop) < 0)
-        return;
+	return;
 
     ALOGI("output crop:");
     dump_crop(&crop);
@@ -189,12 +191,12 @@ int fimc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum
 #ifdef BOARD_USE_V4L2
     struct v4l2_plane   planes[MAX_PLANES];
     for (int i = 0; i < MAX_PLANES; i++)
-        memset(&planes[i], 0, sizeof(struct v4l2_plane));
+	memset(&planes[i], 0, sizeof(struct v4l2_plane));
 #endif
 
     if (MAX_DST_BUFFERS <= buf_index || MAX_PLANES <= num_plane) {
-        ALOGE("%s::exceed MAX! : buf_index=%d, num_plane=%d", __func__, buf_index, num_plane);
-        return -1;
+	ALOGE("%s::exceed MAX! : buf_index=%d, num_plane=%d", __func__, buf_index, num_plane);
+	return -1;
     }
 
     buf.type   = type;
@@ -206,32 +208,32 @@ int fimc_v4l2_query_buf(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum
 #endif
 
     if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0) {
-        ALOGE("%s::VIDIOC_QUERYBUF failed, plane_cnt=%d", __func__, buf.length);
-        return -1;
+	ALOGE("%s::VIDIOC_QUERYBUF failed, plane_cnt=%d", __func__, buf.length);
+	return -1;
     }
 
 #ifdef BOARD_USE_V4L2
     for (int i = 0; i < num_plane; i++) {
-        secBuf->phys.extP[i] = (unsigned int)buf.m.planes[i].cookie;
-        secBuf->size.extS[i] = buf.m.planes[i].length;
+	secBuf->phys.extP[i] = (unsigned int)buf.m.planes[i].cookie;
+	secBuf->size.extS[i] = buf.m.planes[i].length;
 
-        if ((secBuf->virt.extP[i] = (char *)mmap(0, buf.m.planes[i].length,
-                 PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.planes[i].m.mem_offset)) < 0) {
-            ALOGE("%s::mmap failed", __func__);
-            ALOGE("%s::Offset = 0x%x", __func__, buf.m.planes[i].m.mem_offset);
-            ALOGE("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
-            ALOGE("%s::vaddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
-            ALOGE("%s::paddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->phys.extP[i]);
-            return -1;
-        }
+	if ((secBuf->virt.extP[i] = (char *)mmap(0, buf.m.planes[i].length,
+		 PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.planes[i].m.mem_offset)) < 0) {
+	    ALOGE("%s::mmap failed", __func__);
+	    ALOGE("%s::Offset = 0x%x", __func__, buf.m.planes[i].m.mem_offset);
+	    ALOGE("%s::Legnth = %d"  , __func__, buf.m.planes[i].length);
+	    ALOGE("%s::vaddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->virt.extP[i]);
+	    ALOGE("%s::paddr[%d][%d] = 0x%x", __func__, buf_index, i, (unsigned int)secBuf->phys.extP[i]);
+	    return -1;
+	}
     }
 #else
     secBuf->size.s = buf.length;
 
     if ((secBuf->virt.p = (char *)mmap(0, buf.length,
-            PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset)) < 0) {
-            ALOGE("%s::mmap failed", __func__);
-        return -1;
+	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset)) < 0) {
+	    ALOGE("%s::mmap failed", __func__);
+	return -1;
     }
     ALOGI("%s::buffers[%d] vaddr = 0x%x", __func__, buf_index, (unsigned int)secBuf->virt.p);
 #endif
@@ -248,8 +250,8 @@ int fimc_v4l2_req_buf(int fd, unsigned int num_bufs, enum v4l2_buf_type type, en
     reqbuf.count  = num_bufs;
 
     if (ioctl(fd, VIDIOC_REQBUFS, &reqbuf) < 0) {
-        ALOGE("%s::VIDIOC_REQBUFS failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_REQBUFS failed", __func__);
+	return -1;
     }
 
 #ifdef DEBUG_LIB_FIMC
@@ -257,9 +259,9 @@ int fimc_v4l2_req_buf(int fd, unsigned int num_bufs, enum v4l2_buf_type type, en
 #endif
 
     if (reqbuf.count < num_bufs) {
-        ALOGE("%s::VIDIOC_REQBUFS failed ((reqbuf.count(%d) < num_bufs(%d))",
-            __func__, reqbuf.count, num_bufs);
-        return -1;
+	ALOGE("%s::VIDIOC_REQBUFS failed ((reqbuf.count(%d) < num_bufs(%d))",
+	    __func__, reqbuf.count, num_bufs);
+	return -1;
     }
 
     return 0;
@@ -272,8 +274,8 @@ int fimc_v4l2_s_ctrl(int fd, int id, int value)
     vc.value = value;
 
     if (ioctl(fd, VIDIOC_S_CTRL, &vc) < 0) {
-        ALOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, id, value);
-        return -1;
+	ALOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, id, value);
+	return -1;
     }
 
     return 0;
@@ -289,92 +291,92 @@ int fimc_v4l2_set_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field, s5
 
     fmt.type = type;
     if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0) {
-        ALOGE("%s::VIDIOC_G_FMT failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_G_FMT failed", __func__);
+	return -1;
     }
 
     switch (fmt.type) {
     case V4L2_BUF_TYPE_VIDEO_OUTPUT:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-        fmt.fmt.pix.width       = img_info->full_width;
-        fmt.fmt.pix.height      = img_info->full_height;
-        fmt.fmt.pix.pixelformat = img_info->color_space;
-        fmt.fmt.pix.field       = field;
-        break;
+	fmt.fmt.pix.width       = img_info->full_width;
+	fmt.fmt.pix.height      = img_info->full_height;
+	fmt.fmt.pix.pixelformat = img_info->color_space;
+	fmt.fmt.pix.field       = field;
+	break;
 #ifdef BOARD_USE_V4L2
     case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-        fmt.fmt.pix_mp.width       = img_info->full_width;
-        fmt.fmt.pix_mp.height      = img_info->full_height;
-        fmt.fmt.pix_mp.pixelformat = img_info->color_space;
-        fmt.fmt.pix_mp.field       = field;
-        fmt.fmt.pix_mp.num_planes  = img_info->planes;
-        break;
+	fmt.fmt.pix_mp.width       = img_info->full_width;
+	fmt.fmt.pix_mp.height      = img_info->full_height;
+	fmt.fmt.pix_mp.pixelformat = img_info->color_space;
+	fmt.fmt.pix_mp.field       = field;
+	fmt.fmt.pix_mp.num_planes  = img_info->planes;
+	break;
 #endif
     case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-        if (ioctl(fd, VIDIOC_G_FBUF, &fbuf) < 0) {
-            ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
-            return -1;
-        }
+	if (ioctl(fd, VIDIOC_G_FBUF, &fbuf) < 0) {
+	    ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
+	    return -1;
+	}
 
-        fbuf.base            = (void *)addr;
-        fbuf.fmt.width       = img_info->full_width;
-        fbuf.fmt.height      = img_info->full_height;
-        fbuf.fmt.pixelformat = img_info->color_space;
+	fbuf.base            = (void *)addr;
+	fbuf.fmt.width       = img_info->full_width;
+	fbuf.fmt.height      = img_info->full_height;
+	fbuf.fmt.pixelformat = img_info->color_space;
 
-        if (ioctl(fd, VIDIOC_S_FBUF, &fbuf) < 0) {
-            ALOGE("%s::VIDIOC_S_FBUF (w=%d, h=%d, color=%d) failed",
-                __func__,
-                img_info->full_width,
-                img_info->full_height,
-                img_info->color_space);
-            return -1;
-        }
+	if (ioctl(fd, VIDIOC_S_FBUF, &fbuf) < 0) {
+	    ALOGE("%s::VIDIOC_S_FBUF (w=%d, h=%d, color=%d) failed",
+		__func__,
+		img_info->full_width,
+		img_info->full_height,
+		img_info->color_space);
+	    return -1;
+	}
 
-        fimc_dst_buf.base[0] = (unsigned int)img_info->buf_addr_phy_rgb_y;
-        fimc_dst_buf.base[1] = (unsigned int)img_info->buf_addr_phy_cb;
-        fimc_dst_buf.base[2] = (unsigned int)img_info->buf_addr_phy_cr;
+	fimc_dst_buf.base[0] = (unsigned int)img_info->buf_addr_phy_rgb_y;
+	fimc_dst_buf.base[1] = (unsigned int)img_info->buf_addr_phy_cb;
+	fimc_dst_buf.base[2] = (unsigned int)img_info->buf_addr_phy_cr;
 
-        vc.id    = V4L2_CID_DST_INFO;
-        vc.value = (unsigned int)&fimc_dst_buf.base[0];
+	vc.id    = V4L2_CID_DST_INFO;
+	vc.value = (unsigned int)&fimc_dst_buf.base[0];
 
-        if (ioctl(fd, VIDIOC_S_CTRL, &vc) < 0) {
-            ALOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, vc.id, vc.value);
-            return -1;
-        }
+	if (ioctl(fd, VIDIOC_S_CTRL, &vc) < 0) {
+	    ALOGE("%s::VIDIOC_S_CTRL (id=%d,value=%d) failed", __func__, vc.id, vc.value);
+	    return -1;
+	}
 
-        fmt.fmt.win.w.left        = img_info->start_x;
-        fmt.fmt.win.w.top         = img_info->start_y;
-        fmt.fmt.win.w.width       = img_info->width;
-        fmt.fmt.win.w.height      = img_info->height;
-        break;
+	fmt.fmt.win.w.left        = img_info->start_x;
+	fmt.fmt.win.w.top         = img_info->start_y;
+	fmt.fmt.win.w.width       = img_info->width;
+	fmt.fmt.win.w.height      = img_info->height;
+	break;
     default:
-        ALOGE("invalid buffer type");
-        return -1;
-        break;
+	ALOGE("invalid buffer type");
+	return -1;
+	break;
     }
 
     if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
-        ALOGE("%s::VIDIOC_S_FMT failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_S_FMT failed", __func__);
+	return -1;
     }
 
     if (fmt.type != V4L2_BUF_TYPE_VIDEO_OVERLAY) {
-        crop.type     = type;
-        crop.c.left   = img_info->start_x;
-        crop.c.top    = img_info->start_y;
-        crop.c.width  = img_info->width;
-        crop.c.height = img_info->height;
+	crop.type     = type;
+	crop.c.left   = img_info->start_x;
+	crop.c.top    = img_info->start_y;
+	crop.c.width  = img_info->width;
+	crop.c.height = img_info->height;
 
-        if (ioctl(fd, VIDIOC_S_CROP, &crop) < 0) {
-            ALOGE("%s::VIDIOC_S_CROP (x=%d, y=%d, w=%d, h=%d) failed",
-                __func__,
-                img_info->start_x,
-                img_info->start_y,
-                img_info->width,
-                img_info->height);
-            return -1;
-        }
+	if (ioctl(fd, VIDIOC_S_CROP, &crop) < 0) {
+	    ALOGE("%s::VIDIOC_S_CROP (x=%d, y=%d, w=%d, h=%d) failed",
+		__func__,
+		img_info->start_x,
+		img_info->start_y,
+		img_info->width,
+		img_info->height);
+	    return -1;
+	}
     }
 
     return 0;
@@ -383,8 +385,8 @@ int fimc_v4l2_set_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field, s5
 int fimc_v4l2_stream_on(int fd, enum v4l2_buf_type type)
 {
     if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
-        ALOGE("%s::VIDIOC_STREAMON failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_STREAMON failed", __func__);
+	return -1;
     }
 
     return 0;
@@ -398,7 +400,7 @@ int fimc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l
 #ifdef BOARD_USE_V4L2
     struct v4l2_plane   planes[MAX_PLANES];
     for (int i = 0; i < MAX_PLANES; i++)
-        memset(&planes[i], 0, sizeof(struct v4l2_plane));
+	memset(&planes[i], 0, sizeof(struct v4l2_plane));
 #else
     struct fimc_buf fimcbuf;
 #endif
@@ -411,13 +413,13 @@ int fimc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l
     buf.m.planes = planes;
 
     for (unsigned int i = 0; i < buf.length; i++) {
-        buf.m.planes[i].length = secBuf->size.extS[i];
-        buf.m.planes[i].m.userptr = (unsigned long)secBuf->phys.extP[i];
+	buf.m.planes[i].length = secBuf->size.extS[i];
+	buf.m.planes[i].m.userptr = (unsigned long)secBuf->phys.extP[i];
     }
 #else
     for (int i = 0; i < 3 ; i++) {
-        fimcbuf.base[i]   = secBuf->phys.extP[i];
-        fimcbuf.length[i] = secBuf->size.extS[i];
+	fimcbuf.base[i]   = secBuf->phys.extP[i];
+	fimcbuf.length[i] = secBuf->size.extS[i];
     }
 
     buf.m.userptr = (unsigned long)(&fimcbuf);
@@ -425,8 +427,8 @@ int fimc_v4l2_queue(int fd, SecBuffer *secBuf, enum v4l2_buf_type type, enum v4l
 #endif
 
     if (ioctl(fd, VIDIOC_QBUF, &buf) < 0) {
-        ALOGE("%s::VIDIOC_QBUF failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_QBUF failed", __func__);
+	return -1;
     }
 
     return 0;
@@ -440,7 +442,7 @@ int fimc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, 
 #ifdef BOARD_USE_V4L2
     struct v4l2_plane   planes[MAX_PLANES];
     for (int i = 0; i < MAX_PLANES; i++)
-        memset(&planes[i], 0, sizeof(struct v4l2_plane));
+	memset(&planes[i], 0, sizeof(struct v4l2_plane));
 #endif
 
     buf.type     = type;
@@ -450,8 +452,8 @@ int fimc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, 
     buf.m.planes = planes;
 #endif
     if (ioctl(fd, VIDIOC_DQBUF, &buf) < 0) {
-        ALOGE("%s::VIDIOC_DQBUF failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_DQBUF failed", __func__);
+	return -1;
     }
     *index = buf.index;
 
@@ -461,8 +463,8 @@ int fimc_v4l2_dequeue(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, 
 int fimc_v4l2_stream_off(int fd, enum v4l2_buf_type type)
 {
     if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0) {
-        ALOGE("%s::VIDIOC_STREAMOFF failed", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_STREAMOFF failed", __func__);
+	return -1;
     }
 
     return 0;
@@ -477,8 +479,8 @@ int fimc_v4l2_clr_buf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory)
     req.memory  = memory;
 
     if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0) {
-        ALOGE("%s::VIDIOC_REQBUFS", __func__);
-        return -1;
+	ALOGE("%s::VIDIOC_REQBUFS", __func__);
+	return -1;
     }
 
     return 0;
@@ -497,11 +499,11 @@ static inline int multipleOfN(int number, int N)
     case 64:
     case 128:
     case 256:
-        result = (number - (number & (N-1)));
-        break;
+	result = (number - (number & (N-1)));
+	break;
     default:
-        result = number - (number % N);
-        break;
+	result = number - (number % N);
+	break;
     }
     return result;
 }
@@ -514,7 +516,7 @@ extern "C" SecFimc* create_instance()
 extern "C" void destroy_instance(SecFimc* handle)
 {
     if (handle != NULL)
-        delete handle;
+	delete handle;
 }
 
 SecFimc::SecFimc()
@@ -525,6 +527,7 @@ SecFimc::SecFimc()
 
     mRotVal = 0;
     mRealDev = -1;
+    mFimcRrvedPhysMemAddr = 0x0;
     mNumOfBuf = 0;
     mHwVersion = 0;
     mGlobalAlpha = 0x0;
@@ -538,22 +541,24 @@ SecFimc::SecFimc()
     mFd = 0;
     mDev = 0;
     mColorKey = 0x0;
+    mSrc_index = 0;
 }
 
 SecFimc::~SecFimc()
 {
     if (mFlagCreate == true) {
-        ALOGE("%s::this is not Destroyed fail", __func__);
-        if (destroy() == false)
-            ALOGE("%s::destroy failed", __func__);
+	ALOGE("%s::this is not Destroyed fail", __func__);
+	if (destroy() == false)
+	    ALOGE("%s::destroy failed", __func__);
     }
 }
+
 
 bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
 {
     if (mFlagCreate == true) {
-        ALOGE("%s::Already Created fail", __func__);
-        return false;
+	ALOGE("%s::Already Created fail", __func__);
+	return false;
     }
 
     char node[20];
@@ -566,44 +571,44 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
 
     switch (mode) {
     case MODE_SINGLE_BUF:
-        mFimcMode = FIMC_OVLY_NONE_SINGLE_BUF;
-        break;
+	mFimcMode = FIMC_OVLY_NONE_SINGLE_BUF;
+	break;
     case MODE_MULTI_BUF:
-        mFimcMode = FIMC_OVLY_NONE_MULTI_BUF;
-        break;
+	mFimcMode = FIMC_OVLY_NONE_MULTI_BUF;
+	break;
     case MODE_DMA_AUTO:
-        mFimcMode = FIMC_OVLY_DMA_AUTO;
-        break;
+	mFimcMode = FIMC_OVLY_DMA_AUTO;
+	break;
     default:
-        ALOGE("%s::Invalid mode(%d) fail", __func__, mode);
-        mFimcMode = FIMC_OVLY_NOT_FIXED;
-        goto err;
-        break;
+	ALOGE("%s::Invalid mode(%d) fail", __func__, mode);
+	mFimcMode = FIMC_OVLY_NOT_FIXED;
+	goto err;
+	break;
     }
 
     mNumOfBuf = numOfBuf;
 
     for (int i = 0; i < MAX_DST_BUFFERS; i++)
-        mDstBuffer[i] = zeroBuf;
+	mDstBuffer[i] = zeroBuf;
 
 #ifdef BOARD_USE_V4L2
     switch(mDev) {
     case DEV_0:
-        mRealDev = 0;
-        break;
+	mRealDev = 0;
+	break;
     case DEV_1:
-        mRealDev = 2;
-        break;
+	mRealDev = 2;
+	break;
     case DEV_2:
-        mRealDev = 4;
-        break;
+	mRealDev = 4;
+	break;
     case DEV_3:
-        mRealDev = 5;
-        break;
+	mRealDev = 5;
+	break;
     default:
-        ALOGE("%s::invalid mDev(%d)", __func__, mDev);
-        goto err;
-        break;
+	ALOGE("%s::invalid mDev(%d)", __func__, mDev);
+	goto err;
+	break;
     }
 #endif
 
@@ -611,60 +616,61 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
 
     mFd = open(node, O_RDWR);
     if (mFd < 0) {
-        ALOGE("%s::open(%s) failed", __func__, node);
-        mFd = 0;
-        goto err;
+	ALOGE("%s::open(%s) failed", __func__, node);
+	mFd = 0;
+	goto err;
     }
 
     /* check capability */
     if (ioctl(mFd, VIDIOC_QUERYCAP, &mFimcCap) < 0) {
-        ALOGE("%s::VIDIOC_QUERYCAP failed", __func__);
-        goto err;
+	ALOGE("%s::VIDIOC_QUERYCAP failed", __func__);
+	goto err;
     }
 
     if (!(mFimcCap.capabilities & V4L2_CAP_STREAMING)) {
-        ALOGE("%s::%s has no streaming support", __func__, node);
-        goto err;
+	ALOGE("%s::%s has no streaming support", __func__, node);
+	goto err;
     }
 
 #ifdef BOARD_USE_V4L2
     if (!(mFimcCap.capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE)) {
-        ALOGE("%s::%s is no video output mplane", __func__, node);
-        goto err;
+	ALOGE("%s::%s is no video output mplane", __func__, node);
+	goto err;
     }
 
     if (!(mFimcCap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE)) {
-        ALOGE("%s::%s is no video capture mplane", __func__, node);
-        goto err;
+	ALOGE("%s::%s is no video capture mplane", __func__, node);
+	goto err;
     }
 #else
     if (!(mFimcCap.capabilities & V4L2_CAP_VIDEO_OUTPUT)) {
-        ALOGE("%s::%s is no video output", __func__, node);
-        goto err;
+	ALOGE("%s::%s is no video output", __func__, node);
+	goto err;
     }
 
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
-        ALOGE("%s::VIDIOC_G_FMT failed", __func__);
-        goto err;
+	ALOGE("%s::VIDIOC_G_FMT failed", __func__);
+	goto err;
     }
 
     vc.id = V4L2_CID_RESERVED_MEM_BASE_ADDR;
     vc.value = 0;
     if (ioctl(mFd, VIDIOC_G_CTRL, &vc) < 0) {
-        ALOGE("%s::VIDIOC_G_CTRL - V4L2_CID_RESERVED_MEM_BAES_ADDR", __func__);
-        goto err;
+	ALOGE("%s::VIDIOC_G_CTRL - V4L2_CID_RESERVED_MEM_BAES_ADDR", __func__);
+	goto err;
     }
 
     mDstBuffer[0].phys.p = (unsigned int)vc.value;
+    mFimcRrvedPhysMemAddr = mDstBuffer[0].phys.p;
 
     mS5pFimc.out_buf.phys_addr = (void *)mDstBuffer[0].phys.p;
 
     vc.id    = V4L2_CID_FIMC_VERSION;
     vc.value = 0;
     if (ioctl(mFd, VIDIOC_G_CTRL, &vc) < 0) {
-        ALOGE("%s::VIDIOC_G_CTRL - V4L2_CID_FIMC_VERSION failed, FIMC version is set with default", __func__);
-        vc.value = 0x43;
+	ALOGE("%s::VIDIOC_G_CTRL - V4L2_CID_FIMC_VERSION failed, FIMC version is set with default", __func__);
+	vc.value = 0x43;
     }
 
     mHwVersion = vc.value;
@@ -672,8 +678,8 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
     vc.id = V4L2_CID_OVLY_MODE;
     vc.value = mFimcMode;
     if (ioctl(mFd, VIDIOC_S_CTRL, &vc) < 0) {
-        ALOGE("%s::VIDIOC_S_CTRL - V4L2_CID_OVLY_MODE failed", __func__);
-        goto err;
+	ALOGE("%s::VIDIOC_S_CTRL - V4L2_CID_OVLY_MODE failed", __func__);
+	goto err;
     }
 #endif
 
@@ -683,7 +689,7 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
 
 err :
     if (0 < mFd)
-        close(mFd);
+	close(mFd);
     mFd = 0;
 
     return false;
@@ -694,42 +700,42 @@ bool SecFimc::destroy()
     s5p_fimc_params_t *params = &(mS5pFimc.params);
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Already Destroyed fail", __func__);
-        return false;
+	ALOGE("%s::Already Destroyed fail", __func__);
+	return false;
     }
 
     if (mFlagStreamOn == true) {
-        if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_SRC) < 0) {
-            ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
-            return false;
-        }
+	if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_SRC) < 0) {
+	    ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
+	    return false;
+	}
 #ifdef BOARD_USE_V4L2
-        if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_DST) < 0) {
-            ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
-            return false;
-        }
+	if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_DST) < 0) {
+	    ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
+	    return false;
+	}
 #endif
-        mFlagStreamOn = false;
+	mFlagStreamOn = false;
     }
 
     if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC) < 0) {
-        ALOGE("%s::fimc_v4l2_clr_buf()[src] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_clr_buf()[src] failed", __func__);
+	return false;
     }
 
 #ifdef BOARD_USE_V4L2
     if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST) < 0) {
-        ALOGE("%s::fimc_v4l2_clr_buf()[dst] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_clr_buf()[dst] failed", __func__);
+	return false;
     }
 #endif
     if (mS5pFimc.out_buf.phys_addr != NULL) {
-        mS5pFimc.out_buf.phys_addr = NULL;
-        mS5pFimc.out_buf.length = 0;
+	mS5pFimc.out_buf.phys_addr = NULL;
+	mS5pFimc.out_buf.length = 0;
     }
 
     if (0 < mFd)
-        close(mFd);
+	close(mFd);
     mFd = 0;
 
     mFlagCreate = false;
@@ -742,16 +748,26 @@ bool SecFimc::flagCreate(void)
     return mFlagCreate;
 }
 
-int SecFimc::getFd(void)
+int SecFimc::getSecFimcFd(void)
 {
     return mFd;
+}
+int SecFimc::getFimcRsrvedPhysMemAddr()
+{
+#ifdef DEBUG_LIB_FIMC
+    ALOGD("%s:: mFimcRrvedPhysMemAddr = 0x%8x",
+	  __func__, mFimcRrvedPhysMemAddr);
+#endif
+    if(mFlagCreate == false)
+	ALOGE("%s:: libFimc is not created", __func__);
+    return mFimcRrvedPhysMemAddr;
 }
 
 SecBuffer * SecFimc::getMemAddr(int index)
 {
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     return &mDstBuffer[index];
@@ -760,32 +776,32 @@ SecBuffer * SecFimc::getMemAddr(int index)
 int SecFimc::getHWVersion(void)
 {
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     return mHwVersion;
 }
 
 bool SecFimc::setSrcParams(unsigned int width, unsigned int height,
-                           unsigned int cropX, unsigned int cropY,
-                           unsigned int *cropWidth, unsigned int *cropHeight,
-                           int colorFormat,
-                           bool forceChange)
+			   unsigned int cropX, unsigned int cropY,
+			   unsigned int *cropWidth, unsigned int *cropHeight,
+			   int colorFormat,
+			   bool forceChange)
 {
 #ifdef DEBUG_LIB_FIMC
     ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     int v4l2ColorFormat = HAL_PIXEL_FORMAT_2_V4L2_PIX(colorFormat);
     if (v4l2ColorFormat < 0) {
-        ALOGE("%s::not supported color format", __func__);
-        return false;
+	ALOGE("%s::not supported color format", __func__);
+	return false;
     }
 
     s5p_fimc_params_t *params = &(mS5pFimc.params);
@@ -795,31 +811,31 @@ bool SecFimc::setSrcParams(unsigned int width, unsigned int height,
     int src_planes = m_getYuvPlanes(v4l2ColorFormat);
 
     m_checkSrcSize(width, height,
-                   cropX, cropY,
-                   &fimcWidth, &fimcHeight,
-                   v4l2ColorFormat,
-                   false);
+		   cropX, cropY,
+		   &fimcWidth, &fimcHeight,
+		   v4l2ColorFormat,
+		   false);
 
     if (fimcWidth != *cropWidth || fimcHeight != *cropHeight) {
-        if (forceChange == true) {
+	if (forceChange == true) {
 #ifdef DEBUG_LIB_FIMC
-            ALOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
-                    *cropWidth, *cropHeight, fimcWidth, fimcHeight);
+	    ALOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
+		    *cropWidth, *cropHeight, fimcWidth, fimcHeight);
 #endif
-        } else {
-            ALOGE("%s::invalid source params", __func__);
-            return false;
-        }
+	} else {
+	    ALOGE("%s::invalid source params", __func__);
+	    return false;
+	}
     }
 
     if (   (params->src.full_width == width)
-        && (params->src.full_height == height)
-        && (params->src.start_x == cropX)
-        && (params->src.start_y == cropY)
-        && (params->src.width == fimcWidth)
-        && (params->src.height == fimcHeight)
-        && (params->src.color_space == (unsigned int)v4l2ColorFormat))
-        return true;
+	&& (params->src.full_height == height)
+	&& (params->src.start_x == cropX)
+	&& (params->src.start_y == cropY)
+	&& (params->src.width == fimcWidth)
+	&& (params->src.height == fimcHeight)
+	&& (params->src.color_space == (unsigned int)v4l2ColorFormat))
+	return true;
 
     params->src.full_width  = width;
     params->src.full_height = height;
@@ -831,20 +847,20 @@ bool SecFimc::setSrcParams(unsigned int width, unsigned int height,
     src_planes = (src_planes == -1) ? 1 : src_planes;
 
     if (mFlagSetSrcParam == true) {
-        if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC) < 0) {
-            ALOGE("%s::fimc_v4l2_clr_buf_src() failed", __func__);
-            return false;
-        }
+	if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC) < 0) {
+	    ALOGE("%s::fimc_v4l2_clr_buf_src() failed", __func__);
+	    return false;
+	}
     }
 
     if (fimc_v4l2_set_fmt(mFd, V4L2_BUF_TYPE_SRC, V4L2_FIELD_NONE, &(params->src), 0) < 0) {
-        ALOGE("%s::fimc_v4l2_set_fmt()[src] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_set_fmt()[src] failed", __func__);
+	return false;
     }
 
     if (fimc_v4l2_req_buf(mFd, 1, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC) < 0) {
-        ALOGE("%s::fimc_v4l2_req_buf()[src] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_req_buf()[src] failed", __func__);
+	return false;
     }
 
     *cropWidth  = fimcWidth;
@@ -855,9 +871,9 @@ bool SecFimc::setSrcParams(unsigned int width, unsigned int height,
 }
 
 bool SecFimc::getSrcParams(unsigned int *width, unsigned int *height,
-                           unsigned int *cropX, unsigned int *cropY,
-                           unsigned int *cropWidth, unsigned int *cropHeight,
-                           int *colorFormat)
+			   unsigned int *cropX, unsigned int *cropY,
+			   unsigned int *cropWidth, unsigned int *cropHeight,
+			   int *colorFormat)
 {
     struct v4l2_format fmt;
     struct v4l2_crop crop;
@@ -865,36 +881,36 @@ bool SecFimc::getSrcParams(unsigned int *width, unsigned int *height,
     fmt.type = V4L2_BUF_TYPE_SRC;
 
     if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
-        ALOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
-        return false;
+	ALOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
+	return false;
     }
 
     switch (fmt.type) {
     case V4L2_BUF_TYPE_VIDEO_OUTPUT:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE:
     case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-        *width       = fmt.fmt.pix.width;
-        *height      = fmt.fmt.pix.height;
-        *colorFormat = fmt.fmt.pix.pixelformat;
-        break;
+	*width       = fmt.fmt.pix.width;
+	*height      = fmt.fmt.pix.height;
+	*colorFormat = fmt.fmt.pix.pixelformat;
+	break;
 #ifdef BOARD_USE_V4L2
     case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-        *width       = fmt.fmt.pix_mp.width;
-        *height      = fmt.fmt.pix_mp.height;
-        *colorFormat = fmt.fmt.pix_mp.pixelformat;
-        break;
+	*width       = fmt.fmt.pix_mp.width;
+	*height      = fmt.fmt.pix_mp.height;
+	*colorFormat = fmt.fmt.pix_mp.pixelformat;
+	break;
 #endif
     default:
-        ALOGE("%s::Invalid buffer type", __func__);
-        return false;
-        break;
+	ALOGE("%s::Invalid buffer type", __func__);
+	return false;
+	break;
     }
 
     crop.type = V4L2_BUF_TYPE_SRC;
     if (ioctl(mFd, VIDIOC_G_CROP, &crop) < 0) {
-        ALOGE("%s::VIDIOC_G_CROP failed", __func__);
-        return false;
+	ALOGE("%s::VIDIOC_G_CROP failed", __func__);
+	return false;
     }
 
     *cropX = crop.c.left;
@@ -906,17 +922,17 @@ bool SecFimc::getSrcParams(unsigned int *width, unsigned int *height,
 }
 
 bool SecFimc::setSrcAddr(unsigned int physYAddr,
-                         unsigned int physCbAddr,
-                         unsigned int physCrAddr,
-                         int colorFormat)
+			 unsigned int physCbAddr,
+			 unsigned int physCrAddr,
+			 int colorFormat)
 {
 #ifdef DEBUG_LIB_FIMC
     ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     s5p_fimc_params_t *params = &(mS5pFimc.params);
@@ -926,54 +942,41 @@ bool SecFimc::setSrcAddr(unsigned int physYAddr,
     src_planes = (src_planes == -1) ? 1 : src_planes;
 
     mSrcBuffer.phys.extP[0] = physYAddr;
-
-    if (colorFormat == HAL_PIXEL_FORMAT_YV12) {
-        mSrcBuffer.phys.extP[1] = physCrAddr;
-        mSrcBuffer.phys.extP[2] = physCbAddr;
-    } else {
-        mSrcBuffer.phys.extP[1] = physCbAddr;
-        mSrcBuffer.phys.extP[2] = physCrAddr;
-    }
+    mSrcBuffer.phys.extP[1] = physCbAddr;
+    mSrcBuffer.phys.extP[2] = physCrAddr;
 
     if (2 <= src_planes &&  mSrcBuffer.phys.extP[1] == 0)
-        mSrcBuffer.phys.extP[1] = mSrcBuffer.phys.extP[0] + frame_size;
+	mSrcBuffer.phys.extP[1] = mSrcBuffer.phys.extP[0] + frame_size;
 
     if (3 == src_planes &&  mSrcBuffer.phys.extP[2] == 0) {
-        if (colorFormat == HAL_PIXEL_FORMAT_YV12) {
-            if (12 == src_bpp)
-                mSrcBuffer.phys.extP[1] = mSrcBuffer.phys.extP[2] + (frame_size >> 2);
-            else
-                mSrcBuffer.phys.extP[1] = mSrcBuffer.phys.extP[2] + (frame_size >> 1);
-        } else {
-            if (12 == src_bpp)
-                mSrcBuffer.phys.extP[2] = mSrcBuffer.phys.extP[1] + (frame_size >> 2);
-            else
-                mSrcBuffer.phys.extP[2] = mSrcBuffer.phys.extP[1] + (frame_size >> 1);
-        }
+	if (12 == src_bpp)
+	    mSrcBuffer.phys.extP[2] = mSrcBuffer.phys.extP[1] + (frame_size >> 2);
+	else
+	    mSrcBuffer.phys.extP[2] = mSrcBuffer.phys.extP[1] + (frame_size >> 1);
     }
 
     return true;
 }
 
 bool SecFimc::setDstParams(unsigned int width, unsigned int height,
-                           unsigned int cropX, unsigned int cropY,
-                           unsigned int *cropWidth, unsigned int *cropHeight,
-                           int colorFormat,
-                           bool forceChange)
+			   unsigned int cropX, unsigned int cropY,
+			   unsigned int *cropWidth, unsigned int *cropHeight,
+			   int colorFormat,
+			   bool forceChange)
 {
 #ifdef DEBUG_LIB_FIMC
     ALOGD("%s", __func__);
 #endif
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     int v4l2ColorFormat = HAL_PIXEL_FORMAT_2_V4L2_PIX(colorFormat);
     if (v4l2ColorFormat < 0) {
-        ALOGE("%s::not supported color format", __func__);
-        return false;
+	ALOGE("%s::not supported color format", __func__);
+	return false;
     }
 
     s5p_fimc_params_t *params = &(mS5pFimc.params);
@@ -983,90 +986,90 @@ bool SecFimc::setDstParams(unsigned int width, unsigned int height,
     int dst_planes = m_getYuvPlanes(v4l2ColorFormat);
 
     m_checkDstSize(width, height,
-                   cropX, cropY,
-                   &fimcWidth, &fimcHeight,
-                   v4l2ColorFormat,
-                   mRotVal,
-                   true);
+		   cropX, cropY,
+		   &fimcWidth, &fimcHeight,
+		   v4l2ColorFormat,
+		   mRotVal,
+		   true);
 
     if (fimcWidth != *cropWidth || fimcHeight != *cropHeight) {
-        if (forceChange == true) {
+	if (forceChange == true) {
 #ifdef DEBUG_LIB_FIMC
-            ALOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
-                    *cropWidth, *cropHeight, fimcWidth, fimcHeight);
+	    ALOGD("size is changed from [w = %d, h= %d] to [w = %d, h = %d]",
+		    *cropWidth, *cropHeight, fimcWidth, fimcHeight);
 #endif
-        } else {
-            ALOGE("%s::Invalid destination params", __func__);
-            return false;
-        }
+	} else {
+	    ALOGE("%s::Invalid destination params", __func__);
+	    return false;
+	}
     }
 
     if (90 == mRotVal || 270 == mRotVal) {
-        params->dst.full_width  = height;
-        params->dst.full_height = width;
+	params->dst.full_width  = height;
+	params->dst.full_height = width;
 
-        if (90 == mRotVal) {
-            params->dst.start_x     = cropY;
-            params->dst.start_y     = width - (cropX + fimcWidth);
-        } else {
-            params->dst.start_x = height - (cropY + fimcHeight);
-            params->dst.start_y = cropX;
-        }
+	if (90 == mRotVal) {
+	    params->dst.start_x     = cropY;
+	    params->dst.start_y     = width - (cropX + fimcWidth);
+	} else {
+	    params->dst.start_x = height - (cropY + fimcHeight);
+	    params->dst.start_y = cropX;
+	}
 
-        params->dst.width       = fimcHeight;
-        params->dst.height      = fimcWidth;
+	params->dst.width       = fimcHeight;
+	params->dst.height      = fimcWidth;
 
-        if (0x50 != mHwVersion)
-            params->dst.start_y     += (fimcWidth - params->dst.height);
+	if (0x50 != mHwVersion)
+	    params->dst.start_y     += (fimcWidth - params->dst.height);
 
     } else {
-        params->dst.full_width  = width;
-        params->dst.full_height = height;
+	params->dst.full_width  = width;
+	params->dst.full_height = height;
 
-        if (180 == mRotVal) {
-            params->dst.start_x = width - (cropX + fimcWidth);
-            params->dst.start_y = height - (cropY + fimcHeight);
-        } else {
-            params->dst.start_x     = cropX;
-            params->dst.start_y     = cropY;
-        }
+	if (180 == mRotVal) {
+	    params->dst.start_x = width - (cropX + fimcWidth);
+	    params->dst.start_y = height - (cropY + fimcHeight);
+	} else {
+	    params->dst.start_x     = cropX;
+	    params->dst.start_y     = cropY;
+	}
 
-        params->dst.width       = fimcWidth;
-        params->dst.height      = fimcHeight;
+	params->dst.width       = fimcWidth;
+	params->dst.height      = fimcHeight;
     }
     params->dst.color_space = v4l2ColorFormat;
     dst_planes = (dst_planes == -1) ? 1 : dst_planes;
 
 #ifdef BOARD_USE_V4L2
     if (mFlagSetDstParam == true) {
-        if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST) < 0) {
-            ALOGE("%s::fimc_v4l2_clr_buf_dst() failed", __func__);
-            return false;
-        }
+	if (fimc_v4l2_clr_buf(mFd, V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST) < 0) {
+	    ALOGE("%s::fimc_v4l2_clr_buf_dst() failed", __func__);
+	    return false;
+	}
     }
 #endif
 
     if (fimc_v4l2_s_ctrl(mFd, V4L2_ROTATE, mRotVal) < 0) {
-        ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
+	return false;
     }
 
     if (fimc_v4l2_set_fmt(mFd, V4L2_BUF_TYPE_DST, V4L2_FIELD_ANY, &(params->dst), (unsigned int)mS5pFimc.out_buf.phys_addr) < 0) {
-        ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
+	return false;
     }
 
 #ifdef BOARD_USE_V4L2
     if (fimc_v4l2_req_buf(mFd, mNumOfBuf, V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST) < 0) {
-        ALOGE("%s::fimc_v4l2_req_buf()[dst] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_req_buf()[dst] failed", __func__);
+	return false;
     }
 
     for (int i = 0; i < mNumOfBuf; i++) {
-        if (fimc_v4l2_query_buf(mFd, &(mDstBuffer[i]),
-                           V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, i, dst_planes) < 0) {
-            ALOGE("%s::fimc_v4l2_query_buf() failed", __func__);
-        }
+	if (fimc_v4l2_query_buf(mFd, &(mDstBuffer[i]),
+			   V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, i, dst_planes) < 0) {
+	    ALOGE("%s::fimc_v4l2_query_buf() failed", __func__);
+	}
     }
 #endif
 
@@ -1078,9 +1081,9 @@ bool SecFimc::setDstParams(unsigned int width, unsigned int height,
 }
 
 bool SecFimc::getDstParams(unsigned int *width, unsigned int *height,
-                           unsigned int *cropX, unsigned int *cropY,
-                           unsigned int *cropWidth, unsigned int *cropHeight,
-                           int *colorFormat)
+			   unsigned int *cropX, unsigned int *cropY,
+			   unsigned int *cropWidth, unsigned int *cropHeight,
+			   int *colorFormat)
 {
     struct v4l2_framebuffer fbuf;
     struct v4l2_format      fmt;
@@ -1088,57 +1091,57 @@ bool SecFimc::getDstParams(unsigned int *width, unsigned int *height,
 
     fmt.type = V4L2_BUF_TYPE_DST;
     if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
-        ALOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
-        return false;
+	ALOGE("%s::VIDIOC_G_FMT(fmt.type : %d) failed", __func__, fmt.type);
+	return false;
     }
     switch (fmt.type) {
     case V4L2_BUF_TYPE_VIDEO_OUTPUT:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-        *width       = fmt.fmt.pix.width;
-        *height      = fmt.fmt.pix.height;
-        *colorFormat = fmt.fmt.pix.pixelformat;
-        break;
+	*width       = fmt.fmt.pix.width;
+	*height      = fmt.fmt.pix.height;
+	*colorFormat = fmt.fmt.pix.pixelformat;
+	break;
 #ifdef BOARD_USE_V4L2
     case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
     case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-        *width       = fmt.fmt.pix_mp.width;
-        *height      = fmt.fmt.pix_mp.height;
-        *colorFormat = fmt.fmt.pix_mp.pixelformat;
-        break;
+	*width       = fmt.fmt.pix_mp.width;
+	*height      = fmt.fmt.pix_mp.height;
+	*colorFormat = fmt.fmt.pix_mp.pixelformat;
+	break;
 #endif
     case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-        *cropX = fmt.fmt.win.w.left;
-        *cropY = fmt.fmt.win.w.top;
-        *cropWidth = fmt.fmt.win.w.width;
-        *cropHeight = fmt.fmt.win.w.height;
+	*cropX = fmt.fmt.win.w.left;
+	*cropY = fmt.fmt.win.w.top;
+	*cropWidth = fmt.fmt.win.w.width;
+	*cropHeight = fmt.fmt.win.w.height;
 
-        if (ioctl(mFd, VIDIOC_G_FBUF, &fbuf) < 0) {
-            ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
-            return false;
-        }
+	if (ioctl(mFd, VIDIOC_G_FBUF, &fbuf) < 0) {
+	    ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
+	    return false;
+	}
 
-        *width       = fbuf.fmt.width;
-        *height      = fbuf.fmt.height;
-        *colorFormat = fbuf.fmt.pixelformat;
-        break;
+	*width       = fbuf.fmt.width;
+	*height      = fbuf.fmt.height;
+	*colorFormat = fbuf.fmt.pixelformat;
+	break;
     default:
-        ALOGE("%s::Invalid buffer type", __func__);
-        return false;
-        break;
+	ALOGE("%s::Invalid buffer type", __func__);
+	return false;
+	break;
     }
 
     if (fmt.type != V4L2_BUF_TYPE_VIDEO_OVERLAY) {
 
-        crop.type = V4L2_BUF_TYPE_DST;
-        if (ioctl(mFd, VIDIOC_G_CROP, &crop) < 0) {
-            ALOGE("%s::VIDIOC_G_CROP(crop.type : %d) failed", __func__, crop.type);
-            return false;
-        }
+	crop.type = V4L2_BUF_TYPE_DST;
+	if (ioctl(mFd, VIDIOC_G_CROP, &crop) < 0) {
+	    ALOGE("%s::VIDIOC_G_CROP(crop.type : %d) failed", __func__, crop.type);
+	    return false;
+	}
 
-        *cropX = crop.c.left;
-        *cropY = crop.c.top;
-        *cropWidth = crop.c.width;
-        *cropHeight = crop.c.height;
+	*cropX = crop.c.left;
+	*cropY = crop.c.top;
+	*cropWidth = crop.c.width;
+	*cropHeight = crop.c.height;
     }
 
     return true;
@@ -1153,8 +1156,8 @@ bool SecFimc::setDstAddr(unsigned int physYAddr, unsigned int physCbAddr, unsign
     s5p_fimc_params_t *params = &(mS5pFimc.params);
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     mS5pFimc.out_buf.phys_addr = (void *)physYAddr;
@@ -1165,24 +1168,24 @@ bool SecFimc::setDstAddr(unsigned int physYAddr, unsigned int physCbAddr, unsign
 
 #ifdef BOARD_USE_V4L2
     if (physYAddr != 0)
-        mS5pFimc.use_ext_out_mem = 1;
+	mS5pFimc.use_ext_out_mem = 1;
 #else
     params->dst.buf_addr_phy_rgb_y = physYAddr;
     params->dst.buf_addr_phy_cb    = physCbAddr;
     params->dst.buf_addr_phy_cr    = physCrAddr;
 
     if ((physYAddr != 0)
-        && ((unsigned int)mS5pFimc.out_buf.phys_addr != mDstBuffer[0].phys.p))
-        mS5pFimc.use_ext_out_mem = 1;
+	&& ((unsigned int)mS5pFimc.out_buf.phys_addr != mDstBuffer[0].phys.p))
+	mS5pFimc.use_ext_out_mem = 1;
 
     if (fimc_v4l2_s_ctrl(mFd, V4L2_ROTATE, mRotVal) < 0) {
-        ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
+	return false;
     }
 
     if (fimc_v4l2_set_fmt(mFd, V4L2_BUF_TYPE_DST, V4L2_FIELD_ANY, &(params->dst), (unsigned int)mS5pFimc.out_buf.phys_addr) < 0) {
-        ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
+	return false;
     }
 #endif
 
@@ -1194,13 +1197,13 @@ bool SecFimc::setRotVal(unsigned int rotVal)
     struct v4l2_control vc;
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     if (fimc_v4l2_s_ctrl(mFd, V4L2_ROTATE, rotVal) < 0) {
-        ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE) failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE) failed", __func__);
+	return false;
     }
 
     mRotVal = rotVal;
@@ -1213,49 +1216,49 @@ bool SecFimc::setGlobalAlpha(bool enable, int alpha)
     struct v4l2_format fmt;
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     if (mFlagStreamOn == true) {
-        ALOGE("%s::mFlagStreamOn == true", __func__);
-        return false;
+	ALOGE("%s::mFlagStreamOn == true", __func__);
+	return false;
     }
 
     if (mFlagGlobalAlpha == enable && mGlobalAlpha == alpha)
-        return true;
+	return true;
 
     memset(&fbuf, 0, sizeof(fbuf));
 
     if (ioctl(mFd, VIDIOC_G_FBUF, &fbuf) < 0) {
-        ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
-        return false;
+	ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
+	return false;
     }
 
     if (enable)
-        fbuf.flags |= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
+	fbuf.flags |= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
     else
-        fbuf.flags &= ~V4L2_FBUF_FLAG_GLOBAL_ALPHA;
+	fbuf.flags &= ~V4L2_FBUF_FLAG_GLOBAL_ALPHA;
 
     if (ioctl(mFd, VIDIOC_S_FBUF, &fbuf) < 0) {
-        ALOGE("%s::VIDIOC_S_FBUF failed", __func__);
-        return false;
+	ALOGE("%s::VIDIOC_S_FBUF failed", __func__);
+	return false;
     }
 
     if (enable) {
-        memset(&fmt, 0, sizeof(fmt));
-        fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
 
-        if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
-            ALOGE("%s::VIDIOC_G_FMT failed", __func__);
-            return false;
-        }
+	if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
+	    ALOGE("%s::VIDIOC_G_FMT failed", __func__);
+	    return false;
+	}
 
-        fmt.fmt.win.global_alpha = alpha & 0xFF;
-        if (ioctl(mFd, VIDIOC_S_FMT, &fmt) < 0) {
-            ALOGE("%s::VIDIOC_S_FMT failed", __func__);
-            return false;
-        }
+	fmt.fmt.win.global_alpha = alpha & 0xFF;
+	if (ioctl(mFd, VIDIOC_S_FMT, &fmt) < 0) {
+	    ALOGE("%s::VIDIOC_S_FMT failed", __func__);
+	    return false;
+	}
     }
 
     mFlagGlobalAlpha = enable;
@@ -1268,17 +1271,17 @@ bool SecFimc::setGlobalAlpha(bool enable, int alpha)
 bool SecFimc::setLocalAlpha(bool enable)
 {
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     if (mFlagStreamOn == true) {
-        ALOGE("%s::mFlagStreamOn == true", __func__);
-        return false;
+	ALOGE("%s::mFlagStreamOn == true", __func__);
+	return false;
     }
 
     if (mFlagLocalAlpha == enable)
-        return true;
+	return true;
 
     return true;
 }
@@ -1289,48 +1292,48 @@ bool SecFimc::setColorKey(bool enable, int colorKey)
     struct v4l2_format fmt;
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     if (mFlagStreamOn == true) {
-        ALOGE("%s::mFlagStreamOn == true", __func__);
-        return false;
+	ALOGE("%s::mFlagStreamOn == true", __func__);
+	return false;
     }
 
     if (mFlagColorKey == enable && mColorKey == colorKey)
-        return true;
+	return true;
 
     memset(&fbuf, 0, sizeof(fbuf));
 
     if (ioctl(mFd, VIDIOC_G_FBUF, &fbuf) < 0) {
-        ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
-        return false;
+	ALOGE("%s::VIDIOC_G_FBUF failed", __func__);
+	return false;
     }
 
     if (enable)
-        fbuf.flags |= V4L2_FBUF_FLAG_CHROMAKEY;
+	fbuf.flags |= V4L2_FBUF_FLAG_CHROMAKEY;
     else
-        fbuf.flags &= ~V4L2_FBUF_FLAG_CHROMAKEY;
+	fbuf.flags &= ~V4L2_FBUF_FLAG_CHROMAKEY;
 
     if (ioctl(mFd, VIDIOC_S_FBUF, &fbuf) < 0) {
-        ALOGE("%s::VIDIOC_S_FBUF failed", __func__);
-        return false;
+	ALOGE("%s::VIDIOC_S_FBUF failed", __func__);
+	return false;
     }
 
     if (enable) {
-        memset(&fmt, 0, sizeof(fmt));
-        fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
 
-        if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
-            ALOGE("%s::VIDIOC_G_FMT failed", __func__);
-            return false;
-        }
+	if (ioctl(mFd, VIDIOC_G_FMT, &fmt) < 0) {
+	    ALOGE("%s::VIDIOC_G_FMT failed", __func__);
+	    return false;
+	}
 
-        fmt.fmt.win.chromakey = colorKey & 0xFFFFFF;
+	fmt.fmt.win.chromakey = colorKey & 0xFFFFFF;
 
-        if (ioctl(mFd, VIDIOC_S_FMT, &fmt) < 0)
-            ALOGE("%s::VIDIOC_S_FMT failed", __func__);
+	if (ioctl(mFd, VIDIOC_S_FMT, &fmt) < 0)
+	    ALOGE("%s::VIDIOC_S_FMT failed", __func__);
     }
     mFlagColorKey = enable;
     mColorKey = colorKey;
@@ -1344,18 +1347,18 @@ bool SecFimc::draw(int src_index, int dst_index)
 #endif
 
     if (mFlagCreate == false) {
-        ALOGE("%s::Not yet created", __func__);
-        return false;
+	ALOGE("%s::Not yet created", __func__);
+	return false;
     }
 
     if (mFlagSetSrcParam == false) {
-        ALOGE("%s::mFlagSetSrcParam == false fail", __func__);
-        return false;
+	ALOGE("%s::mFlagSetSrcParam == false fail", __func__);
+	return false;
     }
 
     if (mFlagSetDstParam == false) {
-        ALOGE("%s::mFlagSetDstParam == false fail", __func__);
-        return false;
+	ALOGE("%s::mFlagSetDstParam == false fail", __func__);
+	return false;
     }
 
     s5p_fimc_params_t *params = &(mS5pFimc.params);
@@ -1364,60 +1367,61 @@ bool SecFimc::draw(int src_index, int dst_index)
     int dst_planes = m_getYuvPlanes(params->dst.color_space);
     src_planes  = (src_planes == -1) ? 1 : src_planes;
     dst_planes  = (dst_planes == -1) ? 1 : dst_planes;
+    mSrc_index = src_index;
 
 #ifdef BOARD_USE_V4L2
     if (mFlagStreamOn == false) {
-        if (m_streamOn() == false) {
-            ALOGE("%s::m_streamOn failed", __func__);
-            return false;
-        }
-        mFlagStreamOn = true;
+	if (m_streamOn() == false) {
+	    ALOGE("%s::m_streamOn failed", __func__);
+	    return false;
+	}
+	mFlagStreamOn = true;
     }
     if (fimc_v4l2_dequeue(mFd, V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, &dst_index, dst_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_dequeue[dst](mNumOfBuf : %d) failed", __func__, mNumOfBuf);
-        return false;
+	ALOGE("%s::fimc_v4l2_dequeue[dst](mNumOfBuf : %d) failed", __func__, mNumOfBuf);
+	return false;
     }
 
     if (fimc_v4l2_dequeue(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, &src_index, src_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_dequeue[src](mNumOfBuf : %d) failed", __func__, mNumOfBuf);
-        return false;
+	ALOGE("%s::fimc_v4l2_dequeue[src](mNumOfBuf : %d) failed", __func__, mNumOfBuf);
+	return false;
     }
 
     if (fimc_v4l2_queue(mFd, &(mSrcBuffer), V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, src_index, src_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_queue[src](index : %d) (mNumOfBuf : %d) failed", __func__, 0, mNumOfBuf);
-        return false;
+	ALOGE("%s::fimc_v4l2_queue[src](index : %d) (mNumOfBuf : %d) failed", __func__, 0, mNumOfBuf);
+	return false;
     }
 
     if (fimc_v4l2_queue(mFd, &(mDstBuffer[dst_index]), V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, dst_index, dst_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_queue[dst](index : %d) (mNumOfBuf : %d) failed", __func__, dst_index, mNumOfBuf);
-        return false;
+	ALOGE("%s::fimc_v4l2_queue[dst](index : %d) (mNumOfBuf : %d) failed", __func__, dst_index, mNumOfBuf);
+	return false;
     }
 #else
     if (fimc_v4l2_stream_on(mFd, V4L2_BUF_TYPE_SRC) < 0) {
-        ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
-        goto err;
+	ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
+	goto err;
     }
 
     flagStreamOn = true;
 
     if (fimc_v4l2_queue(mFd, &(mSrcBuffer), V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, src_index, src_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_queue(index : %d) (mNumOfBuf : %d) failed", __func__, 0, mNumOfBuf);
-        goto err;
+	ALOGE("%s::fimc_v4l2_queue(index : %d) (mNumOfBuf : %d) failed", __func__, 0, mNumOfBuf);
+	goto err;
     }
 
     if (fimc_v4l2_dequeue(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, &src_index, src_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_dequeue (mNumOfBuf : %d) failed", __func__, mNumOfBuf);
-        goto err;
+	ALOGE("%s::fimc_v4l2_dequeue (mNumOfBuf : %d) failed", __func__, mNumOfBuf);
+	goto err;
     }
 #endif
 
 err :
 #ifndef BOARD_USE_V4L2
     if (flagStreamOn == true) {
-        if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_SRC) < 0) {
-            ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
-            return false;
-        }
+	if (fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_SRC) < 0) {
+	    ALOGE("%s::fimc_v4l2_stream_off() failed", __func__);
+	    return false;
+	}
     }
 #endif
 
@@ -1438,102 +1442,102 @@ bool SecFimc::m_streamOn()
     dst_planes = (dst_planes == -1) ? 1 : dst_planes;
 
     if (params->src.color_space == V4L2_PIX_FMT_RGB32) {
-        mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width * 4;
+	mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width * 4;
 
     } else if (   (params->src.color_space == V4L2_PIX_FMT_NV12MT)
-               || (params->src.color_space == V4L2_PIX_FMT_NV12M)) {
-        mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width;
-        mSrcBuffer.size.extS[1] = params->src.full_height * params->src.full_width / 2;
+	       || (params->src.color_space == V4L2_PIX_FMT_NV12M)) {
+	mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width;
+	mSrcBuffer.size.extS[1] = params->src.full_height * params->src.full_width / 2;
     } else if (   (params->src.color_space == V4L2_PIX_FMT_YUV420)
-               || (params->src.color_space == V4L2_PIX_FMT_YUV420M)) {
-        mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width;
-        mSrcBuffer.size.extS[1] = params->src.full_height * params->src.full_width / 4;
-        mSrcBuffer.size.extS[2] = params->src.full_height * params->src.full_width / 4;
+	       || (params->src.color_space == V4L2_PIX_FMT_YUV420M)) {
+	mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width;
+	mSrcBuffer.size.extS[1] = params->src.full_height * params->src.full_width / 4;
+	mSrcBuffer.size.extS[2] = params->src.full_height * params->src.full_width / 4;
     } else {
-        mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width * 2;
+	mSrcBuffer.size.extS[0] = params->src.full_height * params->src.full_width * 2;
     }
 
     if (fimc_v4l2_queue(mFd, &(mSrcBuffer), V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, 0, src_planes) < 0) {
-        ALOGE("%s::fimc_v4l2_queue(index : %d) (mSrcBufNum : %d) failed", __func__, 0, 1);
-        return false;
+	ALOGE("%s::fimc_v4l2_queue(index : %d) (mSrcBufNum : %d) failed", __func__, 0, 1);
+	return false;
     }
 
     for (int i = 0; i < mNumOfBuf; i++) {
-        if (fimc_v4l2_queue(mFd, &(mDstBuffer[i]),
-                           V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, i, dst_planes) < 0) {
-            ALOGE("%s::fimc_v4l2_queue(index : %d) (mDstBufNum : %d) failed", __func__, i, mNumOfBuf);
-            return false;
-        }
+	if (fimc_v4l2_queue(mFd, &(mDstBuffer[i]),
+			   V4L2_BUF_TYPE_DST, V4L2_MEMORY_TYPE_DST, i, dst_planes) < 0) {
+	    ALOGE("%s::fimc_v4l2_queue(index : %d) (mDstBufNum : %d) failed", __func__, i, mNumOfBuf);
+	    return false;
+	}
     }
 #endif
     if (fimc_v4l2_stream_on(mFd, V4L2_BUF_TYPE_SRC) < 0) {
-        ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
+	return false;
     }
 
 #ifdef BOARD_USE_V4L2
     if (fimc_v4l2_stream_on(mFd, V4L2_BUF_TYPE_DST) < 0) {
-        ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
-        return false;
+	ALOGE("%s::fimc_v4l2_stream_on() failed", __func__);
+	return false;
     }
 #endif
     return true;
 }
 
 bool SecFimc::m_checkSrcSize(unsigned int width, unsigned int height,
-                             unsigned int cropX, unsigned int cropY,
-                             unsigned int *cropWidth, unsigned int *cropHeight,
-                             int colorFormat,
-                             bool forceChange)
+			     unsigned int cropX, unsigned int cropY,
+			     unsigned int *cropWidth, unsigned int *cropHeight,
+			     int colorFormat,
+			     bool forceChange)
 {
     bool ret = true;
 
     if (8 <= height && *cropHeight < 8) {
-        if (forceChange)
-            *cropHeight = 8;
-        ret = false;
+	if (forceChange)
+	    *cropHeight = 8;
+	ret = false;
     }
 
     if (16 <= width && *cropWidth < 16) {
-        if (forceChange)
-            *cropWidth = 16;
-        ret = false;
+	if (forceChange)
+	    *cropWidth = 16;
+	ret = false;
     }
 
     if (0x50 == mHwVersion) {
-        if (colorFormat == V4L2_PIX_FMT_YUV422P) {
-            if (*cropHeight % 2 != 0) {
-                if (forceChange)
-                    *cropHeight = multipleOfN(*cropHeight, 2);
-                ret = false;
-            }
-            if (*cropWidth % 2 != 0) {
-                if (forceChange)
-                    *cropWidth = multipleOfN(*cropWidth, 2);
-                ret = false;
-            }
-        }
+	if (colorFormat == V4L2_PIX_FMT_YUV422P) {
+	    if (*cropHeight % 2 != 0) {
+		if (forceChange)
+		    *cropHeight = multipleOfN(*cropHeight, 2);
+		ret = false;
+	    }
+	    if (*cropWidth % 2 != 0) {
+		if (forceChange)
+		    *cropWidth = multipleOfN(*cropWidth, 2);
+		ret = false;
+	    }
+	}
     } else {
-        if (height < 8)
-            return false;
+	if (height < 8)
+	    return false;
 
-        if (width % 16 != 0)
-            return false;
+	if (width % 16 != 0)
+	    return false;
 
-        if (*cropWidth % 16 != 0) {
-            if (forceChange)
-                *cropWidth = multipleOfN(*cropWidth, 16);
-            ret = false;
-        }
+	if (*cropWidth % 16 != 0) {
+	    if (forceChange)
+		*cropWidth = multipleOfN(*cropWidth, 16);
+	    ret = false;
+	}
     }
 
     return ret;
 }
 
 bool SecFimc::m_checkDstSize(unsigned int width, unsigned int height,
-                             unsigned int cropX, unsigned int cropY,
-                             unsigned int *cropWidth, unsigned int *cropHeight,
-                             int colorFormat, int rotVal,  bool forceChange)
+			     unsigned int cropX, unsigned int cropY,
+			     unsigned int *cropWidth, unsigned int *cropHeight,
+			     int colorFormat, int rotVal,  bool forceChange)
 {
     bool ret = true;
     unsigned int rotWidth;
@@ -1542,22 +1546,22 @@ bool SecFimc::m_checkDstSize(unsigned int width, unsigned int height,
     unsigned int *rotCropHeight;
 
     if (rotVal == 90 || rotVal == 270) {
-        rotWidth = height;
-        rotHeight = width;
-        rotCropWidth = cropHeight;
-        rotCropHeight = cropWidth;
+	rotWidth = height;
+	rotHeight = width;
+	rotCropWidth = cropHeight;
+	rotCropHeight = cropWidth;
     } else {
-        rotWidth = width;
-        rotHeight = height;
-        rotCropWidth = cropWidth;
-        rotCropHeight = cropHeight;
+	rotWidth = width;
+	rotHeight = height;
+	rotCropWidth = cropWidth;
+	rotCropHeight = cropHeight;
     }
 
     if (rotHeight < 8)
-        return false;
+	return false;
 
     if (rotWidth % 8 != 0)
-        return false;
+	return false;
 
     switch (colorFormat) {
     case V4L2_PIX_FMT_NV21:
@@ -1569,11 +1573,11 @@ bool SecFimc::m_checkDstSize(unsigned int width, unsigned int height,
     case V4L2_PIX_FMT_YUV420M:
 #endif
     case V4L2_PIX_FMT_YUV420:
-        if (*rotCropHeight % 2 != 0) {
-            if (forceChange)
-                *rotCropHeight = multipleOfN(*rotCropHeight, 2);
-            ret = false;
-        }
+	if (*rotCropHeight % 2 != 0) {
+	    if (forceChange)
+		*rotCropHeight = multipleOfN(*rotCropHeight, 2);
+	    ret = false;
+	}
     }
     return ret;
 }
@@ -1583,64 +1587,64 @@ int SecFimc::m_widthOfFimc(int v4l2ColorFormat, int width)
     int newWidth = width;
 
     if (0x50 == mHwVersion) {
-        switch (v4l2ColorFormat) {
-        /* 422 1/2/3 plane */
-        case V4L2_PIX_FMT_YUYV:
-        case V4L2_PIX_FMT_UYVY:
-        case V4L2_PIX_FMT_NV61:
-        case V4L2_PIX_FMT_NV16:
-        case V4L2_PIX_FMT_YUV422P:
-        /* 420 2/3 plane */
-        case V4L2_PIX_FMT_NV21:
-        case V4L2_PIX_FMT_NV12:
-        case V4L2_PIX_FMT_NV12T:
+	switch (v4l2ColorFormat) {
+	/* 422 1/2/3 plane */
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_NV61:
+	case V4L2_PIX_FMT_NV16:
+	case V4L2_PIX_FMT_YUV422P:
+	/* 420 2/3 plane */
+	case V4L2_PIX_FMT_NV21:
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV12T:
 #ifdef BOARD_USE_V4L2
-        case V4L2_PIX_FMT_NV12MT:
-        case V4L2_PIX_FMT_YUV420M:
+	case V4L2_PIX_FMT_NV12MT:
+	case V4L2_PIX_FMT_YUV420M:
 #endif
-        case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YUV420:
 
-            newWidth = multipleOfN(width, 2);
-            break;
-        default :
-            break;
-        }
+	    newWidth = multipleOfN(width, 2);
+	    break;
+	default :
+	    break;
+	}
     } else {
-        switch (v4l2ColorFormat) {
-        case V4L2_PIX_FMT_RGB565:
-            newWidth = multipleOfN(width, 8);
-            break;
-        case V4L2_PIX_FMT_RGB32:
-            newWidth = multipleOfN(width, 4);
-            break;
-        case V4L2_PIX_FMT_YUYV:
-        case V4L2_PIX_FMT_UYVY:
-            newWidth = multipleOfN(width, 4);
-            break;
-        case V4L2_PIX_FMT_NV61:
-        case V4L2_PIX_FMT_NV16:
-            newWidth = multipleOfN(width, 8);
-            break;
-        case V4L2_PIX_FMT_YUV422P:
-            newWidth = multipleOfN(width, 16);
-            break;
-        case V4L2_PIX_FMT_NV21:
-        case V4L2_PIX_FMT_NV12:
-        case V4L2_PIX_FMT_NV12T:
+	switch (v4l2ColorFormat) {
+	case V4L2_PIX_FMT_RGB565:
+	    newWidth = multipleOfN(width, 8);
+	    break;
+	case V4L2_PIX_FMT_RGB32:
+	    newWidth = multipleOfN(width, 4);
+	    break;
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	    newWidth = multipleOfN(width, 4);
+	    break;
+	case V4L2_PIX_FMT_NV61:
+	case V4L2_PIX_FMT_NV16:
+	    newWidth = multipleOfN(width, 8);
+	    break;
+	case V4L2_PIX_FMT_YUV422P:
+	    newWidth = multipleOfN(width, 16);
+	    break;
+	case V4L2_PIX_FMT_NV21:
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV12T:
 #ifdef BOARD_USE_V4L2
-        case V4L2_PIX_FMT_NV12MT:
+	case V4L2_PIX_FMT_NV12MT:
 #endif
-            newWidth = multipleOfN(width, 8);
-            break;
+	    newWidth = multipleOfN(width, 8);
+	    break;
 #ifdef BOARD_USE_V4L2
-        case V4L2_PIX_FMT_YUV420M:
+	case V4L2_PIX_FMT_YUV420M:
 #endif
-        case V4L2_PIX_FMT_YUV420:
-            newWidth = multipleOfN(width, 16);
-            break;
-        default :
-            break;
-        }
+	case V4L2_PIX_FMT_YUV420:
+	    newWidth = multipleOfN(width, 16);
+	    break;
+	default :
+	    break;
+	}
     }
     return newWidth;
 }
@@ -1658,10 +1662,10 @@ int SecFimc::m_heightOfFimc(int v4l2ColorFormat, int height)
     case V4L2_PIX_FMT_YUV420M:
 #endif
     case V4L2_PIX_FMT_YUV420:
-        newHeight = multipleOfN(height, 2);
-        break;
+	newHeight = multipleOfN(height, 2);
+	break;
     default :
-        break;
+	break;
     }
     return newHeight;
 }
@@ -1671,16 +1675,16 @@ int SecFimc::m_getYuvBpp(unsigned int fmt)
     int i, sel = -1;
 
     for (i = 0; i < (int)(sizeof(yuv_list) / sizeof(struct yuv_fmt_list)); i++) {
-        if (yuv_list[i].fmt == fmt) {
-            sel = i;
-            break;
-        }
+	if (yuv_list[i].fmt == fmt) {
+	    sel = i;
+	    break;
+	}
     }
 
     if (sel == -1)
-        return sel;
+	return sel;
     else
-        return yuv_list[sel].bpp;
+	return yuv_list[sel].bpp;
 }
 
 int SecFimc::m_getYuvPlanes(unsigned int fmt)
@@ -1688,14 +1692,76 @@ int SecFimc::m_getYuvPlanes(unsigned int fmt)
     int i, sel = -1;
 
     for (i = 0; i < (int)(sizeof(yuv_list) / sizeof(struct yuv_fmt_list)); i++) {
-        if (yuv_list[i].fmt == fmt) {
-            sel = i;
-            break;
-        }
+	if (yuv_list[i].fmt == fmt) {
+	    sel = i;
+	    break;
+	}
     }
 
     if (sel == -1)
-        return sel;
+	return sel;
     else
-        return yuv_list[sel].planes;
+	return yuv_list[sel].planes;
 }
+
+
+bool SecFimc::handleOneShot()
+{
+
+    #ifdef DEBUG_LIB_FIMC
+    ALOGD("%s", __func__);
+    #endif
+    if(mFlagCreate == false)
+    {
+	ALOGE("%s :: libFimc is not created", __func__);
+	return false;
+    }
+    s5p_fimc_params_t* params = &(mS5pFimc.params);
+    struct fimc_buf fimc_src_buf;
+
+    if(mFlagSetSrcParam == false)
+    {
+	ALOGE("%s :: source params are not set", __func__);
+	return false;
+    }
+    if(mFlagSetDstParam == false)
+    {
+	ALOGE("%s :: destination params are not set", __func__);
+	return false;
+    }
+
+    mSrcBuffer.phys.extP[0] = params->src.buf_addr_phy_rgb_y;
+    mSrcBuffer.phys.extP[1] = params->src.buf_addr_phy_cb;
+    mSrcBuffer.phys.extP[2] = params->src.buf_addr_phy_cr;
+    int src_planes = m_getYuvPlanes(params->src.color_space);
+    int dst_planes = m_getYuvPlanes(params->dst.color_space);
+
+    if(fimc_v4l2_stream_on(mFd, V4L2_BUF_TYPE_SRC)< 0)
+    {
+	ALOGE("%s :: fimc_v4l2_stream_on(V4L2_BUF_TYPE_SRC) fail", __func__);
+	return false;
+    }
+
+    if (fimc_v4l2_queue(mFd, &(mSrcBuffer), V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, mSrc_index, src_planes) < 0)
+    {
+	ALOGE("%s :: fimc_v4l2_queue(mSrc_index : %d) (mSrc_planes : %d) fail", __func__, mSrc_index, src_planes);
+	goto STREAMOFF;
+    }
+
+    if (fimc_v4l2_dequeue(mFd, V4L2_BUF_TYPE_SRC, V4L2_MEMORY_TYPE_SRC, &mSrc_index, src_planes) < 0)
+    {
+	ALOGE("%s :: fimc_v4l2_dequeue (mSrc_index : %d) (mSrc_planes : %d) fail", __func__, &mSrc_index, src_planes);
+	goto STREAMOFF;
+    }
+
+STREAMOFF:
+
+    if(fimc_v4l2_stream_off(mFd, V4L2_BUF_TYPE_SRC) < 0)
+    {
+	ALOGE("%s :: fimc_v4l2_stream_off() fail", __func__);
+	return false;
+    }
+
+    return true;
+}
+

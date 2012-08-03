@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////
 // include
 ///////////////////////////////////////////////////
-#define LOG_NDEBUG 0
-#define LOG_TAG "FimgC210"
+#define ALOG_NDEBUG 0
+#define ALOG_TAG "FimgC210"
 #include <utils/Log.h>
 
 #include "FimgC210.h"

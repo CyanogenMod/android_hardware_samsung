@@ -15,16 +15,18 @@
  */
 
 #include <utils/Log.h>
+
 #include "SEC_OMX_Def.h"
 #include "SecFimc.h"
 #include "HardwareConverter.h"
+#include "exynos_format.h"
 
 HardwareConverter::HardwareConverter()
 {
     SecFimc* handle_fimc = new SecFimc();
     mSecFimc = (void *)handle_fimc;
 
-    if (handle_fimc->create(SecFimc::DEV_0, SecFimc::MODE_MULTI_BUF, 1) == false)
+    if (handle_fimc->create(SecFimc::DEV_2, SecFimc::MODE_MULTI_BUF, 1) == false)
         bHWconvert_flag = 0;
     else
         bHWconvert_flag = 1;
@@ -125,6 +127,9 @@ unsigned int HardwareConverter::OMXtoHarPixelFomrat(OMX_COLOR_FORMATTYPE omx_for
     unsigned int hal_format = 0;
 
     switch (omx_format) {
+    case OMX_COLOR_FormatYCbYCr:
+        hal_format = HAL_PIXEL_FORMAT_YCbCr_422_I;
+        break;
     case OMX_COLOR_FormatYUV420Planar:
         hal_format = HAL_PIXEL_FORMAT_YCbCr_420_P;
         break;
