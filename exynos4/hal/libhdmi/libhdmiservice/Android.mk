@@ -30,8 +30,6 @@ LOCAL_SRC_FILES := \
 	ISecTVOut.cpp \
 	MessageQueue.cpp
 
-LOCAL_C_INCLUDES := \
-
 LOCAL_SHARED_LIBRARIES := \
 	libbinder \
 	libutils \
@@ -40,7 +38,8 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/include
 LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/libhdmi
 LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/libfimc
-LOCAL_SHARED_LIBRARIES += libhdmi libfimc
+LOCAL_C_INCLUDES += $(TOP)/hardware/samsung/exynos/libexynosutils
+LOCAL_SHARED_LIBRARIES += libhdmi libfimc libexynosutils
 
 ifeq ($(BOARD_USES_HDMI_SUBTITLES),true)
 	LOCAL_CFLAGS  += -DBOARD_USES_HDMI_SUBTITLES
