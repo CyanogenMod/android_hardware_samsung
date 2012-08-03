@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////
 // include
 ///////////////////////////////////////////////////
-#define LOG_NDEBUG 0
-#define LOG_TAG "FimgApi"
+#define ALOG_NDEBUG 0
+#define ALOG_TAG "FimgApi"
 #include <utils/Log.h>
 
 #include "FimgApi.h"

@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define LOG_TAG "SecTVOutService"
+#define ALOG_TAG "SecTVOutService"
 
 #include <binder/IServiceManager.h>
 #include <utils/RefBase.h>
@@ -31,6 +31,7 @@
 #include <utils/Log.h>
 #include "SecTVOutService.h"
 #include <linux/fb.h>
+#include "exynos_format.h"
 
 namespace android {
 #define DEFAULT_LCD_WIDTH               800
@@ -143,7 +144,8 @@ namespace android {
 
         case SET_HDMI_RESOLUTION: {
             int resolution = data.readInt32();
-            setHdmiResolution(resolution);
+            int s3dMode = data.readInt32();
+            setHdmiResolution(resolution, (HDMI_S3D_MODE)s3dMode);
         } break;
 
         case SET_HDMI_HDCP: {
@@ -225,12 +227,12 @@ namespace android {
         }
     }
 
-    void SecTVOutService::setHdmiResolution(uint32_t resolution)
+    void SecTVOutService::setHdmiResolution(uint32_t resolution, HDMI_S3D_MODE s3dMode)
     {
         //ALOGD("%s TV resolution = %d", __func__, resolution);
         Mutex::Autolock _l(mLock);
 
-        if ((hdmiCableInserted() == true) && (mSecHdmi.setHdmiResolution(resolution)) == false) {
+        if ((hdmiCableInserted() == true) && (mSecHdmi.setHdmiResolution(resolution, s3dMode)) == false) {
             ALOGE("%s::mSecHdmi.setHdmiResolution() fail", __func__);
             return;
         }

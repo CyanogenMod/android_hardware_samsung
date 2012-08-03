@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-//#define LOG_NDEBUG 0
-//#define LOG_TAG "libhdmi"
+//#define ALOG_NDEBUG 0
+//#define ALOG_TAG "libhdmi"
 #include <cutils/log.h>
 
 #include <sys/types.h>
@@ -30,16 +30,13 @@
 #include <signal.h>
 
 #if defined(BOARD_USE_V4L2)
-#include "sec_utils_v4l2.h"
 #include "s5p_tvout_v4l2.h"
 #include "videodev2.h"
 #else
-#include "sec_utils.h"
 #include "s5p_tvout.h"
 #endif
 #include "SecFimc.h"
 #if defined(BOARD_USES_FIMGAPI)
-#include "sec_g2d_4x.h"
 #include "FimgApi.h"
 #endif
 
@@ -47,6 +44,7 @@
 #include "video.h"
 #include "../libhdmi/libsForhdmi/libedid/libedid.h"
 #include "../libhdmi/libsForhdmi/libcec/libcec.h"
+#include "exynos_format.h"
 
 #include "SecHdmiCommon.h"
 #include "SecHdmiV4L2Utils.h"
@@ -80,9 +78,7 @@ void display_menu(void)
     struct HDMIVideoParameter video;
     struct HDMIAudioParameter audio;
 
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     audio.formatCode = LPCM_FORMAT;
     audio.outPacket  = HDMI_ASP;
@@ -216,9 +212,7 @@ void display_menu(void)
 
 int tvout_open(const char *fp_name)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int fp;
 
@@ -231,9 +225,7 @@ int tvout_open(const char *fp_name)
 #if defined(BOARD_USE_V4L2)
 int tvout_std_v4l2_init(int fd, unsigned int preset_id)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: preset_id = 0x%x", __func__, preset_id);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: preset_id = 0x%x", __func__, preset_id);
 
     int ret;
     struct v4l2_output output;
@@ -286,9 +278,7 @@ int tvout_std_v4l2_init(int fd, unsigned int preset_id)
 
 int tvout_std_v4l2_querycap(int fd, char *node)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_capability v4l2cap;
 
@@ -312,9 +302,7 @@ int tvout_std_v4l2_querycap(int fd, char *node)
 
 int tvout_std_v4l2_enum_dv_presets(int fd)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_dv_enum_preset enum_preset;
     int ret = -1;
@@ -329,10 +317,9 @@ int tvout_std_v4l2_enum_dv_presets(int fd)
             ALOGE("%s::VIDIOC_ENUM_DV_PRESETS", __func__);
             return -1;
         }
-#ifdef DEBUG_HDMI_HW_LEVEL
-        ALOGD("%s::index=%d, preset=0x%08x, name=%s, w=%d, h=%d",
+
+        ALOG_LIB_HDMI_V4L2("%s::index=%d, preset=0x%08x, name=%s, w=%d, h=%d",
               __func__, enum_preset.index, enum_preset.preset, enum_preset.name, enum_preset.width, enum_preset.height);
-#endif
     }
 
     return 0;
@@ -340,9 +327,7 @@ int tvout_std_v4l2_enum_dv_presets(int fd)
 
 int tvout_std_v4l2_s_dv_preset(int fd, struct v4l2_dv_preset *preset)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     if (ioctl(fd, VIDIOC_S_DV_PRESET, preset) < 0) {
         ALOGE("%s::VIDIOC_S_DV_PRESET failed", __func__);
@@ -360,9 +345,7 @@ int tvout_std_v4l2_s_dv_preset(int fd, struct v4l2_dv_preset *preset)
    */
 int tvout_std_v4l2_enum_output(int fd, struct v4l2_output *output)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -383,9 +366,7 @@ int tvout_std_v4l2_enum_output(int fd, struct v4l2_output *output)
    */
 int tvout_std_v4l2_s_output(int fd, int index)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: index = 0x%x", __func__, index);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: index = 0x%x", __func__, index);
 
     int ret;
 
@@ -400,9 +381,7 @@ int tvout_std_v4l2_s_output(int fd, int index)
 
 int tvout_std_v4l2_g_output(int fd, int *index)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -419,9 +398,7 @@ int tvout_std_v4l2_g_output(int fd, int *index)
 
 int tvout_std_v4l2_s_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field, int w, int h, int colorformat, int num_planes)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_format fmt;
 
@@ -463,9 +440,7 @@ int tvout_std_v4l2_s_fmt(int fd, enum v4l2_buf_type type, enum v4l2_field field,
 
 int tvout_std_v4l2_s_crop(int fd, enum v4l2_buf_type type, enum v4l2_field, int x, int y, int w, int h)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_crop crop;
 
@@ -486,9 +461,7 @@ int tvout_std_v4l2_s_crop(int fd, enum v4l2_buf_type type, enum v4l2_field, int 
 
 int tvout_std_v4l2_s_ctrl(int fd, int id, int value)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_control vc;
 
@@ -505,9 +478,7 @@ int tvout_std_v4l2_s_ctrl(int fd, int id, int value)
 
 int tvout_std_v4l2_reqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int num_bufs)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_requestbuffers reqbuf;
 
@@ -531,9 +502,7 @@ int tvout_std_v4l2_reqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memo
 
 int tvout_std_v4l2_querybuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, unsigned int buf_index, unsigned int num_planes, SecBuffer *secBuf)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_MIXER];
@@ -581,9 +550,7 @@ int tvout_std_v4l2_querybuf(int fd, enum v4l2_buf_type type, enum v4l2_memory me
 
 int tvout_std_v4l2_qbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, int buf_index, int num_planes, SecBuffer *secBuf)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_MIXER];
@@ -614,9 +581,7 @@ int tvout_std_v4l2_qbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory
 
 int tvout_std_v4l2_dqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory, int *buf_index, int num_planes)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_buffer buf;
     struct v4l2_plane  planes[MAX_PLANES_MIXER];
@@ -642,9 +607,7 @@ int tvout_std_v4l2_dqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memor
 
 int tvout_std_v4l2_streamon(int fd, enum v4l2_buf_type type)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
         ALOGE("%s::VIDIOC_STREAMON failed", __func__);
@@ -656,9 +619,7 @@ int tvout_std_v4l2_streamon(int fd, enum v4l2_buf_type type)
 
 int tvout_std_v4l2_streamoff(int fd, enum v4l2_buf_type type)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0) {
         ALOGE("%s::VIDIOC_STREAMOFF failed", __func__);
@@ -670,9 +631,7 @@ int tvout_std_v4l2_streamoff(int fd, enum v4l2_buf_type type)
 #else
 int tvout_init(v4l2_std_id std_id)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: std_id = 0x%x", __func__, std_id);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: std_id = 0x%x", __func__, std_id);
 
     int ret;
     struct v4l2_output output;
@@ -746,9 +705,7 @@ int tvout_init(v4l2_std_id std_id)
 
 int tvout_deinit()
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     if (0 < fp_tvout) {
         close(fp_tvout);
@@ -759,9 +716,7 @@ int tvout_deinit()
 
 int tvout_v4l2_querycap(int fp)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: fp = 0x%x", __func__, fp);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: fp = 0x%x", __func__, fp);
 
     struct v4l2_capability cap;
     int ret;
@@ -773,10 +728,8 @@ int tvout_v4l2_querycap(int fp)
         return ret;
     }
 
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("tvout_v4l2_querycap" "DRIVER : %s, CARD : %s, CAP.: 0x%08x\n",
+    ALOG_LIB_HDMI_V4L2("tvout_v4l2_querycap" "DRIVER : %s, CARD : %s, CAP.: 0x%08x\n",
             cap.driver, cap.card, cap.capabilities);
-#endif
 
     return ret;
 }
@@ -790,9 +743,7 @@ int tvout_v4l2_querycap(int fp)
 
 int tvout_v4l2_g_std(int fp, v4l2_std_id *std_id)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -807,9 +758,7 @@ int tvout_v4l2_g_std(int fp, v4l2_std_id *std_id)
 
 int tvout_v4l2_s_std(int fp, v4l2_std_id std_id)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: std_id = 0x%x", __func__, std_id);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: std_id = 0x%x", __func__, std_id);
 
     int ret;
 
@@ -831,9 +780,7 @@ int tvout_v4l2_s_std(int fp, v4l2_std_id std_id)
    */
 int tvout_v4l2_enum_std(int fp, struct v4l2_standard *std, v4l2_std_id std_id)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     std->index = 0;
     while (0 == ioctl (fp, VIDIOC_ENUMSTD, std)) {
@@ -854,9 +801,7 @@ int tvout_v4l2_enum_std(int fp, struct v4l2_standard *std, v4l2_std_id std_id)
    */
 int tvout_v4l2_enum_output(int fp, struct v4l2_output *output)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -877,9 +822,7 @@ int tvout_v4l2_enum_output(int fp, struct v4l2_output *output)
    */
 int tvout_v4l2_s_output(int fp, int index)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s:: index = 0x%x", __func__, index);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s:: index = 0x%x", __func__, index);
 
     int ret;
 
@@ -894,9 +837,7 @@ int tvout_v4l2_s_output(int fp, int index)
 
 int tvout_v4l2_g_output(int fp, int *index)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -920,9 +861,7 @@ int tvout_v4l2_g_output(int fp, int *index)
    */
 int tvout_v4l2_enum_fmt(int fp, struct v4l2_fmtdesc *desc)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     desc->index = 0;
     while (0 == ioctl(fp, VIDIOC_ENUM_FMT, desc)) {
@@ -939,9 +878,7 @@ int tvout_v4l2_enum_fmt(int fp, struct v4l2_fmtdesc *desc)
 
 int tvout_v4l2_g_fmt(int fp, int buf_type, void* ptr)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
     struct v4l2_format format;
@@ -968,9 +905,7 @@ int tvout_v4l2_g_fmt(int fp, int buf_type, void* ptr)
 
 int tvout_v4l2_s_fmt(int fp, int buf_type, void *ptr)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_format format;
     int ret;
@@ -1012,9 +947,7 @@ int tvout_v4l2_s_fmt(int fp, int buf_type, void *ptr)
 
 int tvout_v4l2_g_fbuf(int fp, struct v4l2_framebuffer *frame)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -1032,9 +965,7 @@ int tvout_v4l2_g_fbuf(int fp, struct v4l2_framebuffer *frame)
 
 int tvout_v4l2_s_fbuf(int fp, struct v4l2_framebuffer *frame)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -1048,9 +979,7 @@ int tvout_v4l2_s_fbuf(int fp, struct v4l2_framebuffer *frame)
 
 int tvout_v4l2_s_baseaddr(int fp, void *base_addr)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
 
@@ -1064,9 +993,7 @@ int tvout_v4l2_s_baseaddr(int fp, void *base_addr)
 
 int tvout_v4l2_g_crop(int fp, unsigned int type, struct v4l2_rect *rect)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret;
     struct v4l2_crop crop;
@@ -1092,9 +1019,7 @@ int tvout_v4l2_g_crop(int fp, unsigned int type, struct v4l2_rect *rect)
 
 int tvout_v4l2_s_crop(int fp, unsigned int type, struct v4l2_rect *rect)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_crop crop;
     int ret;
@@ -1117,9 +1042,7 @@ int tvout_v4l2_s_crop(int fp, unsigned int type, struct v4l2_rect *rect)
 
 int tvout_v4l2_start_overlay(int fp)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret, start = 1;
 
@@ -1134,9 +1057,7 @@ int tvout_v4l2_start_overlay(int fp)
 
 int tvout_v4l2_stop_overlay(int fp)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int ret, stop =0;
 
@@ -1153,9 +1074,8 @@ int tvout_v4l2_stop_overlay(int fp)
 int hdmi_init_layer(int layer)
 {
     int fd = -1;
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("### %s (layer = %d) called", __func__, layer);
-#endif
+
+    ALOG_LIB_HDMI_V4L2("### %s (layer = %d) called", __func__, layer);
 
     switch (layer) {
     case HDMI_LAYER_VIDEO :
@@ -1208,9 +1128,9 @@ int hdmi_init_layer(int layer)
 int hdmi_deinit_layer(int layer)
 {
     int ret = 0;
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("### %s(layer = %d) called", __func__, layer);
-#endif
+
+    ALOG_LIB_HDMI_V4L2("### %s(layer = %d) called", __func__, layer);
+
     switch (layer) {
     case HDMI_LAYER_VIDEO :
         if (0 < fp_tvout_v) {
@@ -1292,9 +1212,7 @@ int hdmi_set_v_param(int fd, int layer,
                       SecBuffer * dstBuffer,
                       int dst_x, int dst_y, int dst_w, int dst_h)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int v4l2ColorFormat = HAL_PIXEL_FORMAT_2_V4L2_PIX(srcColorFormat);
     int round_up_src_w;
@@ -1365,9 +1283,7 @@ int hdmi_set_g_param(int fd, int layer,
                       SecBuffer * dstBuffer,
                       int dst_x, int dst_y, int dst_w, int dst_h)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     struct v4l2_rect rect;
     int v4l2ColorFormat = HAL_PIXEL_FORMAT_2_V4L2_PIX(srcColorFormat);
@@ -1448,6 +1364,7 @@ int hdmi_set_g_scaling(int layer,
     int             dst_bpp;
     unsigned char   *dst_addr;
     fimg2d_blit     BlitParam;
+    fimg2d_param    g2d_param;
     rotation        g2d_rotation;
 
     fimg2d_addr srcAddr;
@@ -1458,8 +1375,10 @@ int hdmi_set_g_scaling(int layer,
     fimg2d_image dstImage;
     fimg2d_rect dstRect;
 
-    fimg2d_clip dstClip;
     fimg2d_scale Scaling;
+    fimg2d_repeat Repeat;
+    fimg2d_bluscr Bluscr;
+    fimg2d_clcip Clipping;
 
     switch (g_preset_id) {
     case V4L2_DV_1080P60:
@@ -1494,19 +1413,18 @@ int hdmi_set_g_scaling(int layer,
         cur_g2d_address = (unsigned int)dst_addr;
         prev_src_addr = src_address;
 
-        srcAddr = {(addr_space)ADDR_USER, (unsigned long)src_address, src_w * src_h * 4, 1, 0};
-        srcImage = {srcAddr, srcAddr, src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888};
+        srcAddr = {(addr_space)ADDR_USER, (unsigned long)src_address};
         srcRect = {0, 0, src_w, src_h};
+        srcImage = {src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888, srcAddr, srcAddr, srcRect, false};
 
-        dstAddr = {(addr_space)ADDR_USER, (unsigned long)dst_addr, dst_w * dst_h * dst_bpp, 1, 0};
-        dstImage = {dstAddr, dstAddr, dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format};
+        dstAddr = {(addr_space)ADDR_USER, (unsigned long)dst_addr};
         dstRect = {0, 0, dst_w, dst_h};
-        dstClip = {0, 0, 0, dst_w, dst_h};
+        dstImage = {dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format, dstAddr, dstAddr, dstRect, false};
 
         if (rotVal == 0 || rotVal == 180)
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_w, dst_h};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_w, dst_h};
         else
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_h, dst_w};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_h, dst_w};
 
         switch (rotVal) {
         case 0:
@@ -1527,15 +1445,20 @@ int hdmi_set_g_scaling(int layer,
             break;
         }
 
-        BlitParam = {BLIT_OP_SRC, NON_PREMULTIPLIED, 0xff, 0, g2d_rotation, &Scaling, 0, 0, &dstClip, 0, &srcImage, &dstImage, NULL, &srcRect, &dstRect, NULL, 0};
+        Repeat = {NO_REPEAT, 0};
+        Bluscr = {OPAQUE, 0, 0};
+        Clipping = {false, 0, 0, 0, 0};
+
+        g2d_param = {0, 0xff, 0, g2d_rotation, NON_PREMULTIPLIED, Scaling, Repeat, Bluscr, Clipping};
+
+        BlitParam = {BLIT_OP_SRC, g2d_param, &srcImage, NULL, NULL, &dstImage, BLIT_SYNC, 0};
 
         if (stretchFimgApi(&BlitParam) < 0) {
             ALOGE("%s::stretchFimgApi() fail", __func__);
             return -1;
         }
 
-#ifdef DEBUG_MSG_ENABLE
-    ALOGD("hdmi_set_g_scaling:: \n \\
+    ALOG_LIB_HDMI_V4L2("hdmi_set_g_scaling:: \n \\
                 layer=%d,\n \\
                 srcColorFormat=%d,\n \\
                 src_w=%d, src_h=%d,\n\\
@@ -1546,7 +1469,7 @@ int hdmi_set_g_scaling(int layer,
                 src_w, src_h,
                 src_address, dst_addr,
                 dst_x, dst_y, dst_w, dst_h);
-#endif
+
         dstBuffer->virt.p = (char *)dst_addr;
     }
 #else
@@ -1561,9 +1484,7 @@ int hdmi_set_v_param(int layer,
         unsigned int src_y_address, unsigned int src_c_address,
         int dst_w, int dst_h)
 {
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int round_up_src_w;
     int round_up_src_h;
@@ -1626,6 +1547,7 @@ int hdmi_gl_set_param(int layer,
     int             dst_bpp;
     unsigned char   *dst_addr;
     fimg2d_blit     BlitParam;
+    fimg2d_param    g2d_param;
     rotation        g2d_rotation;
 
     fimg2d_addr srcAddr;
@@ -1636,8 +1558,10 @@ int hdmi_gl_set_param(int layer,
     fimg2d_image dstImage;
     fimg2d_rect dstRect;
 
-    fimg2d_clip dstClip;
     fimg2d_scale Scaling;
+    fimg2d_repeat Repeat;
+    fimg2d_bluscr Bluscr;
+    fimg2d_clip Clipping;
 
     struct fb_var_screeninfo var;
     struct s5ptvfb_user_window window;
@@ -1686,19 +1610,19 @@ int hdmi_gl_set_param(int layer,
         cur_g2d_address = (unsigned int)dst_addr;
         prev_src_addr = src_y_address;
 
-        srcAddr = {(addr_space)ADDR_PHYS, (unsigned long)src_y_address, src_w*src_h*4, 1, 0};
-        srcImage = {srcAddr, srcAddr, src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888};
-        srcRect = {0, 0, src_w, src_h};
 
-        dstAddr = {(addr_space)ADDR_PHYS, (unsigned long)dst_addr, dst_w*dst_h*dst_bpp, 1, 0};
-        dstImage = {dstAddr, dstAddr, dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format};
+        srcAddr = {(addr_space)ADDR_PHYS, (unsigned long)src_y_address};
+        srcRect = {0, 0, src_w, src_h};
+        srcImage = {src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888, srcAddr, srcAddr, srcRect, false};
+
+        dstAddr = {(addr_space)ADDR_PHYS, (unsigned long)dst_addr};
         dstRect = {0, 0, dst_w, dst_h};
-        dstClip = {0, 0, 0, dst_w, dst_h};
+        dstImage = {dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format, dstAddr, dstAddr, dstRect, false};
 
         if (rotVal == 0 || rotVal == 180)
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_w, dst_h};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_w, dst_h};
         else
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_h, dst_w};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_h, dst_w};
 
         switch (rotVal) {
         case 0:
@@ -1718,8 +1642,12 @@ int hdmi_gl_set_param(int layer,
             return -1;
             break;
         }
+        Repeat = {NO_REPEAT, 0};
+        Bluscr = {OPAQUE, 0, 0};
+        Clipping = {false, 0,  0, 0, 0};
 
-        BlitParam = {BLIT_OP_SRC, NON_PREMULTIPLIED, 0xff, 0, g2d_rotation, &Scaling, 0, 0, &dstClip, 0, &srcImage, &dstImage, NULL, &srcRect, &dstRect, NULL, 0};
+        g2d_param = {0, 0xff, 0, g2d_rotation, NON_PREMULTIPLIED, Scaling, Repeat, Bluscr, Clipping};
+        BlitParam = {BLIT_OP_SRC, g2d_param, &srcImage, NULL, NULL, &dstImage, BLIT_SYNC, 0};
 
         if (stretchFimgApi(&BlitParam) < 0) {
             ALOGE("%s::stretchFimgApi() fail", __func__);
@@ -1759,8 +1687,7 @@ int hdmi_gl_set_param(int layer,
     // set base address for grp layer0 of mixer
     int fp_tvout_g;
 
-#ifdef DEBUG_MSG_ENABLE
-    ALOGD("hdmi_gl_set_param:: \n \\
+    ALOG_LIB_HDMI_V4L2("hdmi_gl_set_param:: \n \\
                 layer=%d,\n \\
                 srcColorFormat=%d,\n \\
                 src_w=%d, src_h=%d,\n\\
@@ -1771,7 +1698,6 @@ int hdmi_gl_set_param(int layer,
                 src_w, src_h,
                 src_y_address, src_c_address,
                 dst_x, dst_y, dst_w, dst_h);
-#endif
 
     if (layer == HDMI_LAYER_GRAPHIC_0)
         fp_tvout_g = fp_tvout_g0;
@@ -1814,9 +1740,7 @@ int hdmi_gl_set_param(int layer,
 int hdmi_cable_status()
 {
 #if defined(BOARD_USE_V4L2)
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("%s", __func__);
-#endif
+    ALOG_LIB_HDMI_V4L2("%s", __func__);
 
     int cable_status = 0;
     int fd = 0;
@@ -1837,9 +1761,7 @@ int hdmi_cable_status()
         cable_status = ctrl.value;
     }
 
-#ifdef DEBUG_HDMI_HW_LEVEL
-    ALOGD("HPD_STATUS = %d", cable_status);
-#endif
+    ALOG_LIB_HDMI_V4L2("HPD_STATUS = %d", cable_status);
 
     close(fd);
 
@@ -2105,94 +2027,108 @@ int hdmi_check_resolution(unsigned int preset_id)
     }
 
     if (!EDIDVideoResolutionSupport(&video)) {
-#ifdef DEBUG_MSG_ENABLE
-        ALOGD("%s::EDIDVideoResolutionSupport(%d) fail (not suppoted preset_id) \n", __func__, preset_id);
-#endif
+        ALOG_LIB_HDMI_V4L2("%s::EDIDVideoResolutionSupport(%d) fail (not suppoted preset_id) \n", __func__, preset_id);
         return -1;
     }
 
     return 0;
 }
 
-int hdmi_resolution_2_preset_id(unsigned int resolution, int * w, int * h, unsigned int *preset_id)
+int hdmi_resolution_2_preset_id(unsigned int resolution, unsigned int s3dMode, int * w, int * h, unsigned int *preset_id)
 {
     int ret = 0;
 
-    switch (resolution) {
-    case 1080960:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080P60;
-        break;
-    case 1080950:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080P50;
-        break;
-    case 1080930:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080P30;
-        break;
-    case 1080924:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080P24_TB;
-        break;
-    case 1080160:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080I60;
-        break;
-    case 1080150:
-        *w      = 1920;
-        *h      = 1080;
-        *preset_id = V4L2_DV_1080I50;
-        break;
-    case 720960:
-        *w      = 1280;
-        *h      = 720;
-        *preset_id = V4L2_DV_720P60;
-        break;
-    case 7209601:
-        *w      = 1280;
-        *h      = 720;
-        *preset_id = V4L2_DV_720P60_SB_HALF;
-        break;
-    case 720950:
-        *w      = 1280;
-        *h      = 720;
-        *preset_id = V4L2_DV_720P50;
-        break;
-    case 7209501:
-        *w      = 1280;
-        *h      = 720;
-        *preset_id = V4L2_DV_720P50_TB;
-        break;
-    case 5769501:
-        *w      = 720;
-        *h      = 576;
-        *preset_id = V4L2_DV_576P50;
-        break;
-    case 5769502:
-        *w      = 720;
-        *h      = 576;
-        *preset_id = V4L2_DV_576P50;
-       break;
-    case 4809601:
-        *w      = 720;
-        *h      = 480;
-        *preset_id = V4L2_DV_480P60;
-       break;
-    case 4809602:
-        *w     = 720;
-        *h     = 480;
-        *preset_id = V4L2_DV_480P60;
-      break;
-    default:
-        ALOGE("%s::unmathced resolution(%d)", __func__, resolution);
-        ret = -1;
-        break;
+    if (s3dMode == HDMI_2D) {
+        switch (resolution) {
+        case 1080960:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080P60;
+            break;
+        case 1080950:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080P50;
+            break;
+        case 1080930:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080P30;
+            break;
+        case 1080160:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080I60;
+            break;
+        case 1080150:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080I50;
+            break;
+        case 720960:
+            *w      = 1280;
+            *h      = 720;
+            *preset_id = V4L2_DV_720P60;
+            break;
+        case 720950:
+            *w      = 1280;
+            *h      = 720;
+            *preset_id = V4L2_DV_720P50;
+            break;
+        case 5769501:
+            *w      = 720;
+            *h      = 576;
+            *preset_id = V4L2_DV_576P50;
+            break;
+        case 5769502:
+            *w      = 720;
+            *h      = 576;
+            *preset_id = V4L2_DV_576P50;
+           break;
+        case 4809601:
+            *w      = 720;
+            *h      = 480;
+            *preset_id = V4L2_DV_480P60;
+           break;
+        case 4809602:
+            *w     = 720;
+            *h     = 480;
+            *preset_id = V4L2_DV_480P60;
+          break;
+        default:
+            ALOGE("%s::unmathced 2D resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
+    } else if (s3dMode == HDMI_S3D_TB) {
+        switch (resolution) {
+        case 1080924:
+            *w      = 1920;
+            *h      = 1080;
+            *preset_id = V4L2_DV_1080P24_TB;
+            break;
+        case 720950:
+            *w      = 1280;
+            *h      = 720;
+            *preset_id = V4L2_DV_720P50_TB;
+            break;
+        default:
+            ALOGE("%s::unmathced S3D TB resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
+    } else {
+        switch (resolution) {
+        case 720960:
+            *w      = 1280;
+            *h      = 720;
+            *preset_id = V4L2_DV_720P60_SB_HALF;
+            break;
+        default:
+            ALOGE("%s::unmathced S3D SBS resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
     }
 
     return ret;
@@ -2295,94 +2231,108 @@ int hdmi_check_resolution(v4l2_std_id std_id)
     }
 
     if (!EDIDVideoResolutionSupport(&video)) {
-#ifdef DEBUG_MSG_ENABLE
-        ALOGD("%s::EDIDVideoResolutionSupport(%llx) fail (not suppoted std_id) \n", __func__, std_id);
-#endif
+        ALOG_LIB_HDMI_V4L2("%s::EDIDVideoResolutionSupport(%llx) fail (not suppoted std_id) \n", __func__, std_id);
         return -1;
     }
 
     return 0;
 }
 
-int hdmi_resolution_2_std_id(unsigned int resolution, int * w, int * h, v4l2_std_id * std_id)
+int hdmi_resolution_2_std_id(unsigned int resolution, unsigned int s3dMode, int * w, int * h, v4l2_std_id * std_id)
 {
     int ret = 0;
 
-    switch (resolution) {
-    case 1080960:
-        *std_id = V4L2_STD_1080P_60;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 1080950:
-        *std_id = V4L2_STD_1080P_50;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 1080930:
-        *std_id = V4L2_STD_1080P_30;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 1080924:
-        *std_id = V4L2_STD_TVOUT_1080P_24_TB;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 1080160:
-        *std_id = V4L2_STD_1080I_60;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 1080150:
-        *std_id = V4L2_STD_1080I_50;
-        *w      = 1920;
-        *h      = 1080;
-        break;
-    case 720960:
-        *std_id = V4L2_STD_720P_60;
-        *w      = 1280;
-        *h      = 720;
-        break;
-    case 7209601:
-        *std_id = V4L2_STD_TVOUT_720P_60_SBS_HALF;
-        *w      = 1280;
-        *h      = 720;
-        break;
-    case 720950:
-        *std_id = V4L2_STD_720P_50;
-        *w      = 1280;
-        *h      = 720;
-        break;
-    case 7209501:
-        *std_id = V4L2_STD_TVOUT_720P_50_TB;
-        *w      = 1280;
-        *h      = 720;
-        break;
-    case 5769501:
-        *std_id = V4L2_STD_576P_50_16_9;
-        *w      = 720;
-        *h      = 576;
-        break;
-    case 5769502:
-        *std_id = V4L2_STD_576P_50_4_3;
-        *w      = 720;
-        *h      = 576;
-        break;
-    case 4809601:
-        *std_id = V4L2_STD_480P_60_16_9;
-        *w      = 720;
-        *h      = 480;
-        break;
-    case 4809602:
-        *std_id = V4L2_STD_480P_60_4_3;
-        *w     = 720;
-        *h     = 480;
-        break;
-    default:
-        ALOGE("%s::unmathced resolution(%d)", __func__, resolution);
-        ret = -1;
-        break;
+    if (s3dMode == HDMI_2D) {
+        switch (resolution) {
+        case 1080960:
+            *std_id = V4L2_STD_1080P_60;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 1080950:
+            *std_id = V4L2_STD_1080P_50;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 1080930:
+            *std_id = V4L2_STD_1080P_30;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 1080160:
+            *std_id = V4L2_STD_1080I_60;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 1080150:
+            *std_id = V4L2_STD_1080I_50;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 720960:
+            *std_id = V4L2_STD_720P_60;
+            *w      = 1280;
+            *h      = 720;
+            break;
+        case 720950:
+            *std_id = V4L2_STD_720P_50;
+            *w      = 1280;
+            *h      = 720;
+            break;
+        case 5769501:
+            *std_id = V4L2_STD_576P_50_16_9;
+            *w      = 720;
+            *h      = 576;
+            break;
+        case 5769502:
+            *std_id = V4L2_STD_576P_50_4_3;
+            *w      = 720;
+            *h      = 576;
+            break;
+        case 4809601:
+            *std_id = V4L2_STD_480P_60_16_9;
+            *w      = 720;
+            *h      = 480;
+            break;
+        case 4809602:
+            *std_id = V4L2_STD_480P_60_4_3;
+            *w     = 720;
+            *h     = 480;
+            break;
+        default:
+            ALOGE("%s::unmathced resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
+    } else if (s3dMode == HDMI_S3D_TB) {
+        switch (resolution) {
+        case 1080924:
+            *std_id = V4L2_STD_TVOUT_1080P_24_TB;
+            *w      = 1920;
+            *h      = 1080;
+            break;
+        case 720950:
+            *std_id = V4L2_STD_TVOUT_720P_50_TB;
+            *w      = 1280;
+            *h      = 720;
+            break;
+        default:
+            ALOGE("%s::unmathced S3D TB resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
+    } else {
+        switch (resolution) {
+        case 720960:
+            *std_id = V4L2_STD_TVOUT_720P_60_SBS_HALF;
+            *w      = 1280;
+            *h      = 720;
+            break;
+        default:
+            ALOGE("%s::unmathced S3D SBS resolution(%d)", __func__, resolution);
+            ret = -1;
+            break;
+        }
     }
 
     return ret;

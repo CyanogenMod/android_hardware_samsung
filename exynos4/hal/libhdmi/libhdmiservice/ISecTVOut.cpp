@@ -54,10 +54,11 @@ namespace android {
         remote()->transact(SET_HDMI_MODE, data, &reply);
     }
 
-    void BpSecTVOut::setHdmiResolution(uint32_t resolution)
+    void BpSecTVOut::setHdmiResolution(uint32_t resolution, uint32_t s3dMode)
     {
         Parcel data, reply;
         data.writeInt32(resolution);
+        data.writeInt32(s3dMode);
         remote()->transact(SET_HDMI_RESOLUTION, data, &reply);
     }
 
