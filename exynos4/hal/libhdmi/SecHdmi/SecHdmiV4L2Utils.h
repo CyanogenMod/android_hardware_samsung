@@ -17,8 +17,8 @@
 #ifndef __HDMI_HAL_V4L2_UTILS_H__
 #define __HDMI_HAL_V4L2_UTILS_H__
 
-//#define LOG_NDEBUG 0
-//#define LOG_TAG "libhdmi"
+//#define ALOG_NDEBUG 0
+//#define ALOG_TAG "libhdmi"
 #if defined(BOARD_USE_V4L2)
 #include "SecBuffer.h"
 #endif
@@ -115,10 +115,10 @@ int composite_std_2_v4l2_std_id(int std);
 int hdmi_check_output_mode(int v4l2_output_type);
 #if defined(BOARD_USE_V4L2)
 int hdmi_check_resolution(unsigned int preset_id);
-int hdmi_resolution_2_preset_id(unsigned int resolution, int * w, int * h, unsigned int *preset_id);
+int hdmi_resolution_2_preset_id(unsigned int resolution, unsigned int s3dMode, int * w, int * h, unsigned int *preset_id);
 #else
 int hdmi_check_resolution(v4l2_std_id std_id);
-int hdmi_resolution_2_std_id(unsigned int resolution, int *w, int *h, v4l2_std_id *std_id);
+int hdmi_resolution_2_std_id(unsigned int resolution, unsigned int s3dMode, int *w, int *h, v4l2_std_id *std_id);
 #endif
 int hdmi_enable_hdcp(unsigned int hdcp_en);
 int hdmi_check_audio(void);

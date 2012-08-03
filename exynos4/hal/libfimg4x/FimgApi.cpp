@@ -17,8 +17,8 @@
 **
 */
 
-#define LOG_NDEBUG 0
-#define LOG_TAG "SKIA"
+#define ALOG_NDEBUG 0
+#define ALOG_TAG "SKIA"
 #include <utils/Log.h>
 
 #include "FimgApi.h"
@@ -274,24 +274,22 @@ void printDataBlit(char *title, struct fimg2d_blit *cmd)
 
     ALOGI("    sequence_no. = %u\n", cmd->seq_no);
     ALOGI("    blit_op      = %d(%s)\n", cmd->op, optbl[cmd->op].str);
-    ALOGI("    fill_color   = %X\n", cmd->solid_color);
-    ALOGI("    global_alpha = %u\n", (unsigned int)cmd->g_alpha);
-    ALOGI("    PREMULT      = %s\n", cmd->premult == PREMULTIPLIED ? "PREMULTIPLIED" : "NON-PREMULTIPLIED");
-    ALOGI("    do_dither    = %s\n", cmd->dither == true ? "dither" : "no-dither");
+    ALOGI("    fill_color   = %X\n", cmd->param.solid_color);
+    ALOGI("    global_alpha = %u\n", (unsigned int)cmd->param.g_alpha);
+    ALOGI("    PREMULT      = %s\n", cmd->param.premult == PREMULTIPLIED ? "PREMULTIPLIED" : "NON-PREMULTIPLIED");
+    ALOGI("    do_dither    = %s\n", cmd->param.dither == true ? "dither" : "no-dither");
 
-    printDataBlitRotate(cmd->rotate);
+    printDataBlitRotate(cmd->param.rotate);
 
-    printDataBlitScale(cmd->scaling);
+    printDataBlitScale(&cmd->param.scaling);
 
     printDataBlitImage("SRC", cmd->src);
     printDataBlitImage("DST", cmd->dst);
     printDataBlitImage("MSK", cmd->msk);
 
-    printDataBlitRect("SRC", cmd->src_rect);
-    printDataBlitRect("DST", cmd->dst_rect);
-    printDataBlitRect("MSK", cmd->msk_rect);
-
-    printDataBlitClip(cmd->clipping);
+    printDataBlitRect("SRC", &cmd->src->rect);
+    printDataBlitRect("DST", &cmd->dst->rect);
+    printDataBlitRect("MSK", &cmd->msk->rect);
 }
 
 void printDataBlitImage(char *title, struct fimg2d_image *image)
@@ -299,8 +297,6 @@ void printDataBlitImage(char *title, struct fimg2d_image *image)
     if (NULL != image) {
     ALOGI("    Image_%s\n", title);
     ALOGI("        addr = %X\n", image->addr.start);
-    ALOGI("        size = %u\n", image->addr.size);
-    ALOGI("        (width, height) = (%d, %d)\n", image->width, image->height);
     ALOGI("        format = %d\n", image->fmt);
     } else
         ALOGI("    Image_%s : NULL\n", title);
@@ -317,42 +313,20 @@ void printDataBlitRect(char *title, struct fimg2d_rect *rect)
         ALOGI("    RECT_%s : NULL\n", title);
 }
 
-void printDataBlitRotate(enum rotation rotate)
+void printDataBlitRotate(int rotate)
 {
     ALOGI("    ROTATE : %d\n", rotate);
 }
 
-void printDataBlitClip(struct fimg2d_clip *clip)
-{
-    if (NULL != clip) {
-        ALOGI("    CLIP\n");
-        ALOGI("        clip %s\n", clip->enable == true ? "enabled" : "disabled");
-        ALOGI("        (x1, y1) = (%d, %d)\n", clip->x1, clip->y1);
-        ALOGI("        (x2, y2) = (%d, %d)\n", clip->x2, clip->y2);
-        ALOGI("        (width, hight) = (%d, %d)\n", clip->x2 - clip->x1, clip->y2 - clip->y1);
-    } else
-        ALOGI("    CLIP : NULL\n");
-}
-
 void printDataBlitScale(struct fimg2d_scale *scaling)
 {
-    if (NULL != scaling) {
-        ALOGI("    SCALING\n");
-        ALOGI("        scale_mode : %s\n", scaling->mode == 0 ?
-                                          "NO_SCALING" :
-                              (scaling->mode == 1 ? "SCALING_NEAREST" : "SCALING_BILINEAR"));
-        ALOGI("        scaling_factor_unit : %s\n", scaling->factor == 0 ? "PERCENT" : "PIXEL");
-
-        if (scaling->factor == 0)
-            ALOGI("        scaling_factor : (scale_w, scale_y) = (%d, %d)\n", scaling->scale_w, scaling->scale_h);
-        else {
-            ALOGI("        src : (src_w, src_h) = (%d, %d)\n", scaling->src_w, scaling->src_h);
-            ALOGI("        dst : (dst_w, dst_h) = (%d, %d)\n", scaling->dst_w, scaling->dst_h);
-            ALOGI("        scaling_factor : (scale_w, scale_y) = (%3.2f, %3.2f)\n", (double)scaling->dst_w / scaling->src_w, (double)scaling->dst_h / scaling->src_h);
-        }
-    } else
-        ALOGI("    SCALING : NULL(NO SCALE MODE)\n");
-
+    ALOGI("    SCALING\n");
+    ALOGI("        scale_mode : %s\n", scaling->mode == 0 ?
+                                      "NO_SCALING" :
+                          (scaling->mode == 1 ? "SCALING_NEAREST" : "SCALING_BILINEAR"));
+    ALOGI("        src : (src_w, src_h) = (%d, %d)\n", scaling->src_w, scaling->src_h);
+    ALOGI("        dst : (dst_w, dst_h) = (%d, %d)\n", scaling->dst_w, scaling->dst_h);
+    ALOGI("        scaling_factor : (scale_w, scale_y) = (%3.2f, %3.2f)\n", (double)scaling->dst_w / scaling->src_w, (double)scaling->dst_h / scaling->src_h);
 }
 
 void printDataMatrix(int matrixType)

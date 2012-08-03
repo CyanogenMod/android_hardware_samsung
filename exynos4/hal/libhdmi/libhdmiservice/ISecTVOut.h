@@ -35,7 +35,7 @@ namespace android {
             DECLARE_META_INTERFACE(SecTVOut);
             virtual void setHdmiCableStatus(uint32_t status) = 0;
             virtual void setHdmiMode(uint32_t mode) = 0;
-            virtual void setHdmiResolution(uint32_t resolution) = 0;
+            virtual void setHdmiResolution(uint32_t resolution, uint32_t s3dMode) = 0;
             virtual void setHdmiHdcp(uint32_t enHdcp) = 0;
             virtual void setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer) = 0;
             virtual void setHdmiHwcLayer(uint32_t hwcLayer) = 0;
@@ -56,7 +56,7 @@ namespace android {
             BpSecTVOut(const sp<IBinder>& impl): BpInterface<ISecTVOut>(impl){}
             virtual void setHdmiCableStatus(uint32_t status);
             virtual void setHdmiMode(uint32_t mode);
-            virtual void setHdmiResolution(uint32_t resolution);
+            virtual void setHdmiResolution(uint32_t resolution, uint32_t s3dMode);
             virtual void setHdmiHdcp(uint32_t enHdcp);
             virtual void setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer);
             virtual void setHdmiHwcLayer(uint32_t hwcLayer);

@@ -32,8 +32,6 @@
 
 #include "ISecTVOut.h"
 #include "SecHdmi.h"
-#include "sec_format.h"
-#include "sec_utils.h"
 #include "MessageQueue.h"
 
 namespace android {
@@ -47,6 +45,13 @@ namespace android {
                 HDMI_MODE_NONE = 0,
                 HDMI_MODE_UI,
                 HDMI_MODE_VIDEO,
+            };
+
+            enum HDMI_S3D_MODE
+            {
+                HDMI_2D = 0,
+                HDMI_S3D_TB,
+                HDMI_S3D_SBS,
             };
 
             mutable Mutex mLock;
@@ -79,7 +84,7 @@ namespace android {
 
             virtual void                        setHdmiStatus(uint32_t status);
             virtual void                        setHdmiMode(uint32_t mode);
-            virtual void                        setHdmiResolution(uint32_t resolution);
+            virtual void                        setHdmiResolution(uint32_t resolution, HDMI_S3D_MODE s3dMode);
             virtual void                        setHdmiHdcp(uint32_t enHdcp);
             virtual void                        setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer);
             virtual void                        setHdmiHwcLayer(uint32_t hwcLayer);

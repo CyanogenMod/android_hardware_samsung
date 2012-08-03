@@ -54,12 +54,9 @@ extern "C" {
 
 #ifdef BOARD_USE_V4L2
 #include "s5p_fimc_v4l2.h"
-#include "sec_utils_v4l2.h"
 #else
 #include "s5p_fimc.h"
-#include "sec_utils.h"
 #endif
-#include "sec_format.h"
 
 #include "SecBuffer.h"
 #include "SecRect.h"
@@ -76,26 +73,29 @@ class SecFimc
 {
 public:
     enum DEV {
-        DEV_0 = 0,
-        DEV_1,
-        DEV_2,
-        DEV_3,
-        DEV_MAX,
+	DEV_0 = 0,
+	DEV_1,
+	DEV_2,
+	DEV_3,
+	DEV_MAX,
     };
 
     enum MODE {
-        MODE_NONE = 0,
-        MODE_SINGLE_BUF,
-        MODE_MULTI_BUF,
-        MODE_DMA_AUTO,
-        MODE_MAX,
+	MODE_NONE = 0,
+	MODE_SINGLE_BUF,
+	MODE_MULTI_BUF,
+	MODE_DMA_AUTO,
+	MODE_MAX,
     };
 
 private:
     bool                        mFlagCreate;
     int                         mDev;
+    unsigned int       		mFimcRrvedPhysMemAddr;
     int                         mFimcMode;
     int                         mNumOfBuf;
+    int                         mSrc_index;
+    int                         mSrc_planes;
 
     int                         mRealDev;
     int                         mFd;
@@ -124,38 +124,38 @@ public:
     virtual bool destroy(void);
     bool flagCreate(void);
 
-    int  getFd(void);
-
+    int  getSecFimcFd(void);
+    virtual int getFimcRsrvedPhysMemAddr();
     SecBuffer * getMemAddr(int index = 0);
 
     int  getHWVersion(void);
 
     virtual bool setSrcParams(unsigned int width, unsigned int height,
-                      unsigned int cropX, unsigned int cropY,
-                      unsigned int *cropWidth, unsigned int *cropHeight,
-                      int colorFormat,
-                      bool forceChange = true);
+		      unsigned int cropX, unsigned int cropY,
+		      unsigned int *cropWidth, unsigned int *cropHeight,
+		      int colorFormat,
+		      bool forceChange = true);
 
     virtual bool getSrcParams(unsigned int *width, unsigned int *height,
-                      unsigned int *cropX, unsigned int *cropY,
-                      unsigned int *cropWidth, unsigned int *cropHeight,
-                      int *colorFormat);
+		      unsigned int *cropX, unsigned int *cropY,
+		      unsigned int *cropWidth, unsigned int *cropHeight,
+		      int *colorFormat);
 
     virtual bool setSrcAddr(unsigned int physYAddr,
-                    unsigned int physCbAddr = 0,
-                    unsigned int physCrAddr = 0,
-                    int colorFormat = 0);
+		    unsigned int physCbAddr = 0,
+		    unsigned int physCrAddr = 0,
+		    int colorFormat = 0);
 
     virtual bool setDstParams(unsigned int width, unsigned int height,
-                      unsigned int cropX, unsigned int cropY,
-                      unsigned int *cropWidth, unsigned int *cropHeight,
-                      int colorFormat,
-                      bool forceChange = true);
+		      unsigned int cropX, unsigned int cropY,
+		      unsigned int *cropWidth, unsigned int *cropHeight,
+		      int colorFormat,
+		      bool forceChange = true);
 
     virtual bool getDstParams(unsigned int *width, unsigned int *height,
-                      unsigned int *cropX, unsigned int *cropY,
-                      unsigned int *cropWidth, unsigned int *cropHeight,
-                      int *colorFormat);
+		      unsigned int *cropX, unsigned int *cropY,
+		      unsigned int *cropWidth, unsigned int *cropHeight,
+		      int *colorFormat);
 
     virtual bool setDstAddr(unsigned int physYAddr, unsigned int physCbAddr = 0, unsigned int physCrAddr = 0, int buf_index = 0);
 
@@ -165,21 +165,22 @@ public:
     virtual bool setColorKey(bool enable = true, int colorKey = 0xff);
 
     virtual bool draw(int src_index, int dst_index);
+    virtual bool handleOneShot();
 
 private:
     bool m_streamOn(void);
     bool m_checkSrcSize(unsigned int width, unsigned int height,
-                        unsigned int cropX, unsigned int cropY,
-                        unsigned int *cropWidth, unsigned int *cropHeight,
-                        int colorFormat,
-                        bool forceChange = false);
+			unsigned int cropX, unsigned int cropY,
+			unsigned int *cropWidth, unsigned int *cropHeight,
+			int colorFormat,
+			bool forceChange = false);
 
     bool m_checkDstSize(unsigned int width, unsigned int height,
-                        unsigned int cropX, unsigned int cropY,
-                        unsigned int *cropWidth, unsigned int *cropHeight,
-                        int colorFormat,
-                        int rotVal,
-                        bool forceChange = false);
+			unsigned int cropX, unsigned int cropY,
+			unsigned int *cropWidth, unsigned int *cropHeight,
+			int colorFormat,
+			int rotVal,
+			bool forceChange = false);
     int  m_widthOfFimc(int v4l2ColorFormat, int width);
     int  m_heightOfFimc(int v4l2ColorFormat, int height);
     int  m_getYuvBpp(unsigned int fmt);
