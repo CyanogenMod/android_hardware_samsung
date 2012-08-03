@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define LOG_TAG "libhdmiclient"
+#define ALOG_TAG "libhdmiclient"
 
 #include "SecHdmiClient.h"
 
@@ -62,12 +62,12 @@ void SecHdmiClient::setHdmiMode(int mode)
         g_SecTVOutService->setHdmiMode(mode);
 }
 
-void SecHdmiClient::setHdmiResolution(int resolution)
+void SecHdmiClient::setHdmiResolution(int resolution, enum HDMI_S3D_MODE s3dMode)
 {
     //ALOGD("%s HDMI Resolution: %d\n", __func__, resolution);
 
     if (g_SecTVOutService != 0)
-        g_SecTVOutService->setHdmiResolution(resolution);
+        g_SecTVOutService->setHdmiResolution(resolution, s3dMode);
 }
 
 void SecHdmiClient::setHdmiHdcp(int enHdcp)
@@ -115,7 +115,18 @@ void SecHdmiClient::blit2Hdmi(uint32_t w, uint32_t h,
     if (g_SecTVOutService != 0 && mEnable == 1)
         g_SecTVOutService->blit2Hdmi(w, h, colorFormat, physYAddr, physCbAddr, physCrAddr, dstX, dstY, hdmiLayer, num_of_hwc_layer);
 }
-
+unsigned int SecHdmiClient::getHdmiResolution() {
+//    if (g_SecTVOutService != 0)
+//       g_SecTVOutService->mHdmiResolutionValue;
+    return 0;
+}
+void SecHdmiClient::setHdmiResolution(int resolution) {
+    if (g_SecTVOutService != 0)
+            g_SecTVOutService->setHdmiResolution(resolution, HDMI_2D);
+}
+void SecHdmiClient::disableLayer(unsigned int){
+}
+    
 sp<ISecTVOut> SecHdmiClient::m_getSecTVOutService(void)
 {
     int ret = 0;

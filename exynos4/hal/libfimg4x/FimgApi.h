@@ -25,8 +25,8 @@
 #include "SkMatrix.h"
 #include "sec_g2d_4x.h"
 
-#define REAL_DEBUG
-#define ANDROID_ALOG
+#undef REAL_DEBUG
+#undef ANDROID_ALOG
 
 #if defined(REAL_DEBUG)
 #ifdef ANDROID_ALOG
@@ -104,10 +104,9 @@ extern "C"
 int SyncFimgApi(void);
 
 void printDataBlit(char *title, struct fimg2d_blit *cmd);
-void printDataBlitRotate(enum rotation rotate);
+void printDataBlitRotate(int rotate);
 void printDataBlitImage(char *title, struct fimg2d_image *image);
 void printDataBlitRect(char *title, struct fimg2d_rect *rect);
-void printDataBlitClip(struct fimg2d_clip *clip);
 void printDataBlitScale(struct fimg2d_scale *scaling);
 void printDataMatrix(int matrixType);
 
