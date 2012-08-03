@@ -75,7 +75,7 @@ extern "C" {
 class SecFimc
 {
 public:
-    enum DEV {
+    enum FIMC_DEV {
         DEV_0 = 0,
         DEV_1,
         DEV_2,
@@ -120,11 +120,13 @@ public:
     SecFimc();
     virtual ~SecFimc();
 
-    virtual bool create(enum DEV dev, enum MODE mode, int numOfBuf);
+    virtual bool create(enum FIMC_DEV dev, enum fimc_overlay_mode mode, unsigned int numOfBuf);
     virtual bool destroy(void);
     bool flagCreate(void);
 
-    int  getFd(void);
+    int  getSecFimcFd(void);
+
+    virtual void getFimcRsrvedPhysMemAddr();
 
     SecBuffer * getMemAddr(int index = 0);
 
@@ -141,7 +143,7 @@ public:
                       unsigned int *cropWidth, unsigned int *cropHeight,
                       int *colorFormat);
 
-    virtual bool setSrcAddr(unsigned int physYAddr,
+    virtual bool setSrcPhyAddr(unsigned int physYAddr,
                     unsigned int physCbAddr = 0,
                     unsigned int physCrAddr = 0,
                     int colorFormat = 0);
@@ -157,7 +159,7 @@ public:
                       unsigned int *cropWidth, unsigned int *cropHeight,
                       int *colorFormat);
 
-    virtual bool setDstAddr(unsigned int physYAddr, unsigned int physCbAddr = 0, unsigned int physCrAddr = 0, int buf_index = 0);
+    virtual bool setDstPhyAddr(unsigned int physYAddr, unsigned int physCbAddr = 0, unsigned int physCrAddr = 0);
 
     virtual bool setRotVal(unsigned int rotVal);
     virtual bool setGlobalAlpha(bool enable = true, int alpha = 0xff);
@@ -165,6 +167,8 @@ public:
     virtual bool setColorKey(bool enable = true, int colorKey = 0xff);
 
     virtual bool draw(int src_index, int dst_index);
+
+    virtual void handleOneShot();
 
 private:
     bool m_streamOn(void);

@@ -17,6 +17,10 @@ ifeq ($(filter-out exynos4,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+BOARD_SUPPORT_SYSMMU := true
+
+DEFAULT_FB_NUM := 2
+
 LOCAL_PRELINK_MODULE := false
 LOCAL_SHARED_LIBRARIES := liblog libutils libcutils
 ifeq ($(BOARD_SUPPORT_SYSMMU),true)
