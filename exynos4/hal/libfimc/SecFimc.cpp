@@ -549,7 +549,7 @@ SecFimc::~SecFimc()
     }
 }
 
-bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
+bool SecFimc::create(enum FIMC_DEV dev, enum fimc_overlay_mode mode, unsigned int numOfBuf)
 {
     if (mFlagCreate == true) {
         ALOGE("%s::Already Created fail", __func__);
@@ -565,13 +565,13 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
     mRealDev = dev;
 
     switch (mode) {
-    case MODE_SINGLE_BUF:
+    case FIMC_OVLY_NONE_SINGLE_BUF:
         mFimcMode = FIMC_OVLY_NONE_SINGLE_BUF;
         break;
-    case MODE_MULTI_BUF:
+    case FIMC_OVLY_NONE_MULTI_BUF:
         mFimcMode = FIMC_OVLY_NONE_MULTI_BUF;
         break;
-    case MODE_DMA_AUTO:
+    case FIMC_OVLY_DMA_AUTO:
         mFimcMode = FIMC_OVLY_DMA_AUTO;
         break;
     default:
@@ -592,13 +592,13 @@ bool SecFimc::create(enum DEV dev, enum MODE mode, int numOfBuf)
         mRealDev = 0;
         break;
     case DEV_1:
-        mRealDev = 2;
+        mRealDev = 1;
         break;
     case DEV_2:
-        mRealDev = 4;
+        mRealDev = 2;
         break;
     case DEV_3:
-        mRealDev = 5;
+        mRealDev = 3;
         break;
     default:
         ALOGE("%s::invalid mDev(%d)", __func__, mDev);
@@ -742,9 +742,12 @@ bool SecFimc::flagCreate(void)
     return mFlagCreate;
 }
 
-int SecFimc::getFd(void)
+int SecFimc::getSecFimcFd(void)
 {
     return mFd;
+}
+
+void SecFimc::getFimcRsrvedPhysMemAddr() {
 }
 
 SecBuffer * SecFimc::getMemAddr(int index)
@@ -905,7 +908,7 @@ bool SecFimc::getSrcParams(unsigned int *width, unsigned int *height,
     return true;
 }
 
-bool SecFimc::setSrcAddr(unsigned int physYAddr,
+bool SecFimc::setSrcPhyAddr(unsigned int physYAddr,
                          unsigned int physCbAddr,
                          unsigned int physCrAddr,
                          int colorFormat)
@@ -1046,10 +1049,12 @@ bool SecFimc::setDstParams(unsigned int width, unsigned int height,
     }
 #endif
 
+/*
     if (fimc_v4l2_s_ctrl(mFd, V4L2_ROTATE, mRotVal) < 0) {
         ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
         return false;
     }
+*/
 
     if (fimc_v4l2_set_fmt(mFd, V4L2_BUF_TYPE_DST, V4L2_FIELD_ANY, &(params->dst), (unsigned int)mS5pFimc.out_buf.phys_addr) < 0) {
         ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
@@ -1144,8 +1149,9 @@ bool SecFimc::getDstParams(unsigned int *width, unsigned int *height,
     return true;
 }
 
-bool SecFimc::setDstAddr(unsigned int physYAddr, unsigned int physCbAddr, unsigned int physCrAddr, int buf_index)
+bool SecFimc::setDstPhyAddr(unsigned int physYAddr, unsigned int physCbAddr, unsigned int physCrAddr)
 {
+    int buf_index = 0;
 #ifdef DEBUG_LIB_FIMC
     ALOGD("%s", __func__);
 #endif
@@ -1175,10 +1181,12 @@ bool SecFimc::setDstAddr(unsigned int physYAddr, unsigned int physCbAddr, unsign
         && ((unsigned int)mS5pFimc.out_buf.phys_addr != mDstBuffer[0].phys.p))
         mS5pFimc.use_ext_out_mem = 1;
 
+/*
     if (fimc_v4l2_s_ctrl(mFd, V4L2_ROTATE, mRotVal) < 0) {
         ALOGE("%s::fimc_v4l2_s_ctrl(V4L2_ROTATE)", __func__);
         return false;
     }
+*/
 
     if (fimc_v4l2_set_fmt(mFd, V4L2_BUF_TYPE_DST, V4L2_FIELD_ANY, &(params->dst), (unsigned int)mS5pFimc.out_buf.phys_addr) < 0) {
         ALOGE("%s::fimc_v4l2_set_fmt()[dst] failed", __func__);
@@ -1698,4 +1706,7 @@ int SecFimc::m_getYuvPlanes(unsigned int fmt)
         return sel;
     else
         return yuv_list[sel].planes;
+}
+
+void SecFimc::handleOneShot() {
 }
