@@ -14,38 +14,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-
 LOCAL_PATH := $(call my-dir)
-
-# HAL module implemenation, not prelinked and stored in
-# hw/<OVERLAY_HARDWARE_MODULE_ID>.<ro.product.board>.so
 include $(CLEAR_VARS)
-LOCAL_PRELINK_MODULE := false
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 
-LOCAL_MODULE := gralloc.$(TARGET_BOARD_PLATFORM)
+UMP_SRCS := \
+	arch_011_udd/ump_frontend.c \
+	arch_011_udd/ump_ref_drv.c \
+	arch_011_udd/ump_arch.c \
+	os/linux/ump_uku.c \
+	os/linux/ump_osu_memory.c \
+	os/linux/ump_osu_locks.c
+
+# Shared and static library for target
+# ========================================================
+include $(CLEAR_VARS)
+LOCAL_MODULE := libUMP
+LOCAL_SRC_FILES := $(UMP_SRCS)
+LOCAL_C_INCLUDES:= \
+	hardware/samsung/exynos4/hal/libUMP/include \
+	hardware/samsung/exynos4/hal/libUMP/ump
 LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_PATH := $(TARGET_OUT_STATIC_LIBRARIES)/
+include $(BUILD_STATIC_LIBRARY)
 
-LOCAL_SHARED_LIBRARIES := liblog libcutils libGLESv1_CM libUMP
-
-# Include the UMP header files
-LOCAL_C_INCLUDES := $(TARGET_HAL_PATH)/libgralloc_ump
-
-LOCAL_CFLAGS:= -DLOG_TAG=\"gralloc\" -DGRALLOC_32_BITS -DSTANDARD_LINUX_SCREEN
-
-ifeq ($(BOARD_HAVE_CODEC_SUPPORT),SAMSUNG_CODEC_SUPPORT)
-LOCAL_CFLAGS     += -DSAMSUNG_CODEC_SUPPORT
-LOCAL_C_INCLUDES += frameworks/av/media/libstagefright/include
-endif
-
-LOCAL_SRC_FILES := \
-	gralloc_module.cpp \
-	alloc_device.cpp \
-	framebuffer_device.cpp
-
-#LOCAL_CFLAGS+= -DMALI_VSYNC_EVENT_REPORT_ENABLE
+include $(CLEAR_VARS)
+LOCAL_MODULE := libUMP
+LOCAL_MODULE_TAGS := eng
+LOCAL_WHOLE_STATIC_LIBRARIES := libUMP
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/
 include $(BUILD_SHARED_LIBRARY)
-
 endif

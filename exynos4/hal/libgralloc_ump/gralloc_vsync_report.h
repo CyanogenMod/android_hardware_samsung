@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
- *
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2011 ARM Limited. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef GRALLOC_HELPER_H_
-#define GRALLOC_HELPER_H_
+#ifndef GRALLOC_VSYNC_REPORT_H_
+#define GRALLOC_VSYNC_REPORT_H_
 
-#include <sys/mman.h>
-
-inline size_t round_up_to_page_size(size_t x)
+#ifdef __cplusplus
+extern "C"
 {
-    return (x + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);
+#endif
+
+
+typedef enum mali_vsync_event
+{
+	MALI_VSYNC_EVENT_BEGIN_WAIT = 0,
+	MALI_VSYNC_EVENT_END_WAIT
+} mali_vsync_event;
+
+extern void _mali_base_arch_vsync_event_report(mali_vsync_event);
+
+inline void gralloc_mali_vsync_report(mali_vsync_event event)
+{
+	_mali_base_arch_vsync_event_report(event);
 }
 
-#endif /* GRALLOC_HELPER_H_ */
+#ifdef __cplusplus
+}
+#endif
+#endif /* GRALLOC_VSYNC_REPORT_H_ */
