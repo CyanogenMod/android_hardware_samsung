@@ -37,8 +37,10 @@
 #include <hardware/camera.h>
 #include <videodev2.h>
 #include <videodev2_exynos_camera.h>
+#include "s5p_fimc.h"
 
 #include "SecBuffer.h"
+#include "exynos_mem.h"
 
 #include <utils/String8.h>
 
@@ -56,7 +58,6 @@ namespace android {
 
 #ifndef BOARD_USE_V4L2
 //#define ENABLE_ESD_PREVIEW_CHECK
-//#define ZERO_SHUTTER_LAG
 //#define IS_FW_DEBUG
 #define VIDEO_SNAPSHOT
 
@@ -66,7 +67,7 @@ namespace android {
 
 #define USE_FACE_DETECTION
 #endif
-//#define USE_TOUCH_AF
+#define USE_TOUCH_AF
 
 #if defined(ALOG_NDEBUG) && (ALOG_NDEBUG == 0)
 #define ALOG_CAMERA ALOGD
@@ -184,11 +185,16 @@ namespace android {
 #endif
 #endif
 
+#define DEV_EXYNOS_MEM    "/dev/exynos-mem"
 #define PFX_NODE_MEM   "/dev/exynos-mem"
 
-#define CAMERA_DEV_NAME_TEMP "/data/videotmp_000"
-#define CAMERA_DEV_NAME2_TEMP "/data/videotemp_002"
+#define DEV_NAME3_RESERVED_SIZE 25600
+#define DEV_NAME2_RESERVED_SIZE 32768
 
+#define CAMERA_DEV_NAME_TEMP "/data/videotmp_000"
+#ifdef IS_FW_DEBUG
+#define CAMERA_DEV_NAME2_TEMP "/data/videotemp_002"
+#endif
 
 #define BPP             2
 #define MIN(x, y)       (((x) < (y)) ? (x) : (y))
@@ -256,9 +262,14 @@ namespace android {
 #define PREVIEW_MODE 1
 #define CAPTURE_MODE 2
 #define RECORD_MODE 3
+#define CAMERA_MAX_FACES 5
+
+#ifdef IS_FW_DEBUG
 #define FIMC_IS_FW_DEBUG_REGION_SIZE 512000
 #define FIMC_IS_FW_DEBUG_REGION_ADDR 0x840000
 #define SIZE_4K 4096
+#define ALOGD_IS(...) ((void)ALOG(ALOG_DEBUG, "IS_FW_DEBUG", __VA_ARGS__))
+#endif
 
 struct yuv_fmt_list {
     const char  *name;
@@ -368,7 +379,23 @@ public:
     int             getCameraId(void);
     void            initParameters(int index);
     int             setMode(int recording_en);
+    int             openExynosMemDev(int *fp);
 
+    int             createFimc(int *fp, char *dev_name, int mode, int index);
+    int             setFimc(void);
+    int             setFimcForPreview(void);
+    int             setFimcForRecord(void);
+    int             setFimcForSnapshot(void);
+    int             setFimcSrc(int fd, int width, int height, camera_frame_metadata_t *facedata);
+    int             setFimcDst(int fd, int width, int heifht, int pix_fmt, unsigned int addr);
+    int             clearFimcBuf(int fd);
+    int             runPreviewFimcOneshot(unsigned int src_addr, camera_frame_metadata_t *facedata);
+    int             runRecordFimcOneshot(int index, unsigned int src_addr);
+    int             runSnapshotFimcOneshot(unsigned int src_addr);
+    unsigned int    getShareBufferAddr(int index);
+    int             getSnapshotAddr(int index, SecBuffer *buffer);
+
+    char *          getMappedAddr(void);
     int             startPreview(void);
     int             stopPreview(void);
     int             getPreviewState(void)
@@ -391,12 +418,14 @@ public:
     int             getRecordFrame(void);
     int             releaseRecordFrame(int index);
     int             getRecordAddr(int index, SecBuffer *buffer);
+    int             getRecordPhysAddr(int index, SecBuffer *buffer);
 
     int             getPreview(camera_frame_metadata_t *facedata);
     int             setPreviewSize(int width, int height, int pixel_format);
     int             getPreviewSize(int *width, int *height, int *frame_size);
     int             getPreviewMaxSize(int *width, int *height);
     int             getPreviewPixelFormat(void);
+    int             getPreviewSrcSize(int *width, int *height, int *frame_size);
     int             setPreviewImage(int index, unsigned char *buffer, int size);
 
     int             setVideosnapshotSize(int width, int height);
@@ -605,6 +634,7 @@ private:
     bool            m_camera_use_ISP;
 
     int             m_cam_fd;
+    int             m_prev_fd;
     struct pollfd   m_events_c;
 
     int             m_cam_fd2;
@@ -620,6 +650,14 @@ private:
     int             m_mem_fd;
     off_t           m_debug_paddr;
 #endif
+
+    int             m_exynos_mem_fd_prev;
+    int             m_exynos_mem_fd_rec;
+    int             m_exynos_mem_fd_snap;
+    void           *m_prev_mapped_addr;
+    void           *m_rec_mapped_addr;
+    void           *m_cap_mapped_addr;
+    unsigned int    m_snapshot_phys_addr;
 
     int             m_preview_v4lformat;
     int             m_preview_width;
@@ -652,6 +690,8 @@ private:
     bool            m_record_hint;
     int             m_recording_width;
     int             m_recording_height;
+    int             m_recordshot_width;
+    int             m_recordshot_height;
     long            m_gps_latitude;
     long            m_gps_longitude;
     long            m_gps_altitude;
@@ -665,7 +705,6 @@ private:
     int             m_camera_af_flag;
     int             m_auto_focus_state;
 
-    int             m_flag_camera_create;
     int             m_flag_camera_start;
 
     int             m_jpeg_fd;
@@ -683,6 +722,7 @@ private:
     exif_attribute_t mExifInfo;
 
     struct SecBuffer m_capture_buf[CAP_BUFFERS];
+    struct SecBuffer m_buffers_share[MAX_BUFFERS];
     struct SecBuffer m_buffers_preview[MAX_BUFFERS];
     struct SecBuffer m_buffers_record[MAX_BUFFERS];
 
