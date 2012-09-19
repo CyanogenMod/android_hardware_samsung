@@ -549,7 +549,7 @@ static void *hwc_vsync_thread(void *data)
         // spamming the UEventObserver and events/0 process with more
         // information than this device could really deal with every 18ms
         int res = ioctl(ctx->global_lcd_win.fd, S3CFB_WAIT_FOR_VSYNC, &timestamp);
-        if(res > 0) {
+        if (res > 0 && timestamp > 0) {
             if(!ctx->procs || !ctx->procs->vsync) continue;
             ctx->procs->vsync(ctx->procs, 0, timestamp);
         }
