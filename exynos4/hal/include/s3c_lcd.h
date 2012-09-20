@@ -77,6 +77,7 @@ struct s3c_fb_user_ion_client {
 #define S3CFB_GET_FB_PHY_ADDR       _IOR ('F', 310, unsigned int)
 #define S3C_FB_GET_CURR_FB_INFO     _IOR ('F', 305, s3c_fb_next_info_t)
 #define S3CFB_GET_ION_USER_HANDLE   _IOWR('F', 208, struct s3c_fb_user_ion_client)
+#define S3CFB_WAIT_FOR_VSYNC        _IOR ('F', 311, uint64_t)
 
 /***************** LCD frame buffer *****************/
 #define FB0_NAME    "/dev/fb0"

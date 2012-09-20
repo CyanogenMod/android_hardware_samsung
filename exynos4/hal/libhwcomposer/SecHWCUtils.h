@@ -62,7 +62,7 @@
 
 #ifdef SKIP_DUMMY_UI_LAY_DRAWING
 #define GL_WA_OVLY_ALL
-#define THRES_FOR_SWAP  (1800)    /* 60sec in Frames. 30fps * 60 = 1800 */
+#define THRES_FOR_SWAP  (3600)    /* 60sec in Frames. 60fps * 60 = 3600 */
 #endif
 
 #define NUM_OF_DUMMY_WIN    (4)
