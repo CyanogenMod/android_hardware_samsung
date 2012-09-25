@@ -14,6 +14,7 @@
 
 
 LOCAL_PATH := $(call my-dir)
+ifneq ($(TARGET_DEVICE),epicmtd)
 
 # HAL module implemenation stored in
 # hw/<POWERS_HARDWARE_MODULE_ID>.<ro.hardware>.so
@@ -25,3 +26,4 @@ LOCAL_SRC_FILES := power.c
 LOCAL_MODULE := power.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
+endif
