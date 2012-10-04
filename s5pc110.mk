@@ -14,6 +14,6 @@
 
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
 
-include hardware/samsung/exynos3/s5pc110/Android.mk
+include $(SAM_ROOT)/exynos3/s5pc110/Android.mk
 
 endif
