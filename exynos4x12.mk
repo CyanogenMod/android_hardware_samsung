@@ -16,9 +16,9 @@ ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
 ifeq ($(TARGET_SOC),exynos4x12)
 
 include $(TARGET_HAL_PATH)/Android.mk
-include hardware/samsung/exynos/multimedia/Android.mk
-include hardware/samsung/exynos4/exynos4x12/Android.mk
-include hardware/samsung/exynos4/ril/Android.mk
+include $(SAM_ROOT)/exynos/multimedia/Android.mk
+include $(SAM_ROOT)/exynos4/exynos4x12/Android.mk
+include $(SAM_ROOT)/exynos4/ril/Android.mk
 
 endif
 endif

@@ -12,17 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SAM_ROOT := $(call my-dir)
+
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
 ifeq ($(TARGET_SOC),exynos4210)
-include hardware/samsung/exynos4210.mk
+include $(SAM_ROOT)/exynos4210.mk
 endif
 ifeq ($(TARGET_SOC),exynos4x12)
-include hardware/samsung/exynos4x12.mk
+include $(SAM_ROOT)/exynos4x12.mk
 endif
 endif
 
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
 ifneq ($(TARGET_BOOTLOADER_BOARD_NAME),herring)
-include hardware/samsung/s5pc110.mk
+include $(SAM_ROOT)/s5pc110.mk
 endif
+endif
+
+ifeq ($(BOARD_HAVE_SAMSUNG_WIFI),true)
+include $(SAM_ROOT)/macloader/Android.mk
 endif
