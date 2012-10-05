@@ -176,7 +176,8 @@ struct hwc_context_t {
     struct fb_var_screeninfo  lcd_info;
     s5p_fimc_t                fimc;
     hwc_procs_t               *procs;
-    pthread_t                vsync_thread;
+    pthread_t                 uevent_thread;
+    pthread_t                 vsync_thread;
     int                       num_of_fb_layer;
     int                       num_of_hwc_layer;
     int                       num_of_fb_layer_prev;

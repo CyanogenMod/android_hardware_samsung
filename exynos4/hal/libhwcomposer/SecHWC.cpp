@@ -28,6 +28,8 @@
 #include <cutils/atomic.h>
 #include <hardware_legacy/uevent.h>
 #include <EGL/egl.h>
+#include <sys/prctl.h>
+#include <fcntl.h>
 
 #include "exynos_format.h"
 #include "SecHWCUtils.h"
@@ -935,7 +937,7 @@ void handle_vsync_uevent(hwc_context_t *ctx, const char *buff, int len)
     ctx->procs->vsync(ctx->procs, 0, timestamp);
 }
 
-static void *hwc_vsync_thread(void *data)
+static void *hwc_vsync_uevent_thread(void *data)
 {
     hwc_context_t *ctx = (hwc_context_t *)(data);
     char uevent_desc[4096];
@@ -952,6 +954,40 @@ static void *hwc_vsync_thread(void *data)
             handle_vsync_uevent(ctx, uevent_desc, len);
         }
     }
+
+    return NULL;
+}
+
+static void *hwc_vsync_sysfs_loop(void *data)
+{
+    static char buf[4096];
+    int vsync_timestamp_fd;
+    fd_set exceptfds;
+    int res;
+    int64_t timestamp = 0;
+    hwc_context_t * ctx = (hwc_context_t *)(data);
+
+    vsync_timestamp_fd = open("/sys/devices/platform/samsung-pd.2/s3cfb.0/vsync_time", O_RDONLY);
+    if (!vsync_timestamp_fd)
+        return NULL;
+
+    char thread_name[64] = "hwcVsyncThread";
+    prctl(PR_SET_NAME, (unsigned long) &thread_name, 0, 0, 0);
+    setpriority(PRIO_PROCESS, 0, -20);
+    memset(buf, 0, sizeof(buf));
+
+    SEC_HWC_Log(HWC_LOG_DEBUG,"Using sysfs mechanism for VSYNC notification");
+
+    FD_ZERO(&exceptfds);
+    FD_SET(vsync_timestamp_fd, &exceptfds);
+
+    do {
+        ssize_t len = read(vsync_timestamp_fd, buf, sizeof(buf));
+        timestamp = strtoull(buf, NULL, 0);
+        ctx->procs->vsync(ctx->procs, 0, timestamp);
+        select(vsync_timestamp_fd + 1, NULL, NULL, &exceptfds, NULL);
+        lseek(vsync_timestamp_fd, 0, SEEK_SET);
+    } while (1);
 
     return NULL;
 }
@@ -1082,7 +1118,14 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
         goto err;
     }
 
-    err = pthread_create(&dev->vsync_thread, NULL, hwc_vsync_thread, dev);
+    err = pthread_create(&dev->uevent_thread, NULL, hwc_vsync_uevent_thread, dev);
+    if (err) {
+        SEC_HWC_Log(HWC_LOG_ERROR, "%s::pthread_create() failed : %s", __func__, strerror(err));
+        status = -err;
+        goto err;
+    }
+
+    err = pthread_create(&dev->vsync_thread, NULL, hwc_vsync_sysfs_loop, dev);
     if (err) {
         SEC_HWC_Log(HWC_LOG_ERROR, "%s::pthread_create() failed : %s", __func__, strerror(err));
         status = -err;
