@@ -20,3 +20,7 @@ include $(SEC_OMX_COMPONENT)/video/dec/mpeg4dec/Android.mk
 include $(SEC_OMX_COMPONENT)/video/enc/Android.mk
 include $(SEC_OMX_COMPONENT)/video/enc/h264enc/Android.mk
 include $(SEC_OMX_COMPONENT)/video/enc/mpeg4enc/Android.mk
+
+ifneq ($(filter p1 p1c p1l p1n,$(TARGET_DEVICE)),)
+    LOCAL_CFLAGS += -DP1
+endif

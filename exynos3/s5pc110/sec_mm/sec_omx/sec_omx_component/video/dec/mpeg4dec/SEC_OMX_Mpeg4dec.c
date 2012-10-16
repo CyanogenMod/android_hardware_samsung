@@ -836,6 +836,7 @@ OMX_ERRORTYPE SEC_MFC_Mpeg4Dec_GetExtensionIndex(
         ret = OMX_ErrorNone;
 #ifdef USE_ANDROID_EXTENSION
     } else if (SEC_OSAL_Strcmp(cParameterName, SEC_INDEX_PARAM_ENABLE_ANB) == 0) {
+#ifndef P1
 	    if (isTvOutEnabled()) {
 	        // Samsung normally pushes HW-decoded frames to the TV Out driver
 	        // but it's hard for us to do that without source, so return an error
@@ -843,6 +844,7 @@ OMX_ERRORTYPE SEC_MFC_Mpeg4Dec_GetExtensionIndex(
 	        ret = OMX_ErrorInsufficientResources;
 	        goto EXIT;
 	    }
+#endif
 
         *pIndexType = OMX_IndexParamEnableAndroidBuffers;
         ret = OMX_ErrorNone;
