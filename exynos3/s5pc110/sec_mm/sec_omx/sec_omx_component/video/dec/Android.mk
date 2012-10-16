@@ -17,4 +17,8 @@ LOCAL_C_INCLUDES := $(SEC_OMX_INC)/khronos \
 
 LOCAL_C_INCLUDES += $(SEC_OMX_TOP)/sec_codecs/video/mfc_c110/include
 
+ifeq ($(TARGET_USE_HWDECODING_TVOUT),true)
+    LOCAL_CFLAGS += -DUSE_HWDECODING_TVOUT
+endif
+
 include $(BUILD_STATIC_LIBRARY)
