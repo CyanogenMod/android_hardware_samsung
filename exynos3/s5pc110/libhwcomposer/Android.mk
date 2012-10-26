@@ -20,7 +20,11 @@ include $(CLEAR_VARS)
 LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_SHARED_LIBRARIES := liblog libcutils libEGL libGLESv1_CM libhardware libhardware_legacy
-LOCAL_CFLAGS += -DLOG_TAG=\"hwcomposer\"
+
+LOCAL_CFLAGS := -DLOG_TAG=\"hwcomposer\"
+ifeq ($(BOARD_USES_HDMI),true)
+    LOCAL_CFLAGS += -DBOARD_USES_HDMI
+endif
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../include
