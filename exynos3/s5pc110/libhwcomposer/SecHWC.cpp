@@ -79,9 +79,9 @@ static int set_src_dst_info(hwc_layer_t *cur,
     src_img->w       = prev_handle->iWidth;
     src_img->h       = prev_handle->iHeight;
     src_img->format  = prev_handle->iFormat;
-    src_img->base    = NULL;
+    src_img->base    = 0;
     src_img->offset  = 0;
-    src_img->mem_id  =0;
+    src_img->mem_id  = 0;
 
     src_img->mem_type = HWC_PHYS_MEM_TYPE;
     src_img->w = (src_img->w + 15) & (~15);
@@ -422,6 +422,42 @@ static int hwc_set(hwc_composer_device_t *dev,
         }
     }
 
+#if defined(BOARD_HAVE_HDMI)
+    hdmi_device_t* hdmi = ctx->hdmi;
+    if (ctx->num_of_hwc_layer == 1 && hdmi) {
+        if ((src_img.format == HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP_TILED)||
+                (src_img.format == HAL_PIXEL_FORMAT_CUSTOM_YCrCb_420_SP)) {
+            ADDRS * addr = (ADDRS *)(src_img.base);
+            hdmi->blit(hdmi,
+                       src_img.w,
+                       src_img.h,
+                       src_img.format,
+                       (unsigned int)addr->addr_y,
+                       (unsigned int)addr->addr_cbcr,
+                       (unsigned int)addr->addr_cbcr,
+                       0, 0,
+                       HDMI_MODE_VIDEO,
+                       ctx->num_of_hwc_layer);
+        } else if ((src_img.format == HAL_PIXEL_FORMAT_YCbCr_420_SP) ||
+                    (src_img.format == HAL_PIXEL_FORMAT_YCrCb_420_SP) ||
+                    (src_img.format == HAL_PIXEL_FORMAT_YCbCr_420_P) ||
+                    (src_img.format == HAL_PIXEL_FORMAT_YV12)) {
+            hdmi->blit(hdmi,
+                       src_img.w,
+                       src_img.h,
+                       src_img.format,
+                       (unsigned int)ctx->fimc.params.src.buf_addr_phy_rgb_y,
+                       (unsigned int)ctx->fimc.params.src.buf_addr_phy_cb,
+                       (unsigned int)ctx->fimc.params.src.buf_addr_phy_cr,
+                       0, 0,
+                       HDMI_MODE_VIDEO,
+                       ctx->num_of_hwc_layer);
+        } else {
+            ALOGE("%s: Unsupported format = %d for hdmi", __func__, src_img.format);
+        }
+    }
+#endif
+
     return 0;
 }
 
@@ -606,6 +642,9 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
     int status = 0;
     int err;
     struct hwc_win_info_t *win;
+#if defined(BOARD_HAVE_HDMI)
+    struct hw_module_t    *hdmi_module;
+#endif
 
     if(hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 (const hw_module_t**)&gpsGrallocModule))
@@ -636,6 +675,20 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
     dev->device.methods = &hwc_methods;
 
     *device = &dev->device.common;
+
+#if defined(BOARD_HAVE_HDMI)
+    dev->hdmi = NULL;
+    if(hw_get_module(HDMI_HARDWARE_MODULE_ID,
+                (const hw_module_t**)&hdmi_module)) {
+        ALOGE("%s:: Hdmi device not presented", __func__);
+    } else {
+        int ret = module->methods->open(hdmi_module, "hdmi-composer",
+                (hw_device_t **)&dev->hdmi);
+        if(ret < 0) {
+            ALOGE("%s:: Can't open hdmi device : %s", __func__, strerror(ret));
+        }
+    }
+#endif
 
     /* initializing */
     memset(&(dev->fimc), 0, sizeof(s5p_fimc_t));
