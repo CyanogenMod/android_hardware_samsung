@@ -123,7 +123,7 @@ static int gralloc_map(gralloc_module_t const* module,
             void *mappedAddress = mmap(0, size,
                     PROT_READ|PROT_WRITE, MAP_SHARED, gMemfd, (hnd->paddr - hnd->offset));
             if (mappedAddress == MAP_FAILED) {
-                ALOGE("Could not mmap %s fd(%d)", strerror(errno),hnd->fd);
+                LOGE("Could not mmap %s fd(%d)", strerror(errno),hnd->fd);
                 return -errno;
             }
             hnd->base = intptr_t(mappedAddress) + hnd->offset;
@@ -133,7 +133,7 @@ static int gralloc_map(gralloc_module_t const* module,
             void *mappedAddress = ion_map(hnd->fd, size, 0);
 
             if (mappedAddress == MAP_FAILED) {
-                ALOGE("Could not ion_map %s fd(%d)", strerror(errno), hnd->fd);
+                LOGE("Could not ion_map %s fd(%d)", strerror(errno), hnd->fd);
                 return -errno;
             }
 
@@ -146,7 +146,7 @@ static int gralloc_map(gralloc_module_t const* module,
             void *mappedAddress = mmap(0, size,
                     PROT_READ|PROT_WRITE, MAP_SHARED, hnd->fd, 0);
             if (mappedAddress == MAP_FAILED) {
-                ALOGE("Could not mmap %s fd(%d)", strerror(errno),hnd->fd);
+                LOGE("Could not mmap %s fd(%d)", strerror(errno),hnd->fd);
                 return -errno;
             }
             hnd->base = intptr_t(mappedAddress) + hnd->offset;
@@ -165,12 +165,12 @@ static int gralloc_unmap(gralloc_module_t const* module,
             void* base = (void*)(intptr_t(hnd->base) - hnd->offset);
             size_t size = FIMC1_RESERVED_SIZE * 1024;
             if (munmap(base, size) < 0)
-                ALOGE("Could not unmap %s", strerror(errno));
+                LOGE("Could not unmap %s", strerror(errno));
         } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
             void* base = (void*)hnd->base;
             size_t size = hnd->size;
             if (ion_unmap(base, size) < 0)
-                ALOGE("Could not ion_unmap %s", strerror(errno));
+                LOGE("Could not ion_unmap %s", strerror(errno));
             ion_client_destroy(hnd->ion_client);
         } else {
             void* base = (void*)hnd->base;
@@ -180,7 +180,7 @@ static int gralloc_unmap(gralloc_module_t const* module,
             size += hnd->offset;
 #endif
             if (munmap(base, size) < 0)
-                ALOGE("Could not unmap %s", strerror(errno));
+                LOGE("Could not unmap %s", strerror(errno));
         }
     }
     hnd->base = 0;
@@ -205,7 +205,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
     int retval = -EINVAL;
     void *vaddr;
     if (private_handle_t::validate(handle) < 0) {
-        ALOGE("Registering invalid buffer, returning error");
+        LOGE("Registering invalid buffer, returning error");
         return -EINVAL;
     }
 
@@ -235,7 +235,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         ump_result res = ump_open(); /* TODO: Fix a ump_close() somewhere??? */
         if (res != UMP_OK) {
             pthread_mutex_unlock(&s_map_lock);
-            ALOGE("Failed to open UMP library");
+            LOGE("Failed to open UMP library");
             return retval;
         }
         s_ump_is_open = 1;
@@ -253,12 +253,12 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
                 pthread_mutex_unlock(&s_map_lock);
                 return 0;
             } else {
-                ALOGE("Failed to map UMP handle");
+                LOGE("Failed to map UMP handle");
             }
 
             ump_reference_release((ump_handle)hnd->ump_mem_handle);
         } else {
-            ALOGE("Failed to create UMP handle");
+            LOGE("Failed to create UMP handle");
         }
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_PMEM) {
         pthread_mutex_unlock(&s_map_lock);
@@ -269,7 +269,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         if (gMemfd == 0) {
             gMemfd = open(PFX_NODE_MEM, O_RDWR);
             if (gMemfd < 0) {
-                ALOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
+                LOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
                 return false;
             }
         }
@@ -289,14 +289,14 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
                 pthread_mutex_unlock(&s_map_lock);
                 return 0;
             } else {
-                ALOGE("Failed to map UMP handle");
+                LOGE("Failed to map UMP handle");
             }
             ump_reference_release((ump_handle)hnd->ump_mem_handle);
         } else {
-            ALOGE("Failed to create UMP handle");
+            LOGE("Failed to create UMP handle");
         }
     } else {
-        ALOGE("registering non-UMP buffer not supported");
+        LOGE("registering non-UMP buffer not supported");
     }
 
     pthread_mutex_unlock(&s_map_lock);
@@ -306,7 +306,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
 static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_handle_t handle)
 {
     if (private_handle_t::validate(handle) < 0) {
-        ALOGE("unregistering invalid buffer, returning error");
+        LOGE("unregistering invalid buffer, returning error");
         return -EINVAL;
     }
 
@@ -315,9 +315,9 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
 #ifdef USE_PARTIAL_FLUSH
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP)
         if (!release_rect((int)hnd->ump_id))
-            ALOGE("secureID: 0x%x, release error", (int)hnd->ump_id);
+            LOGE("secureID: 0x%x, release error", (int)hnd->ump_id);
 #endif
-    ALOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
+    LOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
             "[unregister] handle %p still locked (state=%08x)", hnd, hnd->lockState);
 
     /* never unmap buffers that were created in this process */
@@ -335,6 +335,10 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
                 gralloc_unmap(module, handle);
 
             pthread_mutex_unlock(&s_map_lock);
+            if (0 < gMemfd) {
+                close(gMemfd);
+                gMemfd = 0;
+            }
             return 0;
         } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
             ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
@@ -347,7 +351,7 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
             hnd->lockState  = 0;
             hnd->writeOwner = 0;
         } else {
-            ALOGE("unregistering non-UMP buffer not supported");
+            LOGE("unregistering non-UMP buffer not supported");
         }
 
         pthread_mutex_unlock(&s_map_lock);
@@ -361,7 +365,7 @@ static int gralloc_lock(gralloc_module_t const* module, buffer_handle_t handle,
 {
     int err = 0;
     if (private_handle_t::validate(handle) < 0) {
-        ALOGE("Locking invalid buffer, returning error");
+        LOGE("Locking invalid buffer, returning error");
         return -EINVAL;
     }
 
@@ -394,7 +398,7 @@ static int gralloc_lock(gralloc_module_t const* module, buffer_handle_t handle,
 static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle)
 {
     if (private_handle_t::validate(handle) < 0) {
-        ALOGE("Unlocking invalid buffer, returning error");
+        LOGE("Unlocking invalid buffer, returning error");
         return -EINVAL;
     }
 
@@ -423,7 +427,7 @@ static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle
 
         ret = ioctl(gMemfd, EXYNOS_MEM_PADDR_CACHE_FLUSH, &mem);
         if (ret < 0) {
-            ALOGE("Error in exynos-mem : EXYNOS_MEM_PADDR_CACHE_FLUSH (%d)\n", ret);
+            LOGE("Error in exynos-mem : EXYNOS_MEM_PADDR_CACHE_FLUSH (%d)\n", ret);
             return false;
         }
     }

@@ -52,12 +52,6 @@ typedef struct {
     unsigned int lcd_offset_y;
 } s3c_fb_next_info_t;
 
-#ifdef BOARD_USE_V4L2_ION
-struct s3c_fb_user_ion_client {
-    int fd;
-};
-#endif
-
 /*
  * C U S T O M  I O C T L S
  *

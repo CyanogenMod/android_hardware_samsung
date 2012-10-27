@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define LOG_TAG "libhdmiclient"
+#define ALOG_TAG "libhdmiclient"
 
 #include "SecHdmiClient.h"
 
@@ -54,6 +54,17 @@ void SecHdmiClient::setHdmiCableStatus(int status)
         g_SecTVOutService->setHdmiCableStatus(status);
 }
 
+uint32_t SecHdmiClient::getHdmiCableStatus()
+{
+    uint32_t cableStatus = 0;
+    if (g_SecTVOutService == 0)
+        g_SecTVOutService = m_getSecTVOutService();
+
+    if (g_SecTVOutService != 0)
+        cableStatus = g_SecTVOutService->getHdmiCableStatus();
+    return cableStatus;
+}
+
 void SecHdmiClient::setHdmiMode(int mode)
 {
     //ALOGD("%s HDMI Mode: %d\n", __func__, mode);
@@ -62,12 +73,12 @@ void SecHdmiClient::setHdmiMode(int mode)
         g_SecTVOutService->setHdmiMode(mode);
 }
 
-void SecHdmiClient::setHdmiResolution(int resolution)
+void SecHdmiClient::setHdmiResolution(int resolution, HDMI_S3D_MODE s3dMode)
 {
     //ALOGD("%s HDMI Resolution: %d\n", __func__, resolution);
 
     if (g_SecTVOutService != 0)
-        g_SecTVOutService->setHdmiResolution(resolution);
+        g_SecTVOutService->setHdmiResolution(resolution, s3dMode);
 }
 
 void SecHdmiClient::setHdmiHdcp(int enHdcp)
@@ -76,6 +87,15 @@ void SecHdmiClient::setHdmiHdcp(int enHdcp)
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiHdcp(enHdcp);
+}
+
+void SecHdmiClient::setExtDispLayerNum(int extDispLayerNum)
+{
+    if (g_SecTVOutService == 0)
+        g_SecTVOutService = m_getSecTVOutService();
+
+    if (g_SecTVOutService != 0)
+        g_SecTVOutService->setExtDispLayerNum(extDispLayerNum);
 }
 
 void SecHdmiClient::setHdmiRotate(int rotVal, uint32_t hwcLayer)
@@ -144,5 +164,19 @@ sp<ISecTVOut> SecHdmiClient::m_getSecTVOutService(void)
     }
     return g_SecTVOutService;
 }
-
+void SecHdmiClient::setVideoRotation(int rotation){}
+void SecHdmiClient::setForceMirrorMode(int mode){}    
+void SecHdmiClient::setVideoMode(int mode){}
+void SecHdmiClient::setMirrorWithVideoMode(int mode){}
+void SecHdmiClient::disableLayer(unsigned int disable){}
+void SecHdmiClient::setHdmiResolution(int resolution){}
+int SecHdmiClient::getHdmiResolution(){
+    return 0;
+}
+int SecHdmiClient::getVideoMode(){
+    return 0;
+}
+int SecHdmiClient::getHdmiAudioChannel(){
+    return 0;
+}
 }

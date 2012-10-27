@@ -23,9 +23,6 @@
  * <b>Revision History: </b>
  * - 2010/10/13 : Hyunkyung, Kim(hk310.kim@samsung.com) \n
  *   Initial version
- *
- * - 2011/11/15 : Sunmi, Lee(carrotsm.lee@samsung.com) \n
- *   Adjust V4L2 architecture \n
  */
 
 #ifndef __SEC_FIMC_H__
@@ -52,13 +49,8 @@ extern "C" {
 
 #include "utils/Timers.h"
 
-#ifdef BOARD_USE_V4L2
-#include "s5p_fimc_v4l2.h"
-#include "sec_utils_v4l2.h"
-#else
 #include "s5p_fimc.h"
 #include "sec_utils.h"
-#endif
 #include "sec_format.h"
 
 #include "SecBuffer.h"

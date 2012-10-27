@@ -85,11 +85,7 @@ inline int HAL_PIXEL_FORMAT_2_V4L2_PIX(int HAL_PIXEL_FORMAT)
         break;
 
     case HAL_PIXEL_FORMAT_BGRA_8888:
-#if defined(BOARD_USE_V4L2)
-        V4L2_PIX = V4L2_PIX_FMT_BGR32;
-#else
         V4L2_PIX = V4L2_PIX_FMT_RGB32;
-#endif
         break;
 
     case HAL_PIXEL_FORMAT_RGBA_5551:

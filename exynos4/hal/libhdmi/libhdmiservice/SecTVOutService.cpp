@@ -22,7 +22,7 @@
 ** @date    2011-07-06
 */
 
-#define LOG_TAG "SecTVOutService"
+#define ALOG_TAG "SecTVOutService"
 
 #include <binder/IServiceManager.h>
 #include <utils/RefBase.h>
@@ -41,11 +41,14 @@ namespace android {
 
     enum {
         SET_HDMI_STATUS = IBinder::FIRST_CALL_TRANSACTION,
+        GET_HDMI_STATUS,
         SET_HDMI_MODE,
         SET_HDMI_RESOLUTION,
         SET_HDMI_HDCP,
+        SET_EXT_DISP_LAYER_NUM,
         SET_HDMI_ROTATE,
         SET_HDMI_HWCLAYER,
+        SET_FORCE_MIRROR_MODE,
         BLIT_2_HDMI
     };
 
@@ -136,6 +139,10 @@ namespace android {
             setHdmiStatus(status);
         } break;
 
+        case GET_HDMI_STATUS: {
+            reply->writeInt32(getHdmiStatus());
+        } break;
+
         case SET_HDMI_MODE: {
             int mode = data.readInt32();
             setHdmiMode(mode);
@@ -143,12 +150,18 @@ namespace android {
 
         case SET_HDMI_RESOLUTION: {
             int resolution = data.readInt32();
-            setHdmiResolution(resolution);
+            int s3dMode = data.readInt32();
+            setHdmiResolution(resolution, (HDMI_S3D_MODE)s3dMode);
         } break;
 
         case SET_HDMI_HDCP: {
             int enHdcp = data.readInt32();
             setHdmiHdcp(enHdcp);
+        } break;
+
+        case SET_EXT_DISP_LAYER_NUM: {
+            int extDispLayerNum = data.readInt32();
+            setExtDispLayerNum(extDispLayerNum);
         } break;
 
         case SET_HDMI_ROTATE: {
@@ -160,6 +173,11 @@ namespace android {
         case SET_HDMI_HWCLAYER: {
             int hwcLayer = data.readInt32();
             setHdmiHwcLayer((uint32_t)hwcLayer);
+        } break;
+
+        case SET_FORCE_MIRROR_MODE: {
+            int forceMirrorMode = data.readInt32();
+            setForceMirrorMode(forceMirrorMode);
         } break;
 
         case BLIT_2_HDMI: {
@@ -214,6 +232,12 @@ namespace android {
             this->blit2Hdmi(mLCD_width, mLCD_height, HAL_PIXEL_FORMAT_BGRA_8888, 0, 0, 0, 0, 0, HDMI_MODE_UI, 0);
     }
 
+    uint32_t SecTVOutService::getHdmiStatus()
+    {
+        Mutex::Autolock _l(mLock);
+        return hdmiCableInserted();
+    }
+
     void SecTVOutService::setHdmiMode(uint32_t mode)
     {
         ALOGD("%s TV mode = %d", __func__, mode);
@@ -225,12 +249,12 @@ namespace android {
         }
     }
 
-    void SecTVOutService::setHdmiResolution(uint32_t resolution)
+    void SecTVOutService::setHdmiResolution(uint32_t resolution, HDMI_S3D_MODE s3dMode)
     {
         //ALOGD("%s TV resolution = %d", __func__, resolution);
         Mutex::Autolock _l(mLock);
 
-        if ((hdmiCableInserted() == true) && (mSecHdmi.setHdmiResolution(resolution)) == false) {
+        if ((hdmiCableInserted() == true) && (mSecHdmi.setHdmiResolution(resolution, s3dMode)) == false) {
             ALOGE("%s::mSecHdmi.setHdmiResolution() fail", __func__);
             return;
         }
@@ -238,7 +262,7 @@ namespace android {
 
     void SecTVOutService::setHdmiHdcp(uint32_t hdcp_en)
     {
-        ALOGD("%s TV HDCP = %d", __func__, hdcp_en);
+        ALOGD("%d: %s TV HDCP = %d", gettid(), __func__, hdcp_en);
         Mutex::Autolock _l(mLock);
 
         if ((hdmiCableInserted() == true) && (mSecHdmi.setHdcpMode(hdcp_en)) == false) {
@@ -247,9 +271,15 @@ namespace android {
         }
     }
 
+    void SecTVOutService::setExtDispLayerNum(uint32_t extDispLayerNum)
+    {
+        Mutex::Autolock _l(mLock);
+        mExtDispLayerNum = extDispLayerNum;
+    }
+
     void SecTVOutService::setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer)
     {
-        //ALOGD("%s TV ROTATE = %d", __func__, rotVal);
+        //ALOGD("%d: %s TV ROTATE = %d", gettid(), __func__, rotVal);
         Mutex::Autolock _l(mLock);
 
         if ((hdmiCableInserted() == true) && (mSecHdmi.setUIRotation(rotVal, hwcLayer)) == false) {
@@ -265,6 +295,30 @@ namespace android {
 
         mHwcLayer = hwcLayer;
         return;
+    }
+
+    void SecTVOutService::setForceMirrorMode(int forceMirrorMode)
+    {
+        Mutex::Autolock _l(mLock);
+
+        if (mForceMirrorMode != (unsigned int)forceMirrorMode) {
+            mForceMirrorMode = (unsigned int)forceMirrorMode;
+
+            sp<IServiceManager> sm = defaultServiceManager();
+            sp<IBinder> service = 0;
+            Parcel data, reply;
+            if (sm != 0)
+                service = sm->checkService(String16("SurfaceFlinger"));
+            if (service != 0) {
+                status_t err = service->transact(IBinder::INTERFACE_TRANSACTION, data, &reply);
+                if (err == NO_ERROR) {
+                    String16 ifName = reply.readString16();
+                    int32_t code = 1004;
+                    data.writeInterfaceToken(ifName);
+                    service->transact(code, data, &reply);
+                }
+            }
+        }
     }
 
     void SecTVOutService::blit2Hdmi(uint32_t w, uint32_t h, uint32_t colorFormat, 
