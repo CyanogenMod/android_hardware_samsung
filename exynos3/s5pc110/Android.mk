@@ -17,7 +17,7 @@
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
 
 # audio, camera, sensor and light HALs are device specifc
-s5pc110_dirs := libhwcomposer libs3cjpeg libstagefrighthw sec_mm power
+s5pc110_dirs := libhdmi libhwcomposer libs3cjpeg libstagefrighthw sec_mm power
 
 include $(call all-named-subdir-makefiles,$(s5pc110_dirs))
 
