@@ -141,13 +141,4 @@ typedef struct _s5p_fimc_t {
     unsigned int        hw_ver;
 }s5p_fimc_t;
 
-//------------------------  functions for v4l2 ------------------------------//
-int fimc_v4l2_set_src(int fd, unsigned int hw_ver, s5p_fimc_img_info *src);
-int fimc_v4l2_set_dst(int fd, s5p_fimc_img_info *dst, int rotation, unsigned int addr);
-int fimc_v4l2_stream_on(int fd, enum v4l2_buf_type type);
-int fimc_v4l2_queue(int fd, struct fimc_buf *fimc_buf);
-int fimc_v4l2_dequeue(int fd);
-int fimc_v4l2_stream_off(int fd);
-int fimc_v4l2_clr_buf(int fd);
-int fimc_handle_oneshot(int fd, struct fimc_buf *fimc_buf);
 #endif
