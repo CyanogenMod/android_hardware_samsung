@@ -29,7 +29,7 @@ endif
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../include
 
-LOCAL_SRC_FILES := SecHWCUtils.cpp SecHWC.cpp
+LOCAL_SRC_FILES := SecHWCUtils.cpp SecHWC.cpp fimc.c
 
 ifeq ($(BOARD_CUSTOM_VSYNC_IOCTL),true)
     LOCAL_CFLAGS += -DVSYNC_IOCTL
