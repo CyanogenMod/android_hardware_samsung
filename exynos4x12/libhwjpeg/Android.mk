@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2008 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_PATH:= $(call my-dir)
+include $(CLEAR_VARS)
 
-include $(TARGET_HAL_PATH)/Android.mk
-include $(SAM_ROOT)/exynos/Android.mk
-include $(SAM_ROOT)/exynos4x12/Android.mk
-include $(SAM_ROOT)/ril/Android.mk
+LOCAL_C_INCLUDES := $(LOCAL_PATH) \
+		$(TARGET_HAL_PATH)/include
 
-endif
-endif
+LOCAL_SRC_FILES:= \
+	jpeg_hal_unit.c \
+
+LOCAL_SHARED_LIBRARIES :=    \
+	libcutils	\
+
+LOCAL_STATIC_LIBRARIES := \
+
+LOCAL_MODULE:= libhwjpeg
+
+LOCAL_MODULE_TAGS := eng
+
+include $(BUILD_SHARED_LIBRARY)
