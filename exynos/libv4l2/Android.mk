@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2011 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4x12)
+LOCAL_PATH:= $(call my-dir)
 
-include $(TARGET_HAL_PATH)/Android.mk
-include $(SAM_ROOT)/exynos/Android.mk
-include $(SAM_ROOT)/exynos4x12/Android.mk
-include $(SAM_ROOT)/ril/Android.mk
+include $(CLEAR_VARS)
 
-endif
-endif
+LOCAL_SRC_FILES := \
+	exynos_v4l2.c \
+	exynos_subdev.c \
+	exynos_mc.c
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../include
+
+LOCAL_SHARED_LIBRARIES := \
+	liblog \
+	libutils
+
+LOCAL_MODULE := libexynosv4l2
+LOCAL_PRELINK_MODULE := false
+LOCAL_MODULE_TAGS := eng
+
+include $(BUILD_SHARED_LIBRARY)

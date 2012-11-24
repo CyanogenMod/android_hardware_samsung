@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2008 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-ifeq ($(TARGET_SOC),exynos4x12)
+ifeq ($(filter-out exynos4,$(TARGET_BOARD_PLATFORM)),)
 
-include $(TARGET_HAL_PATH)/Android.mk
-include $(SAM_ROOT)/exynos/Android.mk
-include $(SAM_ROOT)/exynos4x12/Android.mk
-include $(SAM_ROOT)/ril/Android.mk
+LOCAL_PATH:= $(call my-dir)
+include $(CLEAR_VARS)
 
-endif
+LOCAL_PRELINK_MODULE := false
+LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libfimc
+
+LOCAL_SRC_FILES := HardwareConverter.cpp
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../include \
+	$(TOP)/hardware/samsung/exynos/openmax/include/khronos \
+	$(TOP)/hardware/samsung/exynos/openmax/include/sec
+
+LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE := libhwconverter
+include $(BUILD_SHARED_LIBRARY)
+
 endif
