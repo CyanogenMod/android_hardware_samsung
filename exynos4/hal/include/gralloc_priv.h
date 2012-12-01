@@ -47,17 +47,6 @@
 
 #define GRALLOC_ARM_UMP_MODULE 1
 
-enum {
-    /* SEC Private usage , for HWC to set HDMI S3D format */
-    /* HDMI should display this buffer as S3D SBS LR/RL*/
-    GRALLOC_USAGE_PRIVATE_SBS_LR        = 0x00400000,
-    GRALLOC_USAGE_PRIVATE_SBS_RL        = 0x00200000,
-
-    /* HDMI should display this buffer as 3D TB LR/RL*/
-    GRALLOC_USAGE_PRIVATE_TB_LR         = 0x00100000,
-    GRALLOC_USAGE_PRIVATE_TB_RL         = 0x00080000,
-};
-
 struct private_handle_t;
 
 struct private_module_t {

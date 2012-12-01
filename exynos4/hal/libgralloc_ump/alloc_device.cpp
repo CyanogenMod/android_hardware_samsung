@@ -80,6 +80,9 @@
 #define OMX_COLOR_FormatYUV420SemiPlanar 0x15
 #endif
 
+#define PFX_NODE_MEM   "/dev/exynos-mem"
+static int gMemfd = 0;
+
 bool ion_dev_open = true;
 static pthread_mutex_t l_surface= PTHREAD_MUTEX_INITIALIZER;
 static int buffer_offset = 0;
@@ -152,6 +155,19 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         hnd->voffset = (EXYNOS4_ALIGN((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)), 4096));
         buffer_offset += size;
 
+        if (gMemfd == 0) {
+            gMemfd = open(PFX_NODE_MEM, O_RDWR);
+            if (gMemfd < 0) {
+                ALOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
+                return false;
+            }
+        }
+
+        size_t size = FIMC1_RESERVED_SIZE * 1024;
+
+        void *mappedAddress = mmap(0, size,
+               PROT_READ|PROT_WRITE, MAP_SHARED, gMemfd, (hnd->paddr - hnd->offset));
+        hnd->base = intptr_t(mappedAddress) + hnd->offset;
         return 0;
     } else {
         ion_buffer ion_fd = 0;
@@ -229,8 +245,13 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                         hnd->height = h;
                         hnd->bpp = bpp;
                         hnd->stride = stride;
-                        hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
-                        hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
+                        if(hnd->format == HAL_PIXEL_FORMAT_YV12) {
+                            hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
+                            hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
+                        } else {
+                            hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
+                            hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
+                        }
                         return 0;
                     } else {
                         ALOGE("gralloc_alloc_buffer() failed to allocate handle");
@@ -355,7 +376,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         case HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP_TILED:
         case OMX_COLOR_FormatYUV420Planar:
         case OMX_COLOR_FormatYUV420SemiPlanar:
-            size = stride * vstride * 2;
+            size = stride * vstride + EXYNOS4_ALIGN((w / 2), 16) * EXYNOS4_ALIGN((h / 2), 16) * 2;
             if(usage & GRALLOC_USAGE_HW_FIMC1)
                 size += PAGE_SIZE * 2;
             break;
@@ -424,6 +445,15 @@ static int alloc_device_free(alloc_device_t* dev, buffer_handle_t handle)
         int index = (hnd->base - m->framebuffer->base) / bufferSize;
         m->bufferMask &= ~(1<<index);
         close(hnd->fd);
+    } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_IOCTL) {
+        void* base = (void*)(intptr_t(hnd->base) - hnd->offset);
+        size_t size = FIMC1_RESERVED_SIZE * 1024;
+        if (munmap(base, size) < 0)
+            ALOGE("Could not unmap %s", strerror(errno));
+        if (0 < gMemfd) {
+            close(gMemfd);
+            gMemfd = 0;
+        }
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
 #ifdef USE_PARTIAL_FLUSH
         if (!release_rect((int)hnd->ump_id))

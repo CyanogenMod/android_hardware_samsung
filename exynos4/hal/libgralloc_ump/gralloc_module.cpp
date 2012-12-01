@@ -335,6 +335,10 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
                 gralloc_unmap(module, handle);
 
             pthread_mutex_unlock(&s_map_lock);
+            if (0 < gMemfd) {
+                close(gMemfd);
+                gMemfd = 0;
+            }
             return 0;
         } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
             ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
