@@ -21,7 +21,7 @@ include $(CLEAR_VARS)
 LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_SHARED_LIBRARIES := liblog libcutils libEGL \
-			  libGLESv1_CM
+			  libGLESv1_CM libhardware libhardware_legacy
 
 LOCAL_C_INCLUDES := \
 	$(TARGET_HAL_PATH)/include
@@ -36,6 +36,10 @@ endif
 
 ifeq ($(TARGET_SOC),exynos4x12)
 LOCAL_CFLAGS += -DSAMSUNG_EXYNOS4x12
+endif
+
+ifeq ($(BOARD_USE_SYSFS_VSYNC_NOTIFICATION),true)
+LOCAL_CFLAGS += -DSYSFS_VSYNC_NOTIFICATION
 endif
 
 ifeq ($(BOARD_USES_HDMI),true)

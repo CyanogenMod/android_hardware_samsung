@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2012 The CyanogenMod Project <http://www.cyanogenmod.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +28,10 @@
 #include <cutils/atomic.h>
 
 #include <EGL/egl.h>
-#include <sys/prctl.h>
 #include <fcntl.h>
+#include <hardware_legacy/uevent.h>
+#include <sys/prctl.h>
+#include <sys/resource.h>
 
 #include "SecHWCUtils.h"
 
@@ -933,7 +936,7 @@ static int hwc_eventControl(struct hwc_composer_device_1* dev, int dpy,
     return -EINVAL;
 }
 
-
+#ifdef SYSFS_VSYNC_NOTIFICATION
 static void *hwc_vsync_sysfs_loop(void *data)
 {
     static char buf[4096];
@@ -960,6 +963,50 @@ static void *hwc_vsync_sysfs_loop(void *data)
         select(vsync_timestamp_fd + 1, NULL, NULL, &exceptfds, NULL);
         lseek(vsync_timestamp_fd, 0, SEEK_SET);
     } while (1);
+
+    return NULL;
+}
+#endif
+
+void handle_vsync_uevent(hwc_context_t *ctx, const char *buff, int len)
+{
+    uint64_t timestamp = 0;
+    const char *s = buff;
+
+    if(!ctx->procs || !ctx->procs->vsync)
+       return;
+
+    s += strlen(s) + 1;
+
+    while(*s) {
+        if (!strncmp(s, "VSYNC=", strlen("VSYNC=")))
+            timestamp = strtoull(s + strlen("VSYNC="), NULL, 0);
+
+        s += strlen(s) + 1;
+        if (s - buff >= len)
+            break;
+    }
+
+    ctx->procs->vsync(ctx->procs, 0, timestamp);
+}
+
+static void *hwc_vsync_thread(void *data)
+{
+    hwc_context_t *ctx = (hwc_context_t *)(data);
+    char uevent_desc[4096];
+
+    memset(uevent_desc, 0, sizeof(uevent_desc));
+    setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
+    uevent_init();
+
+    while(true) {
+
+        int len = uevent_next_event(uevent_desc, sizeof(uevent_desc) - 2);
+
+        bool vsync = !strcmp(uevent_desc, "change@/devices/platform/samsung-pd.2/s3cfb.0");
+        if(vsync)
+            handle_vsync_uevent(ctx, uevent_desc, len);
+    }
 
     return NULL;
 }
@@ -1079,12 +1126,23 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
         goto err;
     }
 
+#ifndef SYSFS_VSYNC_NOTIFICATION
+    err = pthread_create(&dev->vsync_thread, NULL, hwc_vsync_thread, dev);
+    if (err) {
+        ALOGE("%s::pthread_create() failed : %s", __func__, strerror(err));
+        status = -err;
+        goto err;
+    }
+#endif
+
+#ifdef SYSFS_VSYNC_NOTIFICATION
     err = pthread_create(&dev->vsync_thread, NULL, hwc_vsync_sysfs_loop, dev);
     if (err) {
         SEC_HWC_Log(HWC_LOG_ERROR, "%s::pthread_create() failed : %s", __func__, strerror(err));
         status = -err;
         goto err;
     }
+#endif
 
     SEC_HWC_Log(HWC_LOG_DEBUG, "%s:: hwc_device_open: SUCCESS", __func__);
 
