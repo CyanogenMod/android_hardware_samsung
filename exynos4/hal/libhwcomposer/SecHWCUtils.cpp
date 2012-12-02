@@ -272,16 +272,30 @@ int window_hide(struct hwc_win_info_t *win)
     return 0;
 }
 
-int window_get_global_lcd_info(int fd, struct fb_var_screeninfo *lcd_info)
+int window_get_global_lcd_info(struct hwc_context_t *ctx)
 {
-    if (ioctl(fd, FBIOGET_VSCREENINFO, lcd_info) < 0) {
+    struct hwc_win_info_t win;
+    int ret = 0;
+
+    if (ioctl(ctx->global_lcd_win.fd, FBIOGET_VSCREENINFO, &ctx->lcd_info) < 0) {
         SEC_HWC_Log(HWC_LOG_ERROR, "FBIOGET_VSCREENINFO failed : %s",
                 strerror(errno));
         return -1;
     }
 
-    SEC_HWC_Log(HWC_LOG_DEBUG, "%s:: Default LCD x(%d),y(%d)",
-            __func__, lcd_info->xres, lcd_info->yres);
+    if (ctx->lcd_info.xres == 0) {
+        ctx->lcd_info.xres = DEFAULT_LCD_WIDTH;
+        ctx->lcd_info.xres_virtual = DEFAULT_LCD_WIDTH;
+    }
+
+    if (ctx->lcd_info.yres == 0) {
+        ctx->lcd_info.yres = DEFAULT_LCD_HEIGHT;
+        ctx->lcd_info.yres_virtual = DEFAULT_LCD_HEIGHT * NUM_OF_WIN_BUF;
+    }
+
+    if (ctx->lcd_info.bits_per_pixel == 0)
+        ctx->lcd_info.bits_per_pixel = DEFAULT_LCD_BPP;
+
     return 0;
 }
 
