@@ -106,6 +106,9 @@ int window_open(struct hwc_win_info_t *win, int id)
     case 1:
         real_id = 4;
         break;
+    case 2:
+        real_id = 0;
+        break;
     default:
         SEC_HWC_Log(HWC_LOG_ERROR, "%s::id(%d) is weird", __func__, id);
         goto error;
@@ -273,16 +276,18 @@ int window_hide(struct hwc_win_info_t *win)
     return 0;
 }
 
-int window_get_global_lcd_info(int fd, struct fb_var_screeninfo *lcd_info)
+int window_get_global_lcd_info(struct hwc_context_t *ctx)
 {
-    if (ioctl(fd, FBIOGET_VSCREENINFO, lcd_info) < 0) {
+
+    if (ioctl(ctx->global_lcd_win.fd, FBIOGET_VSCREENINFO, &ctx->lcd_info) < 0) {
         SEC_HWC_Log(HWC_LOG_ERROR, "FBIOGET_VSCREENINFO failed : %s",
                 strerror(errno));
         return -1;
     }
 
+
     SEC_HWC_Log(HWC_LOG_DEBUG, "%s:: Default LCD x(%d),y(%d)",
-            __func__, lcd_info->xres, lcd_info->yres);
+            __func__, ctx->lcd_info.xres, ctx->lcd_info.yres);
     return 0;
 }
 
