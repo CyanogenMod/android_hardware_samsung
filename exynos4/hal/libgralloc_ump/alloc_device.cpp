@@ -120,7 +120,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
             gfd = open(node, O_RDWR);
 
             if (gfd < 0) {
-                LOGE("%s:: %s Post processor open error\n", __func__, node);
+                ALOGE("%s:: %s Post processor open error\n", __func__, node);
                 return false;
             }
         }
@@ -129,7 +129,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         vc.value = 0;
         ret = ioctl(gfd, VIDIOC_G_CTRL, &vc);
         if (ret < 0) {
-            LOGE("Error in video VIDIOC_G_CTRL - V4L2_CID_RESERVED_MEM_BAES_ADDR (%d)\n", ret);
+            ALOGE("Error in video VIDIOC_G_CTRL - V4L2_CID_RESERVED_MEM_BAES_ADDR (%d)\n", ret);
             return false;
         }
         paddr = (unsigned int)vc.value;
@@ -158,7 +158,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         if (gMemfd == 0) {
             gMemfd = open(PFX_NODE_MEM, O_RDWR);
             if (gMemfd < 0) {
-                LOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
+                ALOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
                 return false;
             }
         }
@@ -176,7 +176,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
 
         if (usage & GRALLOC_USAGE_HW_ION) {
             if (!ion_dev_open) {
-                LOGE("ERROR, failed to open ion");
+                ALOGE("ERROR, failed to open ion");
                 return -1;
             }
 
@@ -185,14 +185,14 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
             ion_fd = ion_alloc(m->ion_client, size, 0, ion_flags);
 
             if (ion_fd < 0) {
-                LOGE("Failed to ion_alloc");
+                ALOGE("Failed to ion_alloc");
                 return -1;
             }
 
             cpu_ptr = ion_map(ion_fd, size, 0);
 
             if (NULL == cpu_ptr) {
-                LOGE("Failed to ion_map");
+                ALOGE("Failed to ion_map");
                 ion_free(ion_fd);
                 return -1;
             }
@@ -202,7 +202,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
             if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
                 priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_ION;
             } else {
-                LOGE("gralloc_alloc_buffer() failed to import ION memory");
+                ALOGE("gralloc_alloc_buffer() failed to import ION memory");
                 ion_unmap(cpu_ptr, size);
                 ion_free(ion_fd);
                 return -1;
@@ -254,20 +254,20 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                         }
                         return 0;
                     } else {
-                        LOGE("gralloc_alloc_buffer() failed to allocate handle");
+                        ALOGE("gralloc_alloc_buffer() failed to allocate handle");
                     }
                 } else {
-                    LOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
+                    ALOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
                 }
 
                 ump_mapped_pointer_release(ump_mem_handle);
             } else {
-                LOGE("gralloc_alloc_buffer() failed to map UMP memory");
+                ALOGE("gralloc_alloc_buffer() failed to map UMP memory");
             }
 
             ump_reference_release(ump_mem_handle);
         } else {
-            LOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
+            ALOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
         }
     }
     return -1;
@@ -296,7 +296,7 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, in
          * screen when post is called.
          */
         int newUsage = (usage & ~GRALLOC_USAGE_HW_FB) | GRALLOC_USAGE_HW_2D;
-        LOGE("fallback to single buffering");
+        ALOGE("fallback to single buffering");
         return gralloc_alloc_buffer(dev, bufferSize, newUsage, pHandle, w, h, format, bpp, 0, 0);
     }
 
@@ -449,7 +449,7 @@ static int alloc_device_free(alloc_device_t* dev, buffer_handle_t handle)
         void* base = (void*)(intptr_t(hnd->base) - hnd->offset);
         size_t size = FIMC1_RESERVED_SIZE * 1024;
         if (munmap(base, size) < 0)
-            LOGE("Could not unmap %s", strerror(errno));
+            ALOGE("Could not unmap %s", strerror(errno));
         if (0 < gMemfd) {
             close(gMemfd);
             gMemfd = 0;
@@ -457,14 +457,14 @@ static int alloc_device_free(alloc_device_t* dev, buffer_handle_t handle)
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
 #ifdef USE_PARTIAL_FLUSH
         if (!release_rect((int)hnd->ump_id))
-            LOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
+            ALOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
 #endif
         ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
         ump_reference_release((ump_handle)hnd->ump_mem_handle);
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
 #ifdef USE_PARTIAL_FLUSH
         if (!release_rect((int)hnd->ump_id))
-            LOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
+            ALOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
 #endif
         ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
         ump_reference_release((ump_handle)hnd->ump_mem_handle);
@@ -506,7 +506,7 @@ int alloc_device_open(hw_module_t const* module, const char* name, hw_device_t**
     if (0 > m->ion_client)
         ion_dev_open = false;
     if (UMP_OK != ump_res) {
-        LOGE("UMP open failed ump_res %d", ump_res);
+        ALOGE("UMP open failed ump_res %d", ump_res);
         delete dev;
         return -1;
     }
