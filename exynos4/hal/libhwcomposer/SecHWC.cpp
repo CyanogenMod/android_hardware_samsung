@@ -927,7 +927,7 @@ static int hwc_eventControl(struct hwc_composer_device_1* dev, int dpy,
     switch (event) {
     case HWC_EVENT_VSYNC:
         int val = !!enabled;
-        int err = ioctl(ctx->win[0].fd, S3CFB_SET_VSYNC_INT, &val);
+        int err = ioctl(ctx->global_lcd_win.fd, S3CFB_SET_VSYNC_INT, &val);
         if (err < 0)
             return -errno;
         
@@ -1022,6 +1022,11 @@ static int hwc_device_close(struct hw_device_t *dev)
             ret = -1;
         }
 
+        if (window_close(&ctx->global_lcd_win) < 0) {
+            SEC_HWC_Log(HWC_LOG_ERROR, "%s::window_close() fail", __func__);
+            ret = -1;
+        }
+
         for (i = 0; i < NUM_OF_WIN; i++) {
             if (window_close(&ctx->win[i]) < 0)
                 SEC_HWC_Log(HWC_LOG_DEBUG, "%s::window_close() fail", __func__);
@@ -1061,7 +1066,7 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
     dev->device.prepare              = hwc_prepare;
     dev->device.set                  = hwc_set;
     dev->device.eventControl         = hwc_eventControl;
-    dev->device.blank         = hwc_blank;
+    dev->device.blank                = hwc_blank;
     dev->device.query                = hwc_query;
     dev->device.registerProcs        = hwc_registerProcs;
     *device = &dev->device.common;
@@ -1069,17 +1074,24 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
     //initializing
     memset(&(dev->fimc),    0, sizeof(s5p_fimc_t));
 
-     /* open WIN0 & WIN1 here */
-     for (int i = 0; i < NUM_OF_WIN; i++) {
+    /* open WIN0 & WIN1 here */
+    for (int i = 0; i < NUM_OF_WIN; i++) {
         if (window_open(&(dev->win[i]), i)  < 0) {
             SEC_HWC_Log(HWC_LOG_ERROR,
                     "%s:: Failed to open window %d device ", __func__, i);
-             status = -EINVAL;
-             goto err;
+            status = -EINVAL;
+            goto err;
         }
-     }
+    }
 
-    if (window_get_global_lcd_info(dev->win[0].fd, &dev->lcd_info) < 0) {
+    /* open window 2, used to query global LCD info */
+    if (window_open(&dev->global_lcd_win, 2) < 0) {
+        SEC_HWC_Log(HWC_LOG_ERROR, "%s:: Failed to open window 2 device ", __func__);
+        status = -EINVAL;
+        goto err;
+    }
+
+    if (window_get_global_lcd_info(dev) < 0) {
         SEC_HWC_Log(HWC_LOG_ERROR,
                 "%s::window_get_global_lcd_info is failed : %s",
                 __func__, strerror(errno));
@@ -1151,6 +1163,9 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
 err:
     if (destroyFimc(&dev->fimc) < 0)
         SEC_HWC_Log(HWC_LOG_ERROR, "%s::destroyFimc() fail", __func__);
+
+    if (window_close(&dev->global_lcd_win) < 0)
+        SEC_HWC_Log(HWC_LOG_ERROR, "%s::window_close() fail", __func__);
 
     for (int i = 0; i < NUM_OF_WIN; i++) {
         if (window_close(&dev->win[i]) < 0)
