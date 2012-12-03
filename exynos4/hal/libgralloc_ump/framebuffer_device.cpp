@@ -145,6 +145,9 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
         gralloc_mali_vsync_report(MALI_VSYNC_EVENT_END_WAIT);
 #endif
 #endif
+#ifdef STANDARD_LINUX_SCREEN
+        }
+#endif
         m->currentBuffer = buffer;
     } else {
         /*
