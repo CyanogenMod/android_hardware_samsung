@@ -52,7 +52,7 @@
 #include "linux/fb.h"
 
 /* numbers of buffers for page flipping */
-#define NUM_BUFFERS 4
+#define NUM_BUFFERS 2
 
 enum {
     PAGE_FLIP = 0x00000001,
