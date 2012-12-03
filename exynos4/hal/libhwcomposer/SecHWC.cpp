@@ -527,40 +527,45 @@ static void get_hwc_ui_lay_skipdraw_decision(struct hwc_context_t* ctx,
 static int hwc_prepare(hwc_composer_device_1_t *dev, size_t numDisplays, hwc_display_contents_1_t** displays)
 {
 
-    for (uint32_t i = 0; i < numDisplays; i++) {
-        hwc_display_contents_1_t *list = displays[i];  
-        struct hwc_context_t* ctx = (struct hwc_context_t*)dev;
-        int overlay_win_cnt = 0;
-        int compositionType = 0;
-        int ret;
+    struct hwc_context_t* ctx = (struct hwc_context_t*)dev;
+    int overlay_win_cnt = 0;
+    int compositionType = 0;
+    int ret;
+
+    // Compat
+    hwc_display_contents_1_t* list = NULL;
+    if (numDisplays > 0) {
+        list = displays[0];
+    }
+
 #if defined(BOARD_USES_HDMI)
-        android::SecHdmiClient *mHdmiClient = android::SecHdmiClient::getInstance();
-        int hdmi_cable_status = (int)mHdmiClient->getHdmiCableStatus();
-        
-        ctx->hdmi_cable_status = hdmi_cable_status;
+    android::SecHdmiClient *mHdmiClient = android::SecHdmiClient::getInstance();
+    int hdmi_cable_status = (int)mHdmiClient->getHdmiCableStatus();
+
+    ctx->hdmi_cable_status = hdmi_cable_status;
 #endif
         
 #ifdef SKIP_DUMMY_UI_LAY_DRAWING
-        if ((list && (!(list->flags & HWC_GEOMETRY_CHANGED))) &&
-            (ctx->num_of_hwc_layer > 0)) {
-            get_hwc_ui_lay_skipdraw_decision(ctx, list);
-            return 0;
-        }
-        ctx->fb_lay_skip_initialized = 0;
-        ctx->num_of_fb_lay_skip = 0;
+    if ((list && (!(list->flags & HWC_GEOMETRY_CHANGED))) &&
+	(ctx->num_of_hwc_layer > 0)) {
+      get_hwc_ui_lay_skipdraw_decision(ctx, list);
+      return 0;
+    }
+    ctx->fb_lay_skip_initialized = 0;
+    ctx->num_of_fb_lay_skip = 0;
 #ifdef GL_WA_OVLY_ALL
-        ctx->ui_skip_frame_cnt = 0;
+    ctx->ui_skip_frame_cnt = 0;
 #endif
         
-        for (int i = 0; i < NUM_OF_DUMMY_WIN; i++) {
-            ctx->win_virt[i].layer_prev_buf = 0;
-            ctx->win_virt[i].layer_index = -1;
-            ctx->win_virt[i].status = HWC_WIN_FREE;
-        }
+    for (int i = 0; i < NUM_OF_DUMMY_WIN; i++) {
+        ctx->win_virt[i].layer_prev_buf = 0;
+        ctx->win_virt[i].layer_index = -1;
+        ctx->win_virt[i].status = HWC_WIN_FREE;
+    }
 #endif
         
-        //if geometry is not changed, there is no need to do any work here
-        if (!list || (!(list->flags & HWC_GEOMETRY_CHANGED)))
+    //if geometry is not changed, there is no need to do any work here
+    if (!list || (!(list->flags & HWC_GEOMETRY_CHANGED)))
         return 0;
 
     //all the windows are free here....
@@ -656,7 +661,7 @@ static int hwc_prepare(hwc_composer_device_1_t *dev, size_t numDisplays, hwc_dis
             reset_win_rect_info(&ctx->win[i]);
         }
     }
-    }
+
     return 0;
 }
 
@@ -675,8 +680,6 @@ static int hwc_set(hwc_composer_device_1_t *dev,
     struct sec_rect src_work_rect;
     struct sec_rect dst_work_rect;
     bool need_swap_buffers = ctx->num_of_fb_layer > 0;
-    for (uint32_t i = 0; i < numDisplays; i++) {
-        hwc_display_contents_1_t* list = displays[i];      
 
     memset(&src_img, 0, sizeof(src_img));
     memset(&dst_img, 0, sizeof(dst_img));
@@ -687,6 +690,9 @@ static int hwc_set(hwc_composer_device_1_t *dev,
     int skip_hdmi_rendering = 0;
     int rotVal = 0;
 #endif
+
+    // Only support one display
+    hwc_display_contents_1_t* list = displays[0];
 
     if (!list) {
         //turn off the all windows
@@ -887,7 +893,7 @@ static int hwc_set(hwc_composer_device_1_t *dev,
         }
     }
 #endif
-    }
+
     return 0;
 }
 
@@ -1036,12 +1042,22 @@ static int hwc_device_close(struct hw_device_t *dev)
     }
     return ret;
 }
+
 static int hwc_blank(struct hwc_composer_device_1 *dev, int dpy, int blank)
 {
-    // We're using an older method of screen blanking based on
-    // early_suspend in the kernel.  No need to do anything here.
-    return 0;
-}  
+    struct hwc_context_t* ctx = (struct hwc_context_t*)dev;
+    if (blank) {
+        // release our resources, the screen is turning off
+        // in our case, there is nothing to do.
+        ctx->num_of_fb_layer_prev = 0;
+        return 0;
+    }
+    else {
+        // No need to unblank, will unblank on set()
+        return 0;
+    }
+}
+
 static int hwc_device_open(const struct hw_module_t* module, const char* name,
         struct hw_device_t** device)
 {
