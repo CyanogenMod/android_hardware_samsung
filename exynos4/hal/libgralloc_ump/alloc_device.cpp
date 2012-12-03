@@ -354,6 +354,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
     size_t stride_raw = 0;
 
     if (format == HAL_PIXEL_FORMAT_YCbCr_420_SP ||
+        format == HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED ||
         format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
         format == HAL_PIXEL_FORMAT_YCbCr_422_SP ||
         format == HAL_PIXEL_FORMAT_YCbCr_420_P  ||
@@ -369,6 +370,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         vstride = (h + 15) & ~15;
         switch (format) {
         case HAL_PIXEL_FORMAT_YCbCr_420_SP:
+        case HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED:
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
         case HAL_PIXEL_FORMAT_YCbCr_420_P:
         case HAL_PIXEL_FORMAT_YV12:
