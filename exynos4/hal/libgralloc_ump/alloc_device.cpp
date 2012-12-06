@@ -106,6 +106,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
     ump_secure_id ump_id;
 
     size = round_up_to_page_size(size);
+#ifdef INSIGNAL_FIMC1
     if (usage & GRALLOC_USAGE_HW_FIMC1) {
         int dev_fd=0;
         char node[20];
@@ -170,11 +171,16 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         hnd->base = intptr_t(mappedAddress) + hnd->offset;
         return 0;
     } else {
+#endif
         ion_buffer ion_fd = 0;
         unsigned int ion_flags = 0;
         int priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_UMP;
 
+#ifdef  INSIGNAL_FIMC1
         if (usage & GRALLOC_USAGE_HW_ION) {
+#else
+        if (usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1) {
+#endif
             if (!ion_dev_open) {
                 ALOGE("ERROR, failed to open ion");
                 return -1;
@@ -249,8 +255,22 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
                         } else {
+#ifndef INSIGNAL_FIMC1
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
+#else
+                            if(usage & GRALLOC_USAGE_HW_FIMC1) {
+                                /* FIMC1 allocs had an additional alignment to a 4k boundary.  This solves the issues with
+                                 * NHK World Live TV and a few other apps
+                                 */
+                                hnd->uoffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)),4096);
+                                hnd->voffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)),4096);
+                            }
+                            else {
+                                hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
+                                hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
+                            }
+#endif
                         }
                         return 0;
                     } else {
@@ -269,7 +289,9 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
         } else {
             ALOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
         }
+#ifdef INSIGNAL_FIMC1
     }
+#endif
     return -1;
 }
 
@@ -379,8 +401,13 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         case OMX_COLOR_FormatYUV420Planar:
         case OMX_COLOR_FormatYUV420SemiPlanar:
             size = stride * vstride + EXYNOS4_ALIGN((w / 2), 16) * EXYNOS4_ALIGN((h / 2), 16) * 2;
-            if(usage & GRALLOC_USAGE_HW_FIMC1)
+#ifdef  INSIGNAL_FIMC1
+            if (usage & GRALLOC_USAGE_HW_FIMC1) {
+#else
+            if (usage & (GRALLOC_USAGE_HW_ION || GRALLOC_USAGE_HW_FIMC1)) {
+#endif
                 size += PAGE_SIZE * 2;
+            }
             break;
         case HAL_PIXEL_FORMAT_YCbCr_422_SP:
             size = (stride * vstride) + (w/2 * h/2) * 2;
