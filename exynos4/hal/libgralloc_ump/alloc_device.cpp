@@ -452,6 +452,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
 
     // Remove the hardware framebuffer flag to avoid lags
     usage = usage & ~GRALLOC_USAGE_HW_FB;
+    usage |= GRALLOC_USAGE_HW_ION;
 
 /*
  * Using the framebuffer causes lags, so don't use it at all ;-)
