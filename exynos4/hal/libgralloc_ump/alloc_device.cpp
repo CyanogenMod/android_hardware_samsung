@@ -404,7 +404,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
 #ifdef  INSIGNAL_FIMC1
             if (usage & GRALLOC_USAGE_HW_FIMC1) {
 #else
-            if (usage & (GRALLOC_USAGE_HW_ION || GRALLOC_USAGE_HW_FIMC1)) {
+            if (usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1) {
 #endif
                 size += PAGE_SIZE * 2;
             }
