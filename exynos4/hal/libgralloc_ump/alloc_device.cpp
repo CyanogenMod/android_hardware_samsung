@@ -87,6 +87,7 @@ bool ion_dev_open = true;
 static pthread_mutex_t l_surface= PTHREAD_MUTEX_INITIALIZER;
 static int buffer_offset = 0;
 static int gfd = 0;
+static int numAlloc = 0;
 
 #ifdef USE_PARTIAL_FLUSH
 extern struct private_handle_rect *rect_list;
@@ -445,22 +446,19 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
     }
 
     int err;
-    private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
-    const uint32_t bufferMask = m->bufferMask;
-    const uint32_t numBuffers = m->numBuffers;
     pthread_mutex_lock(&l_surface);
 
-    // Remove the hardware framebuffer flag to avoid lags
-    usage = usage & ~GRALLOC_USAGE_HW_FB;
-
-/*
- * Using the framebuffer causes lags, so don't use it at all ;-)
- *
-    if (usage & GRALLOC_USAGE_HW_FB && (bufferMask < ((1LU << numBuffers) - 1)))
+    if (usage & GRALLOC_USAGE_HW_FB && numAlloc < 1) {
+        // first goes to framebuffer
         err = gralloc_alloc_framebuffer(dev, size, usage, pHandle, w, h, format, 32);
-    else
-*/
+        numAlloc++;
+    } else if (usage & GRALLOC_USAGE_HW_FB) {
+        // following requests with usage HW_FB go to ION
+        usage |= GRALLOC_USAGE_HW_ION;
         err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride);
+    } else {
+        err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride);
+    }
 
     pthread_mutex_unlock(&l_surface);
 
