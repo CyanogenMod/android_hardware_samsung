@@ -445,21 +445,10 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
     }
 
     int err;
-    private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
-    const uint32_t bufferMask = m->bufferMask;
-    const uint32_t numBuffers = m->numBuffers;
     pthread_mutex_lock(&l_surface);
-
-    // Remove the hardware framebuffer flag to avoid lags
-    usage = usage & ~GRALLOC_USAGE_HW_FB;
-
-/*
- * Using the framebuffer causes lags, so don't use it at all ;-)
- *
-    if (usage & GRALLOC_USAGE_HW_FB && (bufferMask < ((1LU << numBuffers) - 1)))
+    if (usage & GRALLOC_USAGE_HW_FB)
         err = gralloc_alloc_framebuffer(dev, size, usage, pHandle, w, h, format, 32);
     else
-*/
         err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride);
 
     pthread_mutex_unlock(&l_surface);
