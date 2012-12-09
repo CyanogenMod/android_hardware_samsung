@@ -48,7 +48,7 @@
 #include "s3c_lcd.h"
 #include "sec_format.h"
 
-#define HWC_DEBUG 1
+//#define HWC_DEBUG 1
 #if defined(BOARD_USES_FIMGAPI)
 #include "sec_g2d.h"
 #endif
