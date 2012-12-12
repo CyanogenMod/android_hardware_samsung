@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define NDEBUG 0
 #define LOG_TAG "libhwjpeg"
 
 #include <stdio.h>
@@ -57,6 +58,7 @@ unsigned long measure_time(struct timeval *start, struct timeval *stop)
 
 static int jpeg_v4l2_querycap(int fd)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_capability cap;
     int ret = 0;
 
@@ -71,11 +73,13 @@ static int jpeg_v4l2_querycap(int fd)
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
         ALOGE("[%s]: does not support capture", __func__);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_s_jpegcomp(int fd, int quality)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_jpegcompression arg;
     int ret = 0;
 
@@ -83,11 +87,13 @@ static int jpeg_v4l2_s_jpegcomp(int fd, int quality)
 
     ret = ioctl(fd, VIDIOC_S_JPEGCOMP, &arg);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_s_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *config)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_format fmt;
     int ret = 0;
 
@@ -127,12 +133,13 @@ static int jpeg_v4l2_s_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *
     }
 
     ret = ioctl(fd, VIDIOC_S_FMT, &fmt);
-
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_g_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *config)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_format fmt;
     int ret = 0;
 
@@ -165,11 +172,13 @@ static int jpeg_v4l2_g_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_getconfig(int fd, struct jpeg_config *config)
 {
+    ALOGV("%s E", __func__);
     int ret = 0;
 
     ret = jpeg_v4l2_g_fmt(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, config);
@@ -182,11 +191,13 @@ int jpeghal_getconfig(int fd, struct jpeg_config *config)
     if (ret < 0)
         ALOGE("[%s]: output G_FMT failed", __func__);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_reqbufs(int fd, int buf_cnt, struct jpeg_buf *buf)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_requestbuffers req;
     int ret = 0;
 
@@ -199,11 +210,13 @@ static int jpeg_v4l2_reqbufs(int fd, int buf_cnt, struct jpeg_buf *buf)
 
     ret = ioctl(fd, VIDIOC_REQBUFS, &req);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_querybuf(int fd, struct jpeg_buf *buf)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_buffer v4l2_buf;
     struct v4l2_plane plane[JPEG_MAX_PLANE_CNT];
     int i;
@@ -229,18 +242,20 @@ static int jpeg_v4l2_querybuf(int fd, struct jpeg_buf *buf)
                     PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                     v4l2_buf.m.planes[i].m.mem_offset);
 
-        //ALOGI("[%s]: buf.start[%d] = %p, length = %d", __func__, 0, buf->start[0], buf->length[0]);
+        //LOGI("[%s]: buf.start[%d] = %p, length = %d", __func__, 0, buf->start[0], buf->length[0]);
         if (buf->start[0] == MAP_FAILED) {
             ALOGE("[%s]: mmap failed", __func__);
             return -1;
         }
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_qbuf(int fd, struct jpeg_buf *buf)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_buffer v4l2_buf;
     struct v4l2_plane plane[JPEG_MAX_PLANE_CNT];
     int i;
@@ -268,11 +283,13 @@ static int jpeg_v4l2_qbuf(int fd, struct jpeg_buf *buf)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_dqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory memory)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_buffer buf;
     int ret = 0;
 
@@ -287,11 +304,13 @@ static int jpeg_v4l2_dqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory mem
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_streamon(int fd, enum v4l2_buf_type type)
 {
+    ALOGV("%s E", __func__);
     int ret = 0;
 
     ret = ioctl(fd, VIDIOC_STREAMON, &type);
@@ -300,11 +319,13 @@ static int jpeg_v4l2_streamon(int fd, enum v4l2_buf_type type)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 static int jpeg_v4l2_streamoff(int fd, enum v4l2_buf_type type)
 {
+    ALOGV("%s E", __func__);
     int ret = 0;
 
     ret = ioctl(fd, VIDIOC_STREAMOFF, &type);
@@ -313,11 +334,13 @@ static int jpeg_v4l2_streamoff(int fd, enum v4l2_buf_type type)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_dec_init()
 {
+    ALOGV("%s E", __func__);
     int fd;
     int ret = 0;
 
@@ -334,11 +357,13 @@ int jpeghal_dec_init()
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return fd;
 }
 
 int jpeghal_enc_init()
 {
+    ALOGV("%s E", __func__);
     int fd;
     int ret = 0;
 
@@ -354,11 +379,13 @@ int jpeghal_enc_init()
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return fd;
 }
 
 int jpeghal_dec_setconfig(int fd, struct jpeg_config *config)
 {
+    ALOGV("%s E", __func__);
     int ret = 0;
 
     config->mode = JPEG_DECODE;
@@ -375,6 +402,7 @@ int jpeghal_dec_setconfig(int fd, struct jpeg_config *config)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
@@ -382,7 +410,9 @@ int jpeghal_dec_getconfig(int fd, struct jpeg_config *config)
 {
     int ret = 0;
 
+    ALOGV("%s E", __func__);
     jpeghal_getconfig(fd, config);
+    ALOGV("%s X", __func__);
 
     return ret;
 }
@@ -390,6 +420,7 @@ int jpeghal_dec_getconfig(int fd, struct jpeg_config *config)
 int jpeghal_enc_setconfig(int fd, struct jpeg_config *config)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     ret = jpeg_v4l2_s_jpegcomp(fd, config->enc_qual);
     if (ret < 0) {
@@ -411,15 +442,18 @@ int jpeghal_enc_setconfig(int fd, struct jpeg_config *config)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_enc_getconfig(int fd, struct jpeg_config *config)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     jpeghal_getconfig(fd, config);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
@@ -427,6 +461,7 @@ int jpeghal_set_inbuf(int fd, struct jpeg_buf *buf)
 {
     int ret = 0;
 
+    ALOGV("%s E", __func__);
     buf->buf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 
     ret = jpeg_v4l2_reqbufs(fd, 1, buf);
@@ -442,6 +477,7 @@ int jpeghal_set_inbuf(int fd, struct jpeg_buf *buf)
             return -1;
         }
     }
+    ALOGV("%s X", __func__);
 
     return ret;
 }
@@ -449,6 +485,7 @@ int jpeghal_set_inbuf(int fd, struct jpeg_buf *buf)
 int jpeghal_set_outbuf(int fd, struct jpeg_buf *buf)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     buf->buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 
@@ -465,6 +502,7 @@ int jpeghal_set_outbuf(int fd, struct jpeg_buf *buf)
             return -1;
         }
     }
+    ALOGV("%s X", __func__);
 
     return ret;
 }
@@ -472,6 +510,7 @@ int jpeghal_set_outbuf(int fd, struct jpeg_buf *buf)
 static int jpeg_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     ret = jpeg_v4l2_qbuf(fd, in_buf);
     if (ret < 0) {
@@ -491,55 +530,66 @@ static int jpeg_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
     ret = jpeg_v4l2_dqbuf(fd, in_buf->buf_type, in_buf->memory);
     ret = jpeg_v4l2_dqbuf(fd, out_buf->buf_type, out_buf->memory);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_dec_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     ret = jpeg_exe(fd, in_buf, out_buf);
     if (ret < 0)
         ALOGE("[%s]: JPEG decoding is failed", __func__);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_enc_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 {
     int ret = 0;
+    ALOGV("%s E", __func__);
 
     ret = jpeg_exe(fd, in_buf, out_buf);
     if (ret < 0)
         ALOGE("[%s]: JPEG Encoding is failed", __func__);
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_deinit(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 {
     int ret = 0;
+    int i = 0;
+    ALOGV("%s E", __func__);
 
     jpeg_v4l2_streamoff(fd, in_buf->buf_type);
     jpeg_v4l2_streamoff(fd, out_buf->buf_type);
 
     if (in_buf->memory == V4L2_MEMORY_MMAP)
-        munmap((char *)(in_buf->start[0]), in_buf->length[0]);
+        for (i = 0; i < in_buf->num_planes; i++)
+            munmap((char *)(in_buf->start[i]), in_buf->length[i]);
 
     if (out_buf->memory == V4L2_MEMORY_MMAP)
-        munmap((char *)(out_buf->start[0]), out_buf->length[0]);
+        for (i = 0; i < out_buf->num_planes; i++)
+            munmap((char *)(out_buf->start[i]), out_buf->length[i]);
 
     jpeg_v4l2_reqbufs(fd, 0, in_buf);
 
     jpeg_v4l2_reqbufs(fd, 0, out_buf);
 
     ret = close(fd);
+    ALOGV("%s X", __func__);
 
     return ret;
 }
 
 int jpeghal_s_ctrl(int fd, int cid, int value)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_control vc;
     int ret = 0;
 
@@ -552,11 +602,13 @@ int jpeghal_s_ctrl(int fd, int cid, int value)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ret;
 }
 
 int jpeghal_g_ctrl(int fd, int id)
 {
+    ALOGV("%s E", __func__);
     struct v4l2_control ctrl;
     int ret = 0;
 
@@ -568,5 +620,6 @@ int jpeghal_g_ctrl(int fd, int id)
         return -1;
     }
 
+    ALOGV("%s X", __func__);
     return ctrl.value;
 }
