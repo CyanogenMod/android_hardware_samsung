@@ -63,13 +63,13 @@ static int jpeg_v4l2_querycap(int fd)
     ret = ioctl(fd, VIDIOC_QUERYCAP, &cap);
 
     if (!(cap.capabilities & V4L2_CAP_STREAMING))
-        ALOGE("[%s]: does not support streaming", __func__);
+        LOGE("[%s]: does not support streaming", __func__);
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_OUTPUT))
-        ALOGE("[%s]: does not support output", __func__);
+        LOGE("[%s]: does not support output", __func__);
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
-        ALOGE("[%s]: does not support capture", __func__);
+        LOGE("[%s]: does not support capture", __func__);
 
     return ret;
 }
@@ -122,7 +122,7 @@ static int jpeg_v4l2_s_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *
         }
         break;
     default:
-            ALOGE("[%s]: invalid v4l2 buf type", __func__);
+            LOGE("[%s]: invalid v4l2 buf type", __func__);
             return -1;
     }
 
@@ -161,7 +161,7 @@ static int jpeg_v4l2_g_fmt(int fd, enum v4l2_buf_type type, struct jpeg_config *
             config->pix.dec_fmt.out_fmt = fmt.fmt.pix_mp.pixelformat;
         break;
     default:
-        ALOGE("[%s]: invalid v4l2 buf type", __func__);
+        LOGE("[%s]: invalid v4l2 buf type", __func__);
         return -1;
     }
 
@@ -174,13 +174,13 @@ int jpeghal_getconfig(int fd, struct jpeg_config *config)
 
     ret = jpeg_v4l2_g_fmt(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, config);
     if (ret < 0) {
-        ALOGE("[%s]: input G_FMT failed", __func__);
+        LOGE("[%s]: input G_FMT failed", __func__);
         return -1;
     }
 
     ret = jpeg_v4l2_g_fmt(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, config);
     if (ret < 0)
-        ALOGE("[%s]: output G_FMT failed", __func__);
+        LOGE("[%s]: output G_FMT failed", __func__);
 
     return ret;
 }
@@ -219,7 +219,7 @@ static int jpeg_v4l2_querybuf(int fd, struct jpeg_buf *buf)
 
     ret = ioctl(fd, VIDIOC_QUERYBUF, &v4l2_buf);
     if (ret < 0) {
-        ALOGE("[%s:%d]: VIDIOC_QUERYBUF failed", __func__, ret);
+        LOGE("[%s:%d]: VIDIOC_QUERYBUF failed", __func__, ret);
         return ret;
     }
 
@@ -229,9 +229,9 @@ static int jpeg_v4l2_querybuf(int fd, struct jpeg_buf *buf)
                     PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                     v4l2_buf.m.planes[i].m.mem_offset);
 
-        //ALOGI("[%s]: buf.start[%d] = %p, length = %d", __func__, 0, buf->start[0], buf->length[0]);
+        //LOGI("[%s]: buf.start[%d] = %p, length = %d", __func__, 0, buf->start[0], buf->length[0]);
         if (buf->start[0] == MAP_FAILED) {
-            ALOGE("[%s]: mmap failed", __func__);
+            LOGE("[%s]: mmap failed", __func__);
             return -1;
         }
     }
@@ -264,7 +264,7 @@ static int jpeg_v4l2_qbuf(int fd, struct jpeg_buf *buf)
 
     ret = ioctl(fd, VIDIOC_QBUF, &v4l2_buf);
     if (ret < 0) {
-        ALOGE("[%s:%d] QBUF failed", __func__, ret);
+        LOGE("[%s:%d] QBUF failed", __func__, ret);
         return -1;
     }
 
@@ -283,7 +283,7 @@ static int jpeg_v4l2_dqbuf(int fd, enum v4l2_buf_type type, enum v4l2_memory mem
 
     ret = ioctl(fd, VIDIOC_DQBUF, &buf);
     if (ret < 0) {
-        ALOGE("[%s:%d] DQBUF failed", __func__, ret);
+        LOGE("[%s:%d] DQBUF failed", __func__, ret);
         return -1;
     }
 
@@ -296,7 +296,7 @@ static int jpeg_v4l2_streamon(int fd, enum v4l2_buf_type type)
 
     ret = ioctl(fd, VIDIOC_STREAMON, &type);
     if (ret < 0) {
-        ALOGE("[%s:%d] STREAMON failed", __func__, ret);
+        LOGE("[%s:%d] STREAMON failed", __func__, ret);
         return -1;
     }
 
@@ -309,7 +309,7 @@ static int jpeg_v4l2_streamoff(int fd, enum v4l2_buf_type type)
 
     ret = ioctl(fd, VIDIOC_STREAMOFF, &type);
     if (ret < 0) {
-        ALOGE("[%s:%d] STREAMOFF failed", __func__, ret);
+        LOGE("[%s:%d] STREAMOFF failed", __func__, ret);
         return -1;
     }
 
@@ -324,13 +324,13 @@ int jpeghal_dec_init()
     fd = open(JPEG_DEC_NODE, O_RDWR, 0);
 
     if (fd < 0) {
-        ALOGE("[%s]: JPEG dec open failed", __func__);
+        LOGE("[%s]: JPEG dec open failed", __func__);
         return -1;
     }
 
     ret = jpeg_v4l2_querycap(fd);
     if (ret < 0) {
-        ALOGE("[%s]: QUERYCAP failed", __func__);
+        LOGE("[%s]: QUERYCAP failed", __func__);
         return -1;
     }
 
@@ -344,13 +344,13 @@ int jpeghal_enc_init()
 
     fd = open(JPEG_ENC_NODE, O_RDWR, 0);
     if (fd < 0) {
-        ALOGE("[%s]: JPEG enc open failed", __func__);
+        LOGE("[%s]: JPEG enc open failed", __func__);
         return -1;
     }
 
     ret = jpeg_v4l2_querycap(fd);
     if (ret < 0) {
-        ALOGE("[%s]: QUERYCAP failed", __func__);
+        LOGE("[%s]: QUERYCAP failed", __func__);
         return -1;
     }
 
@@ -365,13 +365,13 @@ int jpeghal_dec_setconfig(int fd, struct jpeg_config *config)
 
     ret = jpeg_v4l2_s_fmt(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, config);
     if (ret < 0) {
-        ALOGE("[%s]: decoder input S_FMT failed", __func__);
+        LOGE("[%s]: decoder input S_FMT failed", __func__);
         return -1;
     }
 
     ret = jpeg_v4l2_s_fmt(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, config);
     if (ret < 0) {
-        ALOGE("[%s]: decoder output S_FMT failed", __func__);
+        LOGE("[%s]: decoder output S_FMT failed", __func__);
         return -1;
     }
 
@@ -393,7 +393,7 @@ int jpeghal_enc_setconfig(int fd, struct jpeg_config *config)
 
     ret = jpeg_v4l2_s_jpegcomp(fd, config->enc_qual);
     if (ret < 0) {
-        ALOGE("[%s]: S_JPEGCOMP failed", __func__);
+        LOGE("[%s]: S_JPEGCOMP failed", __func__);
         return -1;
     }
 
@@ -401,13 +401,13 @@ int jpeghal_enc_setconfig(int fd, struct jpeg_config *config)
 
     ret = jpeg_v4l2_s_fmt(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, config);
     if (ret < 0) {
-        ALOGE("[%s]: encoder input S_FMT failed", __func__);
+        LOGE("[%s]: encoder input S_FMT failed", __func__);
         return -1;
     }
 
     ret = jpeg_v4l2_s_fmt(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, config);
     if (ret < 0) {
-        ALOGE("[%s]: encoder output S_FMT failed", __func__);
+        LOGE("[%s]: encoder output S_FMT failed", __func__);
         return -1;
     }
 
@@ -431,14 +431,14 @@ int jpeghal_set_inbuf(int fd, struct jpeg_buf *buf)
 
     ret = jpeg_v4l2_reqbufs(fd, 1, buf);
     if (ret < 0) {
-        ALOGE("[%s:%d]: Input REQBUFS failed", __func__, ret);
+        LOGE("[%s:%d]: Input REQBUFS failed", __func__, ret);
         return -1;
     }
 
     if (buf->memory == V4L2_MEMORY_MMAP) {
         ret = jpeg_v4l2_querybuf(fd, buf);
         if (ret < 0) {
-            ALOGE("[%s:%d]: Input QUERYBUF failed", __func__, ret);
+            LOGE("[%s:%d]: Input QUERYBUF failed", __func__, ret);
             return -1;
         }
     }
@@ -454,14 +454,14 @@ int jpeghal_set_outbuf(int fd, struct jpeg_buf *buf)
 
     ret = jpeg_v4l2_reqbufs(fd, 1, buf);
     if (ret < 0) {
-        ALOGE("[%s:%d]: Output REQBUFS failed", __func__, ret);
+        LOGE("[%s:%d]: Output REQBUFS failed", __func__, ret);
         return -1;
     }
 
     if (buf->memory == V4L2_MEMORY_MMAP) {
         ret = jpeg_v4l2_querybuf(fd, buf);
         if (ret < 0) {
-            ALOGE("[%s:%d]: Output QUERYBUF failed", __func__, ret);
+            LOGE("[%s:%d]: Output QUERYBUF failed", __func__, ret);
             return -1;
         }
     }
@@ -475,13 +475,13 @@ static int jpeg_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 
     ret = jpeg_v4l2_qbuf(fd, in_buf);
     if (ret < 0) {
-        ALOGE("[%s:%d]: Input QBUF failed", __func__, ret);
+        LOGE("[%s:%d]: Input QBUF failed", __func__, ret);
         return -1;
     }
 
     ret = jpeg_v4l2_qbuf(fd, out_buf);
     if (ret < 0) {
-        ALOGE("[%s:%d]: Output QBUF failed", __func__, ret);
+        LOGE("[%s:%d]: Output QBUF failed", __func__, ret);
         return -1;
     }
 
@@ -500,7 +500,7 @@ int jpeghal_dec_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 
     ret = jpeg_exe(fd, in_buf, out_buf);
     if (ret < 0)
-        ALOGE("[%s]: JPEG decoding is failed", __func__);
+        LOGE("[%s]: JPEG decoding is failed", __func__);
 
     return ret;
 }
@@ -511,7 +511,7 @@ int jpeghal_enc_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 
     ret = jpeg_exe(fd, in_buf, out_buf);
     if (ret < 0)
-        ALOGE("[%s]: JPEG Encoding is failed", __func__);
+        LOGE("[%s]: JPEG Encoding is failed", __func__);
 
     return ret;
 }
@@ -519,15 +519,18 @@ int jpeghal_enc_exe(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 int jpeghal_deinit(int fd, struct jpeg_buf *in_buf, struct jpeg_buf *out_buf)
 {
     int ret = 0;
+    int i = 0;
 
     jpeg_v4l2_streamoff(fd, in_buf->buf_type);
     jpeg_v4l2_streamoff(fd, out_buf->buf_type);
 
     if (in_buf->memory == V4L2_MEMORY_MMAP)
-        munmap((char *)(in_buf->start[0]), in_buf->length[0]);
+        for (i = 0; i < in_buf->num_planes; i++)
+            munmap((char *)(in_buf->start[i]), in_buf->length[i]);
 
     if (out_buf->memory == V4L2_MEMORY_MMAP)
-        munmap((char *)(out_buf->start[0]), out_buf->length[0]);
+        for (i = 0; i < out_buf->num_planes; i++)
+            munmap((char *)(out_buf->start[i]), out_buf->length[i]);
 
     jpeg_v4l2_reqbufs(fd, 0, in_buf);
 
@@ -548,7 +551,7 @@ int jpeghal_s_ctrl(int fd, int cid, int value)
 
     ret = ioctl(fd, VIDIOC_S_CTRL, &vc);
     if (ret != 0) {
-        ALOGE("[%s] ioctl : cid(%d), value(%d)\n", __func__, cid, value);
+        LOGE("[%s] ioctl : cid(%d), value(%d)\n", __func__, cid, value);
         return -1;
     }
 
@@ -564,7 +567,7 @@ int jpeghal_g_ctrl(int fd, int id)
 
     ret = ioctl(fd, VIDIOC_G_CTRL, &ctrl);
     if (ret < 0) {
-        ALOGE("[%s] ioctl : cid(%d)\n", __func__, ctrl.id);
+        LOGE("[%s] ioctl : cid(%d)\n", __func__, ctrl.id);
         return -1;
     }
 
