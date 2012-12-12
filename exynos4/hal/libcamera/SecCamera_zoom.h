@@ -38,8 +38,10 @@
 #include <videodev2.h>
 #include <videodev2_samsung.h>
 #include "sec_utils_v4l2.h"
+#include "s5p_fimc.h"
 
 #include "SecBuffer.h"
+#include "exynos_mem.h"
 
 #include <utils/String8.h>
 
@@ -49,6 +51,7 @@
 
 #ifdef SAMSUNG_EXYNOS4x12
 #include "jpeg_hal.h"
+#include "swscaler.h"
 #endif
 
 #include "Exif.h"
@@ -56,7 +59,7 @@ namespace android {
 
 //#define ENABLE_ESD_PREVIEW_CHECK
 //#define ZERO_SHUTTER_LAG
-//#define IS_FW_DEBUG
+#define IS_FW_DEBUG
 #define VIDEO_SNAPSHOT
 
 #if defined VIDEO_SNAPSHOT
@@ -64,7 +67,7 @@ namespace android {
 #endif
 
 #define USE_FACE_DETECTION
-//#define USE_TOUCH_AF
+#define USE_TOUCH_AF
 
 #if defined(LOG_NDEBUG) && (LOG_NDEBUG == 0)
 #define LOG_CAMERA LOGD
@@ -132,6 +135,8 @@ namespace android {
 /* focal length of 0.9mm */
 #define S5K6A3_FOCAL_LENGTH            90
 
+#define MAX_METERING_AREA              64
+
 #define MAX_BACK_CAMERA_PREVIEW_WIDTH       JOIN(BACK_CAM,_PREVIEW_WIDTH)
 #define MAX_BACK_CAMERA_PREVIEW_HEIGHT      JOIN(BACK_CAM,_PREVIEW_HEIGHT)
 #define MAX_BACK_CAMERA_SNAPSHOT_WIDTH      JOIN(BACK_CAM,_SNAPSHOT_WIDTH)
@@ -174,11 +179,17 @@ namespace android {
 #endif
 #endif
 
+#define DEV_EXYNOS_MEM    "/dev/exynos-mem"
 #define PFX_NODE_MEM   "/dev/exynos-mem"
 
-#define CAMERA_DEV_NAME_TEMP "/data/videotmp_000"
-#define CAMERA_DEV_NAME2_TEMP "/data/videotemp_002"
+#define DEV_NAME3_RESERVED_SIZE 25600
+#define DEV_NAME2_RESERVED_SIZE 25600
+#define VIDEO_SNAPSHOT_RESERVED_SIZE 15360
 
+#define CAMERA_DEV_NAME_TEMP "/data/videotmp_000"
+#ifdef IS_FW_DEBUG
+#define CAMERA_DEV_NAME2_TEMP "/data/videotemp_002"
+#endif
 
 #define BPP             2
 #define MIN(x, y)       (((x) < (y)) ? (x) : (y))
@@ -234,9 +245,28 @@ namespace android {
 #define PREVIEW_MODE 1
 #define CAPTURE_MODE 2
 #define RECORD_MODE 3
+#define CAMERA_MAX_FACES 5
+
+#ifdef IS_FW_DEBUG
 #define FIMC_IS_FW_DEBUG_REGION_SIZE 512000
-#define FIMC_IS_FW_DEBUG_REGION_ADDR 0x840000
+#define FIMC_IS_FW_DEBUG_REGION_ADDR 0x84B000
 #define SIZE_4K 4096
+#define LOGD_IS(...) ((void)LOG(LOG_DEBUG, "IS_FW_DEBUG", __VA_ARGS__))
+#endif
+
+struct ExynosRect {
+    int left;
+    int top;
+    int right;
+    int bottom;
+};
+
+struct ExynosRect2 {
+    int x;
+    int y;
+    int w;
+    int h;
+};
 
 struct yuv_fmt_list {
     const char  *name;
@@ -324,7 +354,23 @@ public:
     int             getCameraId(void);
     void            initParameters(int index);
     int             setMode(int recording_en);
+    int             openExynosMemDev(int *fp);
 
+    int             createFimc(int *fp, char *dev_name, int mode, int index);
+    int             setFimc(void);
+    int             setFimcForPreview(void);
+    int             setFimcForRecord(void);
+    int             setFimcForSnapshot(void);
+    int             setFimcSrc(int fd, int width, int height, camera_frame_metadata_t *facedata);
+    int             setFimcDst(int fd, int width, int heifht, int pix_fmt, unsigned int addr);
+    int             clearFimcBuf(int fd);
+    int             runPreviewFimcOneshot(int index, camera_frame_metadata_t *facedata);
+    int             runRecordFimcOneshot(int index);
+    int             runSnapshotFimcOneshot(int index);
+    int             getShareBufferAddr(int index, struct fimc_buf *src_buf);
+    int             getSnapshotAddr(int index, SecBuffer *buffer);
+
+    char *          getMappedAddr(void);
     int             startPreview(void);
     int             stopPreview(void);
     int             getPreviewState(void)
@@ -347,16 +393,18 @@ public:
     int             getRecordFrame(void);
     int             releaseRecordFrame(int index);
     int             getRecordAddr(int index, SecBuffer *buffer);
+    int             getRecordPhysAddr(int index, SecBuffer *buffer);
 
     int             getPreview(camera_frame_metadata_t *facedata);
     int             setPreviewSize(int width, int height, int pixel_format);
     int             getPreviewSize(int *width, int *height, int *frame_size);
     int             getPreviewMaxSize(int *width, int *height);
     int             getPreviewPixelFormat(void);
+    int             getPreviewSrcSize(int *width, int *height, int *frame_size);
     int             setPreviewImage(int index, unsigned char *buffer, int size);
 
-    int             setVideosnapshotSize(int width, int height);
-    int             getVideosnapshotSize(int *width, int *height, int *frame_size);
+    int             setSensorSize(int width, int height);
+    int             getSensorSize(int *width, int *height, int *frame_size);
     int             setSnapshotSize(int width, int height);
     int             getSnapshotSize(int *width, int *height, int *frame_size);
     int             getSnapshotMaxSize(int *width, int *height);
@@ -405,6 +453,8 @@ public:
 
     int             setMetering(int metering_value);
     int             getMetering(void);
+    bool            setMeteringAreas(int num, ExynosRect2 *rect2s, int *weights);
+    int             getMaxNumMeteringAreas(void);
 
     int             setAutoExposureLock(int toggle);
     int             setAutoWhiteBalanceLock(int toggle);
@@ -488,6 +538,7 @@ public:
     int             getDefultIMEI(void);
     const __u8*     getCameraSensorName(void);
     bool             getUseInternalISP(void);
+    bool            setMaxSize(void);
 #ifdef ENABLE_ESD_PREVIEW_CHECK
     int             getCameraSensorESDStatus(void);
 #endif // ENABLE_ESD_PREVIEW_CHECK
@@ -558,6 +609,7 @@ private:
     bool            m_camera_use_ISP;
 
     int             m_cam_fd;
+    int             m_prev_fd;
     struct pollfd   m_events_c;
 
     int             m_cam_fd2;
@@ -574,6 +626,14 @@ private:
     off_t           m_debug_paddr;
 #endif
 
+    int             m_exynos_mem_fd_prev;
+    int             m_exynos_mem_fd_rec;
+    int             m_exynos_mem_fd_snap;
+    void           *m_prev_mapped_addr;
+    void           *m_rec_mapped_addr;
+    void           *m_cap_mapped_addr;
+    unsigned int    m_snapshot_phys_addr;
+
     int             m_preview_v4lformat;
     int             m_preview_width;
     int             m_preview_height;
@@ -587,8 +647,8 @@ private:
     int             m_snapshot_max_height;
 
     int             m_num_capbuf;
-    int             m_videosnapshot_width;
-    int             m_videosnapshot_height;
+    int             m_sensor_width;
+    int             m_sensor_height;
 
     int             m_angle;
     int             m_anti_banding;
@@ -617,8 +677,8 @@ private:
     int             m_slow_ae;
     int             m_camera_af_flag;
     int             m_auto_focus_state;
+    bool            m_isTouchMetering;
 
-    int             m_flag_camera_create;
     int             m_flag_camera_start;
 
     int             m_jpeg_fd;
@@ -636,6 +696,7 @@ private:
     exif_attribute_t mExifInfo;
 
     struct SecBuffer m_capture_buf[CAP_BUFFERS];
+    struct SecBuffer m_buffers_share[MAX_BUFFERS];
     struct SecBuffer m_buffers_preview[MAX_BUFFERS];
     struct SecBuffer m_buffers_record[MAX_BUFFERS];
 

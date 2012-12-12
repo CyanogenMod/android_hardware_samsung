@@ -19,7 +19,7 @@
 #ifndef ANDROID_HARDWARE_CAMERA_HARDWARE_SEC_H
 #define ANDROID_HARDWARE_CAMERA_HARDWARE_SEC_H
 
-#include "SecCamera.h"
+#include "SecCamera_zoom.h"
 #include <utils/threads.h>
 #include <utils/RefBase.h>
 #include <binder/MemoryBase.h>
@@ -87,6 +87,48 @@ private:
         }
     };
 
+    class PreviewFimcThread : public Thread {
+        CameraHardwareSec *mHardware;
+    public:
+        PreviewFimcThread(CameraHardwareSec *hw):
+        Thread(false),
+        mHardware(hw) { }
+        virtual void onFirstRef() {
+            run("CameraPreviewThread", PRIORITY_URGENT_DISPLAY);
+        }
+        virtual bool threadLoop() {
+            return mHardware->previewFimcThread();
+        }
+    };
+
+    class RecordFimcThread : public Thread {
+        CameraHardwareSec *mHardware;
+    public:
+        RecordFimcThread(CameraHardwareSec *hw):
+        Thread(false),
+        mHardware(hw) { }
+        virtual void onFirstRef() {
+            run("CameraPreviewThread", PRIORITY_URGENT_DISPLAY);
+        }
+        virtual bool threadLoop() {
+            return mHardware->recordFimcThread();
+        }
+    };
+
+    class CallbackThread : public Thread {
+        CameraHardwareSec *mHardware;
+    public:
+        CallbackThread(CameraHardwareSec *hw):
+        Thread(false),
+        mHardware(hw) { }
+        virtual void onFirstRef() {
+            run("CameraPreviewThread", PRIORITY_URGENT_DISPLAY);
+        }
+        virtual bool threadLoop() {
+            return mHardware->callbackThread();
+        }
+    };
+
     class PictureThread : public Thread {
         CameraHardwareSec *mHardware;
     public:
@@ -128,9 +170,20 @@ private:
             void        initDefaultParameters(int cameraId);
             void        initHeapLocked();
 
+            int         mRunningThread;
     sp<PreviewThread>   mPreviewThread;
             int         previewThread();
+            int         previewThreadForZoom();
             int         previewThreadWrapper();
+
+    sp<PreviewFimcThread>   mPreviewFimcThread;
+            int         previewFimcThread();
+
+    sp<RecordFimcThread>   mRecordFimcThread;
+            int         recordFimcThread();
+
+    sp<CallbackThread>   mCallbackThread;
+            int         callbackThread();
 
     sp<AutoFocusThread> mAutoFocusThread;
             int         autoFocusThread();
@@ -148,6 +201,9 @@ private:
             int         mPrevWp;
             int         mCurrWp;
    unsigned int         mDebugVaddr;
+            bool        mStopDebugging;
+    mutable Mutex       mDebugLock;
+    mutable Condition   mDebugCondition;
 #endif
 
             int         save_jpeg(unsigned char *real_jpeg, int jpeg_size);
@@ -164,7 +220,11 @@ private:
             bool        scaleDownYuv422(char *srcBuf, uint32_t srcWidth,
                                         uint32_t srcHight, char *dstBuf,
                                         uint32_t dstWidth, uint32_t dstHight);
+            bool        scaleDownYuv422sp(struct SecBuffer *srcBuf, uint32_t srcWidth,
+                                        uint32_t srcHeight, char *dstBuf,
+                                        uint32_t dstWidth, uint32_t dstHeight);
 
+            bool        fileDump(char *filename, void *srcBuf, uint32_t size);
             bool        CheckVideoStartMarker(unsigned char *pBuf);
             bool        CheckEOIMarker(unsigned char *pBuf);
             bool        FindEOIMarkerInJPEG(unsigned char *pBuf,
@@ -177,8 +237,10 @@ private:
             void        setSkipFrame(int frame);
             bool        isSupportedPreviewSize(const int width,
                                                const int height) const;
-            bool        getVideosnapshotSize(int *width, int *height);
-
+            bool        getSensorSize(int *width, int *height);
+            int         bracketsStr2Ints(char *str, int num, ExynosRect *rects, int *weights);
+            bool        subBracketsStr2Ints(int num, char *str, int *arr);
+            bool        meteringAxisTrans(ExynosRect *rects, ExynosRect2 *rect2s, int num);
     /* used by auto focus thread to block until it's told to run */
     mutable Mutex       mFocusLock;
     mutable Condition   mFocusCondition;
@@ -192,6 +254,15 @@ private:
             bool        mPreviewRunning;
             bool        mPreviewStartDeferred;
             bool        mExitPreviewThread;
+    mutable Mutex       mFimcLock;
+    mutable Condition   mFimcStoppedCondition;
+    mutable Mutex       mCallbackLock;
+    mutable Condition   mCallbackCondition;
+    mutable Mutex       mTakePictureLock;
+    mutable Condition   mTakePictureCondition;
+    mutable Condition   mStopPictureCondition;
+    mutable Mutex       mPreviewFimcLock;
+    mutable Condition   mPreviewFimcCondition;
 
             preview_stream_ops *mPreviewWindow;
 
@@ -216,7 +287,10 @@ private:
     sp<MemoryHeapBase>  mThumbnailHeap;
     camera_memory_t     *mRecordHeap[BUFFER_COUNT_FOR_ARRAY];
 
-    camera_frame_metadata_t     *mFaceData;
+    camera_frame_metadata_t     mFaceData;
+    camera_face_t               mFaces[CAMERA_MAX_FACES];
+    camera_frame_metadata_t     mFaceMetaData;
+    camera_face_t               mMetaFaces[CAMERA_MAX_FACES];
     camera_memory_t     *mFaceDataHeap;
 
     buffer_handle_t *mBufferHandle[BUFFER_COUNT_FOR_ARRAY];
@@ -238,6 +312,8 @@ private:
 
             int32_t     mMsgEnabled;
 
+            int         mRunningSetParam;
+            int         mFDcount;
             bool        mRecordRunning;
             bool        mRecordHint;
     mutable Mutex       mRecordLock;
@@ -246,6 +322,8 @@ private:
             int         mPostViewSize;
      struct SecBuffer   mCapBuffer;
             int         mCapIndex;
+            int         mCurrentIndex;
+            int         mOldRecordIndex;
             int         mCameraID;
 
             Vector<Size> mSupportedPreviewSizes;
