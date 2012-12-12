@@ -230,7 +230,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                 ump_id = ump_secure_id_get(ump_mem_handle);
                 if (UMP_INVALID_SECURE_ID != ump_id) {
                     private_handle_t* hnd;
-                    hnd = new private_handle_t(priv_alloc_flag, size, (int)cpu_ptr,
+                    hnd = new private_handle_t(priv_alloc_flag, size, reinterpret_cast<int> (cpu_ptr),
                     private_handle_t::LOCK_STATE_MAPPED, ump_id, ump_mem_handle, ion_fd, 0, 0);
                     if (NULL != hnd) {
                         *pHandle = hnd;
@@ -239,9 +239,9 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             private_handle_rect *psRect;
                             private_handle_rect *psFRect;
                             psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
-                            psRect->handle = (int)hnd->ump_id;
-                            psRect->stride = (int)hnd->stride_raw;
-                            psFRect = find_last_rect((int)hnd->ump_id);
+                            psRect->handle = static_cast<int> (hnd->ump_id);
+                            psRect->stride = static_cast<int> (hnd->stride_raw);
+                            psFRect = find_last_rect(static_cast<int> (hnd->ump_id));
                             psFRect->next = psRect;
                         }
 #endif
@@ -449,7 +449,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
     if (usage & GRALLOC_USAGE_HW_FB)
         err = gralloc_alloc_framebuffer(dev, size, usage, pHandle, w, h, format, 32);
     else
-        err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride);
+        err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, static_cast<int> (stride_raw), static_cast<int> (stride));
 
     pthread_mutex_unlock(&l_surface);
 
@@ -485,15 +485,15 @@ static int alloc_device_free(alloc_device_t* dev, buffer_handle_t handle)
         }
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
 #ifdef USE_PARTIAL_FLUSH
-        if (!release_rect((int)hnd->ump_id))
-            ALOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
+        if (!release_rect(static_cast<int> (hnd->ump_id))
+            ALOGE("secure id: 0x%x, release error", static_cast<int> (hnd->ump_id));
 #endif
         ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
         ump_reference_release((ump_handle)hnd->ump_mem_handle);
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
 #ifdef USE_PARTIAL_FLUSH
-        if (!release_rect((int)hnd->ump_id))
-            ALOGE("secure id: 0x%x, release error",(int)hnd->ump_id);
+        if (!release_rect(static_cast<int> (hnd->ump_id))
+            ALOGE("secure id: 0x%x, release error", static_cast<int> (hnd->ump_id));
 #endif
         ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
         ump_reference_release((ump_handle)hnd->ump_mem_handle);

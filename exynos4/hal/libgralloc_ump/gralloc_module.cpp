@@ -217,9 +217,9 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         private_handle_rect *psRect;
         private_handle_rect *psFRect;
         psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
-        psRect->handle = (int)hnd->ump_id;
-        psRect->stride = (int)hnd->stride;
-        psFRect = find_last_rect((int)hnd->ump_id);
+        psRect->handle = static_cast<int> (hnd->ump_id);
+        psRect->stride = static_cast<int> (hnd->stride);
+        psFRect = find_last_rect(static_cast<int> (hnd->ump_id));
         psFRect->next = psRect;
     }
 #endif
@@ -242,9 +242,9 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
     }
 
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
-        hnd->ump_mem_handle = (int)ump_handle_create_from_secure_id(hnd->ump_id);
+        hnd->ump_mem_handle = reinterpret_cast<int> (ump_handle_create_from_secure_id(hnd->ump_id));
         if (UMP_INVALID_MEMORY_HANDLE != (ump_handle)hnd->ump_mem_handle) {
-            hnd->base = (int)ump_mapped_pointer_get((ump_handle)hnd->ump_mem_handle);
+            hnd->base = reinterpret_cast<int> (ump_mapped_pointer_get((ump_handle)hnd->ump_mem_handle));
             if (0 != hnd->base) {
                 hnd->lockState = private_handle_t::LOCK_STATE_MAPPED;
                 hnd->writeOwner = 0;
@@ -278,7 +278,7 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         pthread_mutex_unlock(&s_map_lock);
         return 0;
     } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION) {
-        hnd->ump_mem_handle = (int)ump_handle_create_from_secure_id(hnd->ump_id);
+        hnd->ump_mem_handle = reinterpret_cast<int> (ump_handle_create_from_secure_id(hnd->ump_id));
         if (UMP_INVALID_MEMORY_HANDLE != (ump_handle)hnd->ump_mem_handle) {
             vaddr = (void*)ump_mapped_pointer_get((ump_handle)hnd->ump_mem_handle);
             if (0 != vaddr) {
@@ -314,8 +314,8 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
 
 #ifdef USE_PARTIAL_FLUSH
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP)
-        if (!release_rect((int)hnd->ump_id))
-            ALOGE("secureID: 0x%x, release error", (int)hnd->ump_id);
+        if (!release_rect(static_cast<int> (hnd->ump_id))
+            ALOGE("secureID: 0x%x, release error", static_cast<int> (hnd->ump_id));
 #endif
     ALOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
             "[unregister] handle %p still locked (state=%08x)", hnd, hnd->lockState);
@@ -327,7 +327,7 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
             ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
             hnd->base = 0;
             ump_reference_release((ump_handle)hnd->ump_mem_handle);
-            hnd->ump_mem_handle = (int)UMP_INVALID_MEMORY_HANDLE;
+            hnd->ump_mem_handle = reinterpret_cast<int> (UMP_INVALID_MEMORY_HANDLE);
             hnd->lockState  = 0;
             hnd->writeOwner = 0;
         } else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_IOCTL) {
@@ -347,7 +347,7 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
                 gralloc_unmap(module, handle);
 
             hnd->base = 0;
-            hnd->ump_mem_handle = (int)UMP_INVALID_MEMORY_HANDLE;
+            hnd->ump_mem_handle = reinterpret_cast<int> (UMP_INVALID_MEMORY_HANDLE);
             hnd->lockState  = 0;
             hnd->writeOwner = 0;
         } else {
@@ -375,7 +375,7 @@ static int gralloc_lock(gralloc_module_t const* module, buffer_handle_t handle,
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
 #ifdef USE_PARTIAL_FLUSH
         private_handle_rect *psRect;
-        psRect = find_rect((int)hnd->ump_id);
+        psRect = find_rect(static_cast<int> (hnd->ump_id));
         psRect->l = l;
         psRect->t = t;
         psRect->w = w;
@@ -408,7 +408,7 @@ static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
 #ifdef USE_PARTIAL_FLUSH
         private_handle_rect *psRect;
-        psRect = find_rect((int)hnd->ump_id);
+        psRect = find_rect(static_cast<int> (hnd->ump_id));
         ump_cpu_msync_now((ump_handle)hnd->ump_mem_handle, UMP_MSYNC_CLEAN,
                 (void *)(hnd->base + (psRect->stride * psRect->t)), psRect->stride * psRect->h );
         return 0;
