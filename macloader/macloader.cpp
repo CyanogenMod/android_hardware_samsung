@@ -40,6 +40,7 @@ enum Type {
  * murata:
  * 00:37:6d
  * 88:30:8a
+ * 60:21:C0
  *
  * semcosh:
  * 5c:0a:5b
@@ -57,7 +58,7 @@ int main() {
 
     /* open mac addr file */
     file = fopen(MACADDR_PATH, "r");
-    if(file == 0) {
+    if (file == 0) {
         fprintf(stderr, "open(%s) failed\n", MACADDR_PATH);
         ALOGE("Can't open %s\n", MACADDR_PATH);
         return -1;
@@ -65,21 +66,22 @@ int main() {
 
     /* get and compare mac addr */
     str = fgets(mac_addr_half, 9, file);
-    if(str == 0) {
+    if (str == 0) {
         fprintf(stderr, "fgets() from file %s failed\n", MACADDR_PATH);
         ALOGE("Can't read from %s\n", MACADDR_PATH);
         return -1;
     }
 
     /* murata */
-    if(strncasecmp(mac_addr_half, "00:37:6d", 9) == 0 ||
+    if (strncasecmp(mac_addr_half, "00:37:6d", 9) == 0 ||
         strncasecmp(mac_addr_half, "88:30:8a", 9) == 0 ||
-        strncasecmp(mac_addr_half, "20:02:af", 9) == 0) {
+        strncasecmp(mac_addr_half, "20:02:af", 9) == 0 ||
+        strncasecmp(mac_addr_half, "60:21:C0", 9) == 0) {
         type = MURATA;
     }
 
     /* semcosh */
-    if(strncasecmp(mac_addr_half, "5c:0a:5b", 9) == 0) {
+    if (strncasecmp(mac_addr_half, "5c:0a:5b", 9) == 0) {
         type = SEMCOSH;
     }
 
@@ -113,7 +115,7 @@ int main() {
             break;
          }
 
-        if(ret != 0) {
+        if (ret != 0) {
             fprintf(stderr, "fputs() to file %s failed\n", CID_PATH);
             ALOGE("Can't write to %s\n", CID_PATH);
             return -1;
@@ -132,7 +134,7 @@ int main() {
         system(chown_cmd);
         system(chgrp_cmd);
 
-        if(ret != 0) {
+        if (ret != 0) {
             fprintf(stderr, "chmod() on file %s failed\n", CID_PATH);
             ALOGE("Can't set permissions on %s\n", CID_PATH);
             return ret;
