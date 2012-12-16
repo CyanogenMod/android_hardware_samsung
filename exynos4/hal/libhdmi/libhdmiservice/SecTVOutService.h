@@ -49,6 +49,13 @@ namespace android {
                 HDMI_MODE_VIDEO,
             };
 
+            enum HDMI_S3D_MODE
+            {
+                HDMI_2D = 0,
+                HDMI_S3D_TB,
+                HDMI_S3D_SBS,
+            };
+
             mutable Mutex mLock;
 
             class HDMIFlushThread : public Thread {
@@ -79,7 +86,7 @@ namespace android {
 
             virtual void                        setHdmiStatus(uint32_t status);
             virtual void                        setHdmiMode(uint32_t mode);
-            virtual void                        setHdmiResolution(uint32_t resolution);
+            virtual void                        setHdmiResolution(uint32_t resolution, HDMI_S3D_MODE s3dMode);
             virtual void                        setHdmiHdcp(uint32_t enHdcp);
             virtual void                        setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer);
             virtual void                        setHdmiHwcLayer(uint32_t hwcLayer);
@@ -91,12 +98,20 @@ namespace android {
             bool                                hdmiCableInserted(void);
             void                                setLCDsize(void);
 
+            void setExtDispLayerNum(uint32_t extDispLayerNum);
+            void setForceMirrorMode(int forceMirrorMode);
+
+            uint32_t getHdmiStatus();
+
         private:
             SecHdmi                     mSecHdmi;
             bool                        mHdmiCableInserted;
             int                         mUILayerMode;
             uint32_t                    mLCD_width, mLCD_height;
             uint32_t                    mHwcLayer;
+
+            int mExtDispLayerNum;
+            unsigned int mForceMirrorMode;
     };
 
     class SecHdmiEventMsg : public MessageBase {
@@ -116,6 +131,8 @@ namespace android {
             uint32_t    mDstX, mDstY;
             uint32_t    mHdmiMode;
             uint32_t    mHdmiLayer, mHwcLayer;
+
+            uint32_t mForceMirrorMode;
 
             SecHdmiEventMsg(SecHdmi *SecHdmi, uint32_t srcWidth, uint32_t srcHeight, uint32_t srcColorFormat,
                     uint32_t srcYAddr, uint32_t srcCbAddr, uint32_t srcCrAddr,

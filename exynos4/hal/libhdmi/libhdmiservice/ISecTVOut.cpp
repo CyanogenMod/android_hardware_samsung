@@ -32,11 +32,14 @@ namespace android {
 
     enum {
         SET_HDMI_STATUS = IBinder::FIRST_CALL_TRANSACTION,
+        GET_HDMI_STATUS,
         SET_HDMI_MODE,
         SET_HDMI_RESOLUTION,
         SET_HDMI_HDCP,
+        SET_EXT_DISP_LAYER_NUM,
         SET_HDMI_ROTATE,
         SET_HDMI_HWCLAYER,
+        SET_FORCE_MIRROR_MODE,
         BLIT_2_HDMI
     };
 
@@ -47,6 +50,13 @@ namespace android {
         remote()->transact(SET_HDMI_STATUS, data, &reply);
     }
 
+    uint32_t BpSecTVOut::getHdmiCableStatus()
+    {
+        Parcel data, reply;
+        remote()->transact(GET_HDMI_STATUS, data, &reply);
+        return reply.readInt32();
+    }
+
     void BpSecTVOut::setHdmiMode(uint32_t mode)
     {
         Parcel data, reply;
@@ -54,10 +64,11 @@ namespace android {
         remote()->transact(SET_HDMI_MODE, data, &reply);
     }
 
-    void BpSecTVOut::setHdmiResolution(uint32_t resolution)
+    void BpSecTVOut::setHdmiResolution(uint32_t resolution, uint32_t s3dMode)
     {
         Parcel data, reply;
         data.writeInt32(resolution);
+        data.writeInt32(s3dMode);
         remote()->transact(SET_HDMI_RESOLUTION, data, &reply);
     }
 
@@ -66,6 +77,13 @@ namespace android {
         Parcel data, reply;
         data.writeInt32(resolution);
         remote()->transact(SET_HDMI_HDCP, data, &reply);
+    }
+
+    void BpSecTVOut::setExtDispLayerNum(uint32_t extDispLayerNum)
+    {
+        Parcel data, reply;
+        data.writeInt32(extDispLayerNum);
+        remote()->transact(SET_EXT_DISP_LAYER_NUM, data, &reply);
     }
 
     void BpSecTVOut::setHdmiRotate(uint32_t rotVal, uint32_t hwcLayer)

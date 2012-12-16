@@ -37,9 +37,11 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	libcutils
 
-LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/include
-LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/libhdmi
-LOCAL_C_INCLUDES += $(TARGET_HAL_PATH)/libfimc
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../../include \
+	$(LOCAL_PATH)/../../libhdmi \
+	$(LOCAL_PATH)/../../libfimc
+
 LOCAL_SHARED_LIBRARIES += libhdmi libfimc
 
 ifeq ($(BOARD_USES_HDMI_SUBTITLES),true)
@@ -55,14 +57,6 @@ ifeq ($(TARGET_SOC),exynos4x12)
 endif
 
 LOCAL_CFLAGS     += -DBOARD_USES_HDMI
-
-ifeq ($(BOARD_USE_V4L2),true)
-	LOCAL_CFLAGS += -DBOARD_USE_V4L2
-endif
-
-ifeq ($(BOARD_USE_V4L2_ION),true)
-	LOCAL_CFLAGS += -DBOARD_USE_V4L2_ION
-endif
 
 LOCAL_MODULE := libTVOut
 
@@ -109,14 +103,6 @@ ifeq ($(TARGET_SOC),exynos4x12)
 endif
 
 LOCAL_CFLAGS     += -DBOARD_USES_HDMI
-
-ifeq ($(BOARD_USE_V4L2),true)
-	LOCAL_CFLAGS += -DBOARD_USE_V4L2
-endif
-
-ifeq ($(BOARD_USE_V4L2_ION),true)
-	LOCAL_CFLAGS += -DBOARD_USE_V4L2_ION
-endif
 
 LOCAL_MODULE:= libhdmiclient
 
