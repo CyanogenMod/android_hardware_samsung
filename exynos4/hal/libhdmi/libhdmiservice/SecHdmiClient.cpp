@@ -48,39 +48,59 @@ SecHdmiClient * SecHdmiClient::getInstance(void)
 
 void SecHdmiClient::setHdmiCableStatus(int status)
 {
-    //ALOGD("%s HDMI status: %d\n", __func__, status);
+    //LOGD("%s HDMI status: %d\n", __func__, status);
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiCableStatus(status);
 }
 
+uint32_t SecHdmiClient::getHdmiCableStatus()
+{
+    uint32_t cableStatus = 0;
+    if (g_SecTVOutService == 0)
+        g_SecTVOutService = m_getSecTVOutService();
+
+    if (g_SecTVOutService != 0)
+        cableStatus = g_SecTVOutService->getHdmiCableStatus();
+    return cableStatus;
+}
+
 void SecHdmiClient::setHdmiMode(int mode)
 {
-    //ALOGD("%s HDMI Mode: %d\n", __func__, mode);
+    //LOGD("%s HDMI Mode: %d\n", __func__, mode);
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiMode(mode);
 }
 
-void SecHdmiClient::setHdmiResolution(int resolution)
+void SecHdmiClient::setHdmiResolution(int resolution, HDMI_S3D_MODE s3dMode)
 {
-    //ALOGD("%s HDMI Resolution: %d\n", __func__, resolution);
+    //LOGD("%s HDMI Resolution: %d\n", __func__, resolution);
 
     if (g_SecTVOutService != 0)
-        g_SecTVOutService->setHdmiResolution(resolution);
+        g_SecTVOutService->setHdmiResolution(resolution, s3dMode);
 }
 
 void SecHdmiClient::setHdmiHdcp(int enHdcp)
 {
-    //ALOGD("%s HDMI HDCP: %d\n", __func__, enHdcp);
+    //LOGD("%s HDMI HDCP: %d\n", __func__, enHdcp);
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiHdcp(enHdcp);
 }
 
+void SecHdmiClient::setExtDispLayerNum(int extDispLayerNum)
+{
+    if (g_SecTVOutService == 0)
+        g_SecTVOutService = m_getSecTVOutService();
+
+    if (g_SecTVOutService != 0)
+        g_SecTVOutService->setExtDispLayerNum(extDispLayerNum);
+}
+
 void SecHdmiClient::setHdmiRotate(int rotVal, uint32_t hwcLayer)
 {
-    //ALOGD("%s HDMI ROTATE: %d\n", __func__, rotVal);
+    //LOGD("%s HDMI ROTATE: %d\n", __func__, rotVal);
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiRotate(rotVal, hwcLayer);
@@ -88,7 +108,7 @@ void SecHdmiClient::setHdmiRotate(int rotVal, uint32_t hwcLayer)
 
 void SecHdmiClient::setHdmiHwcLayer(uint32_t hwcLayer)
 {
-    //ALOGD("%s HDMI HWCLAYER: %d\n", __func__, hwcLayer);
+    //LOGD("%s HDMI HWCLAYER: %d\n", __func__, hwcLayer);
 
     if (g_SecTVOutService != 0)
         g_SecTVOutService->setHdmiHwcLayer(hwcLayer);
@@ -96,7 +116,7 @@ void SecHdmiClient::setHdmiHwcLayer(uint32_t hwcLayer)
 
 void SecHdmiClient::setHdmiEnable(uint32_t enable)
 {
-    //ALOGD("%s HDMI ENABLE: %d\n", __func__, enable);
+    //LOGD("%s HDMI ENABLE: %d\n", __func__, enable);
 
     if (g_SecTVOutService != 0)
         mEnable = enable;
@@ -144,5 +164,19 @@ sp<ISecTVOut> SecHdmiClient::m_getSecTVOutService(void)
     }
     return g_SecTVOutService;
 }
-
+void SecHdmiClient::setVideoRotation(int rotation){}
+void SecHdmiClient::setForceMirrorMode(int mode){}
+void SecHdmiClient::setVideoMode(int mode){}
+void SecHdmiClient::setMirrorWithVideoMode(int mode){}
+void SecHdmiClient::disableLayer(unsigned int disable){}
+void SecHdmiClient::setHdmiResolution(int resolution){}
+int SecHdmiClient::getHdmiResolution(){
+    return 0;
+}
+int SecHdmiClient::getVideoMode(){
+    return 0;
+}
+int SecHdmiClient::getHdmiAudioChannel(){
+    return 0;
+}   
 }

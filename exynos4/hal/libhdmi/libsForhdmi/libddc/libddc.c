@@ -29,7 +29,7 @@
 
 #include "libddc.h"
 
-#define DDC_DEBUG 0
+#define DDC_DEBUG 1
 
 /**
  * @brief DDC device name.
@@ -41,6 +41,10 @@
 
 #ifdef DDC_CH_I2C_2
 #define DEV_NAME    "/dev/i2c-2"
+#endif
+
+#ifdef DDC_CH_I2C_6
+#define DEV_NAME    "/dev/i2c-6"
 #endif
 
 #ifdef DDC_CH_I2C_7
