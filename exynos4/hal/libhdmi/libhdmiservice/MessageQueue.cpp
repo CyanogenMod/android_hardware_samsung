@@ -111,7 +111,7 @@ sp<MessageBase> MessageQueue::waitMessage(nsecs_t timeout)
             }
 
             if (nextEventTime >= 0) {
-                //ALOGD("nextEventTime = %lld ms", nextEventTime);
+                ALOGD("nextEventTime = %lld ms", nextEventTime);
                 if (nextEventTime > 0) {
                     // we're about to wait, flush the binder command buffer
                     IPCThreadState::self()->flushCommands();
@@ -121,7 +121,7 @@ sp<MessageBase> MessageQueue::waitMessage(nsecs_t timeout)
                     }
                 }
             } else {
-                //ALOGD("going to wait");
+                ALOGD("going to wait");
                 // we're about to wait, flush the binder command buffer
                 IPCThreadState::self()->flushCommands();
                 mCondition.wait(mLock);
@@ -165,7 +165,7 @@ status_t MessageQueue::queueMessage(
     message->when = systemTime() + relTime;
     mMessages.insert(message);
     
-    //ALOGD("MessageQueue::queueMessage time = %lld ms", message->when);
+    ALOGD("MessageQueue::queueMessage time = %lld ms", message->when);
     //dumpLocked(message);
 
     mCondition.signal();

@@ -23,18 +23,26 @@
 #include <cutils/log.h>
 
 #include "videodev2.h"
-#if defined(BOARD_USE_V4L2)
-#include "s5p_tvout_v4l2.h"
-#else
 #include "s5p_tvout.h"
-#endif
 
-//#define DEBUG_MSG_ENABLE
-//#define DEBUG_HDMI_HW_LEVEL
+//#define LOG_LIB_HDMI
+//#define DEBUG_LIB_HDMI_V4L2
 #define BOARD_USES_EDID
 //#define BOARD_USES_CEC
 #if defined(SAMSUNG_EXYNOS4x12)
 //#define SUPPORT_G2D_UI_MODE
+#endif
+
+#if defined(DEBUG_LIB_HDMI)
+#define LOG_LIB_HDMI LOGD
+#else
+#define LOG_LIB_HDMI(...)
+#endif
+
+#if defined(DEBUG_LIB_HDMI_V4L2)
+#define LOG_LIB_HDMI_V4L2 LOGD
+#else
+#define LOG_LIB_HDMI_V4L2(...)
 #endif
 
 #define DEFAULT_FB      (0)
@@ -56,6 +64,13 @@
 #define SUPPORT_1080P_FIMC_OUT
 #define HDMI_MAX_WIDTH              (1920)
 #define HDMI_MAX_HEIGHT             (1080)
+
+#define HDMI_2D_RESOLUTION_NUM      (11)
+#define HDMI_TB_RESOLUTION_NUM      (2)
+#define HDMI_SBS_RESOLUTION_NUM     (1)
+
+#define DEFAULT_HDMI_S3D_SBS_RESOLUTION_VALUE   (720960)
+#define DEFAULT_HDMI_S3D_TB_RESOLUTION_VALUE    (1080924)
 
 #define ALIGN(x, a)    (((x) + (a) - 1) & ~((a) - 1))
 
@@ -135,4 +150,11 @@ enum hdmi_layer {
     HDMI_LAYER_GRAPHIC_0,
     HDMI_LAYER_GRAPHIC_1,
     HDMI_LAYER_MAX,
+};
+
+enum HDMI_S3D_MODE
+{
+    HDMI_2D = 0,
+    HDMI_S3D_TB,
+    HDMI_S3D_SBS,
 };
