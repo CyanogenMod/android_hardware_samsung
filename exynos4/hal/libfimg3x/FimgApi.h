@@ -30,8 +30,8 @@
 
 #if defined(REAL_DEBUG)
 #ifdef ANDROID_LOG
-    #define PRINT  ALOGE
-    #define PRINTD ALOGD
+    #define PRINT  LOGE
+    #define PRINTD LOGD
 #else
     #define PRINT  printf
     #define PRINTD printf
