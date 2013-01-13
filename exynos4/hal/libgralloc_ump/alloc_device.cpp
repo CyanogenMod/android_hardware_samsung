@@ -255,22 +255,8 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
                         } else {
-#ifndef INSIGNAL_FIMC1
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
-#else
-                            if(usage & GRALLOC_USAGE_HW_FIMC1) {
-                                /* FIMC1 allocs had an additional alignment to a 4k boundary.  This solves the issues with
-                                 * NHK World Live TV and a few other apps
-                                 */
-                                hnd->uoffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)),4096);
-                                hnd->voffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)),4096);
-                            }
-                            else {
-                                hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
-                                hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
-                            }
-#endif
                         }
                         return 0;
                     } else {
