@@ -151,8 +151,8 @@ static int
 rgb_to_brightness(struct light_state_t const* state)
 {
     int color = state->color & 0x00ffffff;
-    return ((77*((color>>16)&0x00ff))
-            + (150*((color>>8)&0x00ff)) + (29*(color&0x00ff))) >> 8;
+    return ((73*((color>>16)&0x00ff))
+            + (146*((color>>8)&0x00ff)) + (25*(color&0x00ff))) >> 8;
 }
 
 #ifdef LED_NOTIFICATION
@@ -208,7 +208,7 @@ static int set_led(char const *dir, struct led_state const *battery,
              * for any non-zero value.  TW lights just sets it to 1. */
             if ((res = write_df_str(dir, "trigger",     "notification")) < 0) return res;
             if ((res = write_df_str(dir, "brightness",  "255"         )) < 0) return res;
-            if ((res = write_df_str(dir, "blink_count", "1"           )) < 0) return res;
+            if ((res = write_df_str(dir, "blink_count", "2"           )) < 0) return res;
             if ((res = write_df_int(dir, "delay_on",    delay_on      )) < 0) return res;
             if ((res = write_df_int(dir, "delay_off",   delay_off     )) < 0) return res;
         } else {
