@@ -22,12 +22,17 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <cutils/log.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #define LOG_TAG "macloader"
 #define LOG_NDEBUG 0
 
 #define MACADDR_PATH "/efs/wifi/.mac.info"
 #define CID_PATH "/data/.cid.info"
+#define SYSTEM_USER_NAME "system"
+#define SYSTEM_GROUP_NAME "system"
 
 enum Type {
     NONE,
@@ -35,6 +40,35 @@ enum Type {
     SEMCOSH,
     SEMCOVE
 };
+
+static uid_t get_system_uid() {
+    struct passwd *result;
+
+    /* Within Android getpwnam and getgrnam are stubbed out */
+    /* the return value is an internally mapped structure */
+    /* so there is no need to use getpwnam_r or getgrnam_r*/
+    result = getpwnam(SYSTEM_USER_NAME);
+
+    if (result == 0) {
+        ALOGE("Failed to get UID for user: %s\n", SYSTEM_USER_NAME);
+        return -1;
+    }
+
+    return result->pw_uid;
+}
+
+static gid_t get_system_gid() {
+    struct group *result;
+
+    result = getgrnam(SYSTEM_GROUP_NAME);
+
+    if (result == 0) {
+        ALOGE("Failed to get GID for group: %s\n", SYSTEM_GROUP_NAME);
+        return -1;
+    }
+
+    return result->gr_gid;
+}
 
 int main() {
     FILE* file;
@@ -44,6 +78,8 @@ int main() {
     int ret = -1;
     int amode;
     enum Type type = NONE;
+    uid_t system_uid;
+    gid_t system_gid;
 
     /* open mac addr file */
     file = fopen(MACADDR_PATH, "r");
@@ -117,17 +153,29 @@ int main() {
         amode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
         ret = chmod(CID_PATH, amode);
 
-        char* chown_cmd = (char*) malloc(strlen("chown system ") + strlen(CID_PATH));
-        char* chgrp_cmd = (char*) malloc(strlen("chgrp system ") + strlen(CID_PATH));
-        sprintf(chown_cmd, "chown system %s", CID_PATH);
-        sprintf(chgrp_cmd, "chgrp system %s", CID_PATH);
-        system(chown_cmd);
-        system(chgrp_cmd);
-
         if (ret != 0) {
             fprintf(stderr, "chmod() on file %s failed\n", CID_PATH);
             ALOGE("Can't set permissions on %s\n", CID_PATH);
             return ret;
+        }
+
+        /* set ownership on cid file */
+        system_uid = get_system_uid();
+        system_gid = get_system_gid();
+
+        /* if either the user or group was found, make the system call */
+        /* if one of them was not found, passing -1 to chown has no effect */
+        /* if there was an error getting an ID this has already been logged */
+        if (system_uid != -1 || system_gid != -1) {
+            ALOGD("Setting ownership on %s\n", CID_PATH);
+
+            ret = chown(CID_PATH, system_uid, system_gid);
+
+            if (ret != 0) {
+                fprintf(stderr, "chown() on file %s failed\n", CID_PATH);
+                ALOGE("Can't set ownership on %s\n", CID_PATH);
+                return ret;
+            }
         }
 
     } else {
