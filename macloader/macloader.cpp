@@ -117,12 +117,12 @@ int main() {
         amode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
         ret = chmod(CID_PATH, amode);
 
-        char* chown_cmd = (char*) malloc(strlen("chown system ") + strlen(CID_PATH));
-        char* chgrp_cmd = (char*) malloc(strlen("chgrp system ") + strlen(CID_PATH));
-        sprintf(chown_cmd, "chown system %s", CID_PATH);
-        sprintf(chgrp_cmd, "chgrp system %s", CID_PATH);
+        /* Build the command to change user and group. */
+        /* Dont forget to make space for the NULL terminator. */
+        char* chown_cmd = (char*) malloc(strlen("chown system:system ") + strlen(CID_PATH) + 1);
+        sprintf(chown_cmd, "chown system:system %s", CID_PATH);
         system(chown_cmd);
-        system(chgrp_cmd);
+        free(chown_cmd);
 
         if (ret != 0) {
             fprintf(stderr, "chmod() on file %s failed\n", CID_PATH);
