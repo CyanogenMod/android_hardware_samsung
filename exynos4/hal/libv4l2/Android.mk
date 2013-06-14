@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2011 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,25 @@
 # limitations under the License.
 
 LOCAL_PATH:= $(call my-dir)
+
 include $(CLEAR_VARS)
 
-LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libexynosutils libexynosv4l2
-
-# to talk to secure side
-#LOCAL_SHARED_LIBRARIES += libMcClient
-#LOCAL_STATIC_LIBRARIES := libsecurepath
+LOCAL_SRC_FILES := \
+	exynos_v4l2.c \
+	exynos_subdev.c \
+	exynos_mc.c
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../include \
-	$(LOCAL_PATH)/../libexynosutils
+	$(TOP)/hardware/samsung/exynos4/hal/libexynosutils
 
-LOCAL_SRC_FILES := exynos_fimc.c
+LOCAL_SHARED_LIBRARIES := \
+	liblog \
+	libutils \
+	libexynosutils 
 
+LOCAL_MODULE := libexynosv4l2
+LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE := libexynosfimc
 
 include $(BUILD_SHARED_LIBRARY)

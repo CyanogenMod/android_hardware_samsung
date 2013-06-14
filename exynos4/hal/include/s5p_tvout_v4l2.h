@@ -20,6 +20,7 @@
 #include <linux/fb.h>
 
 #include "videodev2.h"
+#include "videodev2_exynos_media.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,11 +30,37 @@ extern "C" {
  * Define
  *******************************************/
 /* TVOUT control */
-#define PFX_NODE_FB     "/dev/graphics/fb"
+#define PFX_NODE_FB               "/dev/graphics/fb"
 
-#define TVOUT_DEV_V     "/dev/video20"
-#define TVOUT_DEV_G0    "/dev/video16"
-#define TVOUT_DEV_G1    "/dev/video17"
+#define PFX_NODE_MEDIADEV         "/dev/media"
+#define PFX_NODE_SUBDEV           "/dev/v4l-subdev"
+#define PFX_NODE_VIDEODEV         "/dev/video"
+#define PFX_ENTITY_SUBDEV_MIXER   "s5p-mixer%d"
+#define PFX_ENTITY_VIDEODEV_MIXER_GRP "mxr%d_graph%d"
+#define PFX_ENTITY_SUBDEV_GSC_OUT     "exynos-gsc-sd.%d"
+#define PFX_ENTITY_VIDEODEV_GSC_OUT   "exynos-gsc.%d.output"
+
+#define PFX_ENTITY_SUBDEV_FIMD        "s5p-fimd%d"
+#define PFX_ENTITY_SUBDEV_GSC_CAP     "gsc-cap-subdev.%d"
+#define PFX_ENTITY_VIDEODEV_GSC_CAP   "exynos-gsc.%d.capture"
+
+/* Sub-Mixer 0 */
+#define TVOUT0_DEV_G0      "/dev/video16"
+#define TVOUT0_DEV_G1      "/dev/video17"
+/* Sub-Mixer 1 */
+#define TVOUT1_DEV_G0      "/dev/video18"
+#define TVOUT1_DEV_G1      "/dev/video19"
+
+#define MIXER_V_SUBDEV_PAD_SINK     (0)
+#define MIXER_V_SUBDEV_PAD_SOURCE   (3)
+#define MIXER_G0_SUBDEV_PAD_SINK    (1)
+#define MIXER_G0_SUBDEV_PAD_SOURCE  (4)
+#define MIXER_G1_SUBDEV_PAD_SINK    (2)
+#define MIXER_G1_SUBDEV_PAD_SOURCE  (5)
+
+#define GSCALER_SUBDEV_PAD_SINK     (0)
+#define GSCALER_SUBDEV_PAD_SOURCE   (1)
+#define FIMD_SUBDEV_PAD_SOURCE      (0)
 
 #define HPD_DEV         "/dev/HPD"
 
@@ -74,6 +101,7 @@ extern "C" {
 #define V4L2_STD_TVOUT_720P_50_TB       ((v4l2_std_id)0x15000000)
 #define V4L2_STD_TVOUT_1080P_24_TB      ((v4l2_std_id)0x16000000)
 #define V4L2_STD_TVOUT_1080P_23_TB      ((v4l2_std_id)0x17000000)
+#define V4L2_STD_TVOUT_1080P_60_SBS_HALF ((v4l2_std_id)0x18000000)
 
 /* ------------- Input ------------------*/
 /* type */
