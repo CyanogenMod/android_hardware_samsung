@@ -130,6 +130,7 @@ struct private_handle_t {
     int     height;
     int     bpp;
     int     stride;
+    int     vstride;
 
     /* Following members are for ION memory only */
     int     ion_client;
@@ -169,6 +170,7 @@ struct private_handle_t {
     height(0),
     bpp(0),
     stride(0),
+    vstride(0),
     ion_client(0),
 #ifdef USELESS_SEC_YADDR
     yaddr(0),

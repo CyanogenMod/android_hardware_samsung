@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2012 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
 # limitations under the License.
 
 LOCAL_PATH:= $(call my-dir)
+# HAL module implemenation, not prelinked and stored in
+# hw/<COPYPIX_HARDWARE_MODULE_ID>.<ro.product.board>.so
+
 include $(CLEAR_VARS)
-
 LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libexynosutils libexynosv4l2
-
-# to talk to secure side
-#LOCAL_SHARED_LIBRARIES += libMcClient
-#LOCAL_STATIC_LIBRARIES := libsecurepath
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+LOCAL_SHARED_LIBRARIES := liblog libcutils libEGL libGLESv1_CM libhardware \
+    libhardware_legacy libion libutils libsync libexynosv4l2 libexynosfimc libedid
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../include \
-	$(LOCAL_PATH)/../libexynosutils
+    $(LOCAL_PATH)/../include \
+    $(LOCAL_PATH)/../libexynosutils \
+    $(LOCAL_PATH)/../libgralloc_ump
 
-LOCAL_SRC_FILES := exynos_fimc.c
+LOCAL_SRC_FILES := hwc.cpp
 
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE := libexynosfimc
-
+LOCAL_MODULE := hwcomposer.$(TARGET_BOARD_PLATFORM)
+LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
