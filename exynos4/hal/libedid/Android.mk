@@ -15,20 +15,29 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libexynosutils libexynosv4l2
+LOCAL_MODULE_TAGS := eng
 
-# to talk to secure side
-#LOCAL_SHARED_LIBRARIES += libMcClient
-#LOCAL_STATIC_LIBRARIES := libsecurepath
+LOCAL_PRELINK_MODULE := false
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)
+LOCAL_SHARED_LIBRARIES := liblog
+
+ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_7)
+LOCAL_CFLAGS  += -DDDC_CH_I2C_7
+endif
+
+ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_1)
+LOCAL_CFLAGS  += -DDDC_CH_I2C_1
+endif
+
+ifeq ($(BOARD_HDMI_DDC_CH), DDC_CH_I2C_2)
+LOCAL_CFLAGS  += -DDDC_CH_I2C_2
+endif
+
+LOCAL_SRC_FILES := libddc.c libedid.c
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../include \
-	$(LOCAL_PATH)/../libexynosutils
+	$(LOCAL_PATH) \
+	$(LOCAL_PATH)/../include 
 
-LOCAL_SRC_FILES := exynos_fimc.c
-
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE := libexynosfimc
-
+LOCAL_MODULE := libedid
 include $(BUILD_SHARED_LIBRARY)

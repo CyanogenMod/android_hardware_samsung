@@ -109,6 +109,7 @@ struct private_handle_t {
     };
 
     int     fd;
+    int     share_fd;
 
     int     magic;
     int     flags;
@@ -130,6 +131,7 @@ struct private_handle_t {
     int     height;
     int     bpp;
     int     stride;
+    int     vstride;
 
     /* Following members are for ION memory only */
     int     ion_client;
