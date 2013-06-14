@@ -16,19 +16,24 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PRELINK_MODULE := false
-LOCAL_SHARED_LIBRARIES := liblog libutils libcutils libexynosutils libexynosv4l2
+LOCAL_SHARED_LIBRARIES := liblog libutils libcutils
 
-# to talk to secure side
-#LOCAL_SHARED_LIBRARIES += libMcClient
-#LOCAL_STATIC_LIBRARIES := libsecurepath
+LOCAL_CFLAGS += -DEXYNOS_PLATFORM_ON_ANDROID
 
-LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../include \
-	$(LOCAL_PATH)/../libexynosutils
+LOCAL_C_INCLUDES := $(LOCAL_PATH)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../include
+LOCAL_C_INCLUDES += framework/base/include
 
-LOCAL_SRC_FILES := exynos_fimc.c
+LOCAL_SRC_FILES := ExynosMutex.cpp \
+		   Exynos_log.c
 
 LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE := libexynosfimc
+LOCAL_MODULE := libexynosutils
+
+ifeq ($(TARGET_BOARD_PLATFORM), exynos4)
+LOCAL_SRC_FILES += exynos5_format_v4l2.c
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../include
+endif
 
 include $(BUILD_SHARED_LIBRARY)
