@@ -14,6 +14,7 @@
 
 SAM_ROOT := $(call my-dir)
 
+# Exynos 4
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
 ifeq ($(TARGET_SOC),exynos4210)
 include $(SAM_ROOT)/exynos4210.mk
@@ -23,12 +24,19 @@ include $(SAM_ROOT)/exynos4x12.mk
 endif
 endif
 
+# Exynos 3
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
 ifneq ($(TARGET_BOOTLOADER_BOARD_NAME),herring)
 include $(SAM_ROOT)/s5pc110.mk
 endif
 endif
 
+# Wifi
 ifeq ($(BOARD_HAVE_SAMSUNG_WIFI),true)
 include $(SAM_ROOT)/macloader/Android.mk
+endif
+
+# RIL
+ifeq ($(BOARD_VENDOR),samsung)
+include $(SAM_ROOT)/ril/Android.mk
 endif
