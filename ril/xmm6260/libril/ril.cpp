@@ -361,8 +361,6 @@ processCommandBuffer(void *buffer, size_t buflen) {
     int index;
     int ret;
 
-    ALOGE("processCommandBuffer: enter");
-
     p.setData((uint8_t *) buffer, buflen);
 
     // status checked at end
@@ -406,10 +404,8 @@ processCommandBuffer(void *buffer, size_t buflen) {
 
 /*    sLastDispatchedToken = token; */
 
-    ALOGE("processCommandBuffer: dispatchFunction()");
     pRI->pCI->dispatchFunction(p, pRI);
 
-    ALOGE("processCommandBuffer: exit");
     return 0;
 }
 
