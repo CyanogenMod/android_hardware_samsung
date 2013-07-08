@@ -17,16 +17,20 @@
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(BOARD_VENDOR),samsung)
-ifeq ($(BOARD_PROVIDES_LIBRIL),true)
 
+# libril
+ifeq ($(BOARD_PROVIDES_LIBRIL),true)
 ifeq ($(BOARD_MODEM_TYPE),xmm6260)
 include $(LOCAL_PATH)/xmm6260/libril/Android.mk
 endif
-
 ifeq ($(BOARD_MODEM_TYPE),xmm6262)
 include $(LOCAL_PATH)/xmm6262/libril/Android.mk
 endif
-
 endif
+
+# ril client
+client_dirs := libsecril-client libsecril-client-sap
+include $(call all-named-subdir-makefiles,$(client_dirs))
+
 endif
 
