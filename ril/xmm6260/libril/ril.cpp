@@ -632,7 +632,6 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
     }
 
     if (s_callbacks.version < 3) { // Remove when partners upgrade to version 3
-        ALOGE("dispatchDial: s_callbacks.version < 3");
         uusPresent = 0;
         sizeOfDial = sizeof(dial) - sizeof(RIL_UUS_Info *);
     } else {
@@ -1518,8 +1517,17 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
         p.writeInt32(p_cur->numberPresentation);
         writeStringToParcel(p, p_cur->name);
         p.writeInt32(p_cur->namePresentation);
-        p.writeInt32(0); /* UUS Information is absent */
-
+        // Remove when partners upgrade to version 3
+        if ((s_callbacks.version < 3) || (p_cur->uusInfo == NULL || p_cur->uusInfo->uusData == NULL)) {
+            p.writeInt32(0); /* UUS Information is absent */
+        } else {
+            RIL_UUS_Info *uusInfo = p_cur->uusInfo;
+            p.writeInt32(1); /* UUS Information is present */
+            p.writeInt32(uusInfo->uusType);
+            p.writeInt32(uusInfo->uusDcs);
+            p.writeInt32(uusInfo->uusLength);
+            p.write(uusInfo->uusData, uusInfo->uusLength);
+        }
         appendPrintBuf("%s[id=%d,%s,toa=%d,",
             printBuf,
             p_cur->index,
