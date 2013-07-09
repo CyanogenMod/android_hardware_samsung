@@ -18,7 +18,6 @@ ifeq ($(TARGET_SOC),exynos4210)
 include $(TARGET_HAL_PATH)/Android.mk
 include $(SAM_ROOT)/exynos/multimedia/Android.mk
 include $(SAM_ROOT)/exynos4/exynos4210/Android.mk
-include $(SAM_ROOT)/exynos4/ril/Android.mk
 
 endif
 endif
