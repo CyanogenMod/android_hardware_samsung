@@ -14,23 +14,23 @@
 # limitations under the License.
 #
 
-LOCAL_PATH := $(call my-dir)
+RIL_PATH := $(call my-dir)
 
 ifeq ($(BOARD_VENDOR),samsung)
 
 # libril
 ifeq ($(BOARD_PROVIDES_LIBRIL),true)
 ifeq ($(BOARD_MODEM_TYPE),xmm6260)
-include $(LOCAL_PATH)/xmm6260/libril/Android.mk
+include $(RIL_PATH)/xmm6260/libril/Android.mk
 endif
 ifeq ($(BOARD_MODEM_TYPE),xmm6262)
-include $(LOCAL_PATH)/xmm6262/libril/Android.mk
+include $(RIL_PATH)/xmm6262/libril/Android.mk
 endif
 endif
 
 # ril client
-client_dirs := libsecril-client libsecril-client-sap
-include $(call all-named-subdir-makefiles,$(client_dirs))
+SECRIL_CLIENT_DIRS := libsecril-client libsecril-client-sap
+include $(foreach client_dirs,$(SECRIL_CLIENT_DIRS),$(RIL_PATH)/$(client_dirs)/Android.mk)
 
 endif
 
