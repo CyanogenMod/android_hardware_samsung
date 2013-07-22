@@ -15,6 +15,6 @@
 #
 
 ifeq ($(TARGET_SOC),exynos4x12)
-exynos4x12_dirs := liblights nfc
+exynos4x12_dirs := liblights
 include $(call all-named-subdir-makefiles,$(exynos4x12_dirs))
 endif
