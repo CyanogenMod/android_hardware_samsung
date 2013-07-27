@@ -41,7 +41,7 @@
     {RIL_REQUEST_DTMF, dispatchString, responseVoid},
     {RIL_REQUEST_SEND_SMS, dispatchStrings, responseSMS},
     {RIL_REQUEST_SEND_SMS_EXPECT_MORE, dispatchStrings, responseSMS},
-    {RIL_REQUEST_SETUP_DATA_CALL, dispatchStrings, responseDataCallList},
+    {RIL_REQUEST_SETUP_DATA_CALL, dispatchDataCall, responseSetupDataCall},
     {RIL_REQUEST_SIM_IO, dispatchSIM_IO, responseSIM_IO},
     {RIL_REQUEST_SEND_USSD, dispatchString, responseVoid},
     {RIL_REQUEST_CANCEL_USSD, dispatchVoid, responseVoid},
@@ -118,11 +118,13 @@
     {RIL_REQUEST_SET_SMSC_ADDRESS, dispatchString, responseVoid},
     {RIL_REQUEST_REPORT_SMS_MEMORY_STATUS, dispatchInts, responseVoid},
     {RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING, dispatchVoid, responseVoid},
-    {RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE, dispatchVoid, responseInts},
+    {RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE, dispatchCdmaSubscriptionSource, responseInts},
     {RIL_REQUEST_ISIM_AUTHENTICATION, dispatchString, responseString},
     {RIL_REQUEST_ACKNOWLEDGE_INCOMING_GSM_SMS_WITH_PDU, dispatchStrings, responseVoid},
     {RIL_REQUEST_STK_SEND_ENVELOPE_WITH_STATUS, dispatchString, responseSIM_IO},
-    {RIL_REQUEST_VOICE_RADIO_TECH, dispatchVoid, responseInts}, // 108
+    {RIL_REQUEST_VOICE_RADIO_TECH, dispatchVoiceRadioTech, responseInts},
+    {RIL_REQUEST_GET_CELL_INFO_LIST, dispatchVoid, responseCellInfoList},
+    {RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE, dispatchInts, responseVoid}, // 110
     {0, NULL, NULL}, // 10001
     {RIL_REQUEST_GET_CELL_BROADCAST_CONFIG, dispatchVoid, responseVoid},
     {0, NULL, NULL}, // 10003
