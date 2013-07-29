@@ -1494,13 +1494,13 @@ int hdmi_set_g_scaling(int layer,
         cur_g2d_address = (unsigned int)dst_addr;
         prev_src_addr = src_address;
 
-        srcAddr = {(addr_space)ADDR_USER, (unsigned long)src_address, src_w * src_h * 4, 1, 0};
-        srcImage = {srcAddr, srcAddr, src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888};
         srcRect = {0, 0, src_w, src_h};
-
-        dstAddr = {(addr_space)ADDR_USER, (unsigned long)dst_addr, dst_w * dst_h * dst_bpp, 1, 0};
-        dstImage = {dstAddr, dstAddr, dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format};
         dstRect = {0, 0, dst_w, dst_h};
+
+        srcAddr = {(addr_space)ADDR_USER, (unsigned long)src_address};
+        srcImage = { src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888, srcAddr, srcAddr, srcRect, false };
+        dstAddr = {(addr_space)ADDR_USER, (unsigned long)dst_addr};
+        dstImage = { dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format, dstAddr, dstAddr, dstRect, false};
         dstClip = {0, 0, 0, dst_w, dst_h};
 
         if (rotVal == 0 || rotVal == 180)
@@ -1686,19 +1686,20 @@ int hdmi_gl_set_param(int layer,
         cur_g2d_address = (unsigned int)dst_addr;
         prev_src_addr = src_y_address;
 
-        srcAddr = {(addr_space)ADDR_PHYS, (unsigned long)src_y_address, src_w*src_h*4, 1, 0};
-        srcImage = {srcAddr, srcAddr, src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888};
         srcRect = {0, 0, src_w, src_h};
-
-        dstAddr = {(addr_space)ADDR_PHYS, (unsigned long)dst_addr, dst_w*dst_h*dst_bpp, 1, 0};
-        dstImage = {dstAddr, dstAddr, dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format};
         dstRect = {0, 0, dst_w, dst_h};
+
+        srcAddr = {(addr_space)ADDR_USER, (unsigned long)src_y_address};
+        srcImage = { src_w, src_h, src_w*4, AX_RGB, CF_ARGB_8888, srcAddr, srcAddr, srcRect, false };
+        dstAddr = {(addr_space)ADDR_USER, (unsigned long)dst_addr};
+        dstImage = { dst_w, dst_h, dst_w*dst_bpp, AX_RGB, (color_format)dst_color_format, dstAddr, dstAddr, dstRect, false};
+
         dstClip = {0, 0, 0, dst_w, dst_h};
 
         if (rotVal == 0 || rotVal == 180)
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_w, dst_h};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_w, dst_h};
         else
-            Scaling = {SCALING_BILINEAR, SCALING_PIXELS, 0, 0, src_w, src_h, dst_h, dst_w};
+            Scaling = {SCALING_BILINEAR, src_w, src_h, dst_h, dst_w};
 
         switch (rotVal) {
         case 0:
@@ -1718,9 +1719,13 @@ int hdmi_gl_set_param(int layer,
             return -1;
             break;
         }
-
-        BlitParam = {BLIT_OP_SRC, NON_PREMULTIPLIED, 0xff, 0, g2d_rotation, &Scaling, 0, 0, &dstClip, 0, &srcImage, &dstImage, NULL, &srcRect, &dstRect, NULL, 0};
-
+        struct fimg2d_param Param;
+        struct fimg2d_repeat Repeat;
+        struct fimg2d_bluscr BluScr;
+        memset(&Repeat, 0, sizeof(struct fimg2d_repeat));
+        memset(&BluScr, 0, sizeof(struct fimg2d_bluscr));
+        Param = {0, 0xff, 0, g2d_rotation, NON_PREMULTIPLIED, Scaling, Repeat, BluScr, dstClip};
+        BlitParam = {BLIT_OP_SRC, Param, &srcImage, NULL, NULL, &dstImage, BLIT_SYNC, 0};
         if (stretchFimgApi(&BlitParam) < 0) {
             ALOGE("%s::stretchFimgApi() fail", __func__);
             return -1;

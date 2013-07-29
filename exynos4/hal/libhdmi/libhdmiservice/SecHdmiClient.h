@@ -34,8 +34,8 @@
 #include <cutils/log.h>
 #include <binder/IBinder.h>
 #include <binder/IServiceManager.h>
-#include <surfaceflinger/ISurfaceComposer.h>
-#include <surfaceflinger/SurfaceComposerClient.h>
+#include <gui/ISurfaceComposer.h>
+#include <gui/SurfaceComposerClient.h>
 #include "ISecTVOut.h"
 
 #define GETSERVICETIMEOUT (5)
