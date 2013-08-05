@@ -10,7 +10,7 @@ LOCAL_SRC_FILES:= \
     ril_event.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-	liblog \
+    liblog \
     libutils \
     libbinder \
     libcutils \
