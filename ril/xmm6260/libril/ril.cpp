@@ -3363,6 +3363,8 @@ static bool is3gpp2(int radioTech) {
 static RIL_RadioState
 processRadioState(RIL_RadioState newRadioState) {
 
+    RLOGD("processRadioState(): %d", newRadioState);
+
     if((newRadioState > RADIO_STATE_UNAVAILABLE) && (newRadioState < RADIO_STATE_ON)) {
         int newVoiceRadioTech;
         int newCdmaSubscriptionSource;
@@ -3391,6 +3393,7 @@ processRadioState(RIL_RadioState newRadioState) {
         }
 
         /* Send RADIO_ON to telephony */
+        RLOGD("processRadioState(): sending RADIO_STATE_ON");
         newRadioState = RADIO_STATE_ON;
     }
 
@@ -3462,6 +3465,7 @@ void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
     // some things get more payload
     switch(unsolResponse) {
         case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED:
+            RLOGD("RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED -> processRadioState()");
             newState = processRadioState(s_callbacks.onStateRequest());
             p.writeInt32(newState);
             appendPrintBuf("%s {%s}", printBuf,
