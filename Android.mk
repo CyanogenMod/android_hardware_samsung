@@ -38,5 +38,4 @@ endif
 
 ifeq ($(BOARD_VENDOR),samsung)
 include $(SAM_ROOT)/ril/Android.mk
-BOARD_HARDWARE_CLASS := $(SAM_ROOT)/cmhw
 endif
