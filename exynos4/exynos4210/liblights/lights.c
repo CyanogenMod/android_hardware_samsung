@@ -262,10 +262,10 @@ set_light_buttons(struct light_device_t* dev,
     pthread_mutex_lock(&g_lock);
     if (brightness > 0) {
         ALOGD("set_light_buttons on=%d\n", g_enable_touchlight ? 1 : 0);
-        err = write_int(BUTTON_FILE, g_enable_touchlight ? 1 : 0);
+        err = write_int(BUTTON_FILE, g_enable_touchlight ? 1 : 2);
     } else {
         ALOGD("set_light_buttons off\n");
-        err = write_int(BUTTON_FILE, 0);
+        err = write_int(BUTTON_FILE, 2);
     }
     pthread_mutex_unlock(&g_lock);
 
