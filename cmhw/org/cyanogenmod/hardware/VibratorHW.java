@@ -29,7 +29,17 @@ public class VibratorHW {
     private static String LEVEL_THRESHOLD_PATH = "/sys/class/timed_output/vibrator/pwm_threshold";
 
     public static boolean isSupported() {
-        return true;
+        File a = new File(LEVEL_PATH);
+        File b = new File(LEVEL_MAX_PATH);
+        File c = new File(LEVEL_MIN_PATH);
+        File d = new File(LEVEL_DEFAULT_PATH);
+        File e = new File(LEVEL_THRESHOLD_PATH);
+
+        if(!a.exists() && !b.exists() && !c.exists()  && !d.exists()  && !e.exists()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public static int getMaxIntensity()  {
