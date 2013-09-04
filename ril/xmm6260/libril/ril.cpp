@@ -114,6 +114,9 @@ namespace android {
     #define appendPrintBuf(x...)
 #endif
 
+#define MAX_RIL_SOL     RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE
+#define MAX_RIL_UNSOL   RIL_UNSOL_CELL_INFO_LIST
+
 enum WakeType {DONT_WAKE, WAKE_PARTIAL};
 
 typedef struct {
@@ -336,8 +339,8 @@ issueLocalRequest(int request, void *data, int len) {
 
     /* Hack to include Samsung requests */
     if (request > 10000) {
-        index = request - 10000 + RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE;
-        RLOGE("SAMSUNG: request=%d, index=%d", request, index);
+        index = request - 10000 + MAX_RIL_SOL;
+        RLOGD("SAMSUNG: request=%d, index=%d", request, index);
         pRI->pCI = &(s_commands[index]);
     } else {
         pRI->pCI = &(s_commands[request]);
@@ -356,8 +359,6 @@ issueLocalRequest(int request, void *data, int len) {
 
     s_callbacks.onRequest(request, data, len, pRI);
 }
-
-
 
 static int
 processCommandBuffer(void *buffer, size_t buflen) {
@@ -381,8 +382,9 @@ processCommandBuffer(void *buffer, size_t buflen) {
     }
 
     /* Hack to include Samsung requests */
-    //if (request < 1 || request >= (int32_t)NUM_ELEMS(s_commands)) {
-    if (request < 1 || ((request > RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE) && (request < RIL_REQUEST_GET_CELL_BROADCAST_CONFIG)) || request > RIL_REQUEST_HANGUP_VT) {
+    if (request < 1 || ((request > MAX_RIL_SOL) &&
+            (request < RIL_REQUEST_GET_CELL_BROADCAST_CONFIG)) ||
+            request > RIL_REQUEST_HANGUP_VT) {
         RLOGE("unsupported request code %d token %d", request, token);
         // FIXME this should perhaps return a response
         return 0;
@@ -394,8 +396,9 @@ processCommandBuffer(void *buffer, size_t buflen) {
 
     /* Hack to include Samsung requests */
     if (request > 10000) {
-        index = request - 10000 + RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE;
-        RLOGE("processCommandBuffer: samsung request=%d, index=%d", request, index);
+        index = request - 10000 + MAX_RIL_SOL;
+        RLOGD("processCommandBuffer: samsung request=%d, index=%d",
+                request, index);
         pRI->pCI = &(s_commands[index]);
     } else {
         pRI->pCI = &(s_commands[request]);
@@ -1461,7 +1464,7 @@ responseIntsGetPreferredNetworkType(Parcel &p, void *response, size_t responsele
     startResponse;
     for (int i = 0 ; i < numInts ; i++) {
         if (i == 0 && p_int[0] == 7) {
-            RLOGE("REQUEST_GET_PREFERRED_NETWORK_TYPE: NETWORK_MODE_GLOBAL => NETWORK_MODE_WCDMA_PREF");
+            RLOGD("REQUEST_GET_PREFERRED_NETWORK_TYPE: NETWORK_MODE_GLOBAL => NETWORK_MODE_WCDMA_PREF");
             p_int[0] = 0;
         }
         appendPrintBuf("%s%d,", printBuf, p_int[i]);
@@ -1504,18 +1507,18 @@ static int responseStringsNetworks(Parcel &p, void *response, size_t responselen
         p.writeInt32 (0);
     } else {
         char **p_cur = (char **) response;
+        int j = 0;
 
         numStrings = responselen / sizeof(char *);
         p.writeInt32 ((numStrings / inQANElements) * outQANElements);
 
         /* each string*/
         startResponse;
-        int j=0;
         for (int i = 0 ; i < numStrings ; i++) {
             /* Samsung is sending 5 elements, upper layer expects 4.
                Drop every 5th element here */
             if (j == outQANElements) {
-                j=0;
+                j = 0;
             } else {
                 appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
                 writeStringToParcel (p, p_cur[i]);
@@ -3097,8 +3100,14 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
     }
 
     for (int i = 0; i < (int)NUM_ELEMS(s_unsolResponses); i++) {
-        assert(i + RIL_UNSOL_RESPONSE_BASE
+        /* Hack to include Samsung responses */
+        if (i > MAX_RIL_UNSOL - RIL_UNSOL_RESPONSE_BASE) {
+            assert(i + SAMSUNG_UNSOL_RESPONSE_BASE - MAX_RIL_UNSOL
                 == s_unsolResponses[i].requestNumber);
+        } else {
+            assert(i + RIL_UNSOL_RESPONSE_BASE
+                == s_unsolResponses[i].requestNumber);
+        }
     }
 
     // New rild impl calls RIL_startEventLoop() first
@@ -3412,8 +3421,14 @@ void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
         RLOGW("RIL_onUnsolicitedResponse called before RIL_register");
         return;
     }
-
-    unsolResponseIndex = unsolResponse - RIL_UNSOL_RESPONSE_BASE;
+    
+    /* Hack to include Samsung responses */
+    if (unsolResponse > SAMSUNG_UNSOL_RESPONSE_BASE) {
+        unsolResponseIndex = unsolResponse - SAMSUNG_UNSOL_RESPONSE_BASE + MAX_RIL_UNSOL - RIL_UNSOL_RESPONSE_BASE;
+        RLOGD("SAMSUNG: unsolResponse=%d, unsolResponseIndex=%d", unsolResponse, unsolResponseIndex);
+    } else {
+        unsolResponseIndex = unsolResponse - RIL_UNSOL_RESPONSE_BASE;
+    }
 
     if ((unsolResponseIndex < 0)
         || (unsolResponseIndex >= (int32_t)NUM_ELEMS(s_unsolResponses))) {
@@ -3770,6 +3785,7 @@ requestToString(int request) {
         case RIL_UNSOL_RIL_CONNECTED: return "UNSOL_RIL_CONNECTED";
         case RIL_UNSOL_VOICE_RADIO_TECH_CHANGED: return "UNSOL_VOICE_RADIO_TECH_CHANGED";
         case RIL_UNSOL_CELL_INFO_LIST: return "UNSOL_CELL_INFO_LIST";
+        case RIL_UNSOL_STK_SEND_SMS_RESULT: return "RIL_UNSOL_STK_SEND_SMS_RESULT";
         default: return "<unknown request>";
     }
 }
