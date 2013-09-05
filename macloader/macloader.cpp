@@ -66,12 +66,14 @@ int main() {
         strncasecmp(mac_addr_half, "88:30:8a", 9) == 0 ||
         strncasecmp(mac_addr_half, "20:02:af", 9) == 0 ||
         strncasecmp(mac_addr_half, "5c:f8:a1", 9) == 0 ||
+        strncasecmp(mac_addr_half, "40:f3:08", 9) == 0 ||
         strncasecmp(mac_addr_half, "60:21:c0", 9) == 0) {
         type = MURATA;
     }
 
     /* semcosh */
-    if (strncasecmp(mac_addr_half, "5c:0a:5b", 9) == 0) {
+    if (strncasecmp(mac_addr_half, "5c:0a:5b", 9) == 0 ||
+        strncasecmp(mac_addr_half, "cc:3a:61", 9) == 0) {
         type = SEMCOSH;
     }
 

@@ -37,7 +37,6 @@
 
 static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
-static int g_enable_touchlight = -1;
 
 char const*const PANEL_FILE
         = "/sys/class/backlight/panel/brightness";
@@ -55,23 +54,6 @@ void init_globals(void)
 {
     // init the mutex
     pthread_mutex_init(&g_lock, NULL);
-}
-
-void
-load_settings()
-{
-    FILE* fp = fopen("/data/.disable_touchlight", "r");
-    if (!fp) {
-        g_enable_touchlight = 1;
-    } else {
-        g_enable_touchlight = (int)(fgetc(fp));
-        if (g_enable_touchlight == '1')
-            g_enable_touchlight = 1;
-        else
-            g_enable_touchlight = 0;
-
-        fclose(fp);
-    }
 }
 
 #ifdef LED_NOTIFICATION
@@ -234,14 +216,6 @@ set_light_backlight(struct light_device_t* dev,
 
     pthread_mutex_lock(&g_lock);
     err = write_int(PANEL_FILE, brightness);
-
-#ifndef EXYNOS4210_TABLET
-    if (!s_previous_brightness && (brightness > 0)) {
-        err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
-        s_previous_brightness = brightness;
-    }
-#endif
-
     pthread_mutex_unlock(&g_lock);
 
     return err;
@@ -257,16 +231,9 @@ set_light_buttons(struct light_device_t* dev,
     int err = 0;
     int brightness = rgb_to_brightness(state);
 
-    load_settings();
-
     pthread_mutex_lock(&g_lock);
-    if (brightness > 0) {
-        ALOGD("set_light_buttons on=%d\n", g_enable_touchlight ? 1 : 0);
-        err = write_int(BUTTON_FILE, g_enable_touchlight ? 1 : 0);
-    } else {
-        ALOGD("set_light_buttons off\n");
-        err = write_int(BUTTON_FILE, 0);
-    }
+    ALOGD("set_light_buttons: %d\n", brightness > 0 ? 1 : 2);
+    err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
     pthread_mutex_unlock(&g_lock);
 
     return err;

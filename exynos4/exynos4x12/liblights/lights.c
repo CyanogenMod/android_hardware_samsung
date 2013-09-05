@@ -148,6 +148,7 @@ static int get_dimmed_color(struct light_state_t const *state, int brightness)
     return (((red * brightness) / 255) << 16) + (((green * brightness) / 255) << 8) + ((blue * brightness) / 255);
 }
 
+/* Panel backlight */
 static int set_light_backlight(struct light_device_t *dev,
             struct light_state_t const *state)
 {
@@ -156,26 +157,30 @@ static int set_light_backlight(struct light_device_t *dev,
     int previous_brightness = read_int(PANEL_FILE);
 
     pthread_mutex_lock(&g_lock);
-
     err = write_int(PANEL_FILE, brightness);
-
-#ifndef EXYNOS4X12_TABLET
-    if (!previous_brightness && (brightness > 0)) {
-        err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
-    }
-#endif
     pthread_mutex_unlock(&g_lock);
 
     return err;
 }
 
-static int close_lights(struct light_device_t *dev)
+/* Touchkey backlight */
+static int
+set_light_buttons(struct light_device_t* dev,
+        struct light_state_t const* state)
 {
-    ALOGV("close_light is called");
-    if (dev)
-        free(dev);
-
+#ifdef EXYNOS4X12_TABLET
     return 0;
+#else
+    int err = 0;
+    int brightness = rgb_to_brightness(state);
+
+    pthread_mutex_lock(&g_lock);
+    ALOGD("set_light_buttons: %d\n", brightness > 0 ? 1 : 2);
+    err = write_int(BUTTON_FILE, brightness > 0 ? 1 : 2);
+    pthread_mutex_unlock(&g_lock);
+
+    return err;
+#endif
 }
 
 /* LEDs */
@@ -273,6 +278,15 @@ static int set_light_leds_attention(struct light_device_t *dev,
     return set_light_leds(state, 1);
 }
 
+static int close_lights(struct light_device_t *dev)
+{
+    ALOGV("close_light is called");
+    if (dev)
+        free(dev);
+
+    return 0;
+}
+
 static int open_lights(const struct hw_module_t *module, char const *name,
                         struct hw_device_t **device)
 {
@@ -281,6 +295,8 @@ static int open_lights(const struct hw_module_t *module, char const *name,
 
     if (0 == strcmp(LIGHT_ID_BACKLIGHT, name))
         set_light = set_light_backlight;
+    else if (0 == strcmp(LIGHT_ID_BUTTONS, name))
+        set_light = set_light_buttons;
     else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
         set_light = set_light_leds_notifications;
     else if (0 == strcmp(LIGHT_ID_ATTENTION, name))

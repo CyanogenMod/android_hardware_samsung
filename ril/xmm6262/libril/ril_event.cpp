@@ -75,7 +75,7 @@ static struct ril_event pending_list;
 #define DEBUG 0
 
 #if DEBUG
-#define dlog(x...) ALOGD( x )
+#define dlog(x...) RLOGD( x )
 static void dump_event(struct ril_event * ev)
 {
     dlog("~~~~ Event %x ~~~~", (unsigned int)ev);
@@ -370,7 +370,7 @@ void ril_event_loop()
         if (n < 0) {
             if (errno == EINTR) continue;
 
-            ALOGE("ril_event: select error (%d)", errno);
+            RLOGE("ril_event: select error (%d)", errno);
             // bail?
             return;
         }
