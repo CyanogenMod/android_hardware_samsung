@@ -67,6 +67,7 @@ int main() {
         strncasecmp(mac_addr_half, "20:02:af", 9) == 0 ||
         strncasecmp(mac_addr_half, "5c:f8:a1", 9) == 0 ||
         strncasecmp(mac_addr_half, "40:f3:08", 9) == 0 ||
+        strncasecmp(mac_addr_half, "f0:27:65", 9) == 0 ||
         strncasecmp(mac_addr_half, "60:21:c0", 9) == 0) {
         type = MURATA;
     }
