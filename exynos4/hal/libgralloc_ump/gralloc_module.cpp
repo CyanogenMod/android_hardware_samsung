@@ -223,8 +223,6 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         psFRect->next = psRect;
     }
 #endif
-    if (hnd->pid == getpid())
-        return 0;
 
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION)
         err = gralloc_map(module, handle, &vaddr);

@@ -240,7 +240,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             private_handle_rect *psFRect;
                             psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
                             psRect->handle = (int)hnd->ump_id;
-                            psRect->stride = (int)hnd->stride_raw;
+                            psRect->stride = stride_raw;
                             psFRect = find_last_rect((int)hnd->ump_id);
                             psFRect->next = psRect;
                         }
