@@ -322,7 +322,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
     module->ydpi = ydpi;
     module->fps = fps;
 
-    char value[32];
+    char value[PROPERTY_VALUE_MAX];
     property_get("debug.gralloc.vsync", value, "1");
     module->enableVSync = atoi(value);
     /*
