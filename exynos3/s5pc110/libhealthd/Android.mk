@@ -1,5 +1,5 @@
-#
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2013 The Android Open Source Project
+# Copyright (C) 2013 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
+LOCAL_PATH := $(call my-dir)
 
-# audio, camera, sensor and light HALs are device specifc
-s5pc110_dirs := libhdmi libhwcomposer libs3cjpeg libstagefrighthw sec_mm power libhealthd
-
-include $(call all-named-subdir-makefiles,$(s5pc110_dirs))
-
-endif
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := healthd_board_exynos3.cpp
+LOCAL_MODULE := libhealthd.exynos3
+LOCAL_C_INCLUDES := system/core/healthd
+include $(BUILD_STATIC_LIBRARY)
