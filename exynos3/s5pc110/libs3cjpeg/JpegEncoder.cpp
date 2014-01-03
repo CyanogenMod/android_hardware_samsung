@@ -44,8 +44,28 @@ JpegEncoder::JpegEncoder() : available(false)
         return;
     }
 
+    // Must be exactly 0, legacy kernel will return 1 despite
+    // the IOCTL being invalid
+    if (ioctl(mDevFd, IOCTL_JPG_GET_INFO, &mInfo) != 0) {
+#ifdef LEGACY_SUPPORT
+        ALOGW("Unable to read driver info. Using legacy values.");
+        mInfo.frame_buf_size = JPG_FRAME_BUF_SIZE;
+        mInfo.thumb_frame_buf_size = JPG_FRAME_THUMB_BUF_SIZE;
+        mInfo.stream_buf_size = JPG_STREAM_BUF_SIZE;
+        mInfo.thumb_stream_buf_size = JPG_STREAM_THUMB_BUF_SIZE;
+        mInfo.total_buf_size = JPG_TOTAL_BUF_SIZE;
+        mInfo.max_width = MAX_JPG_WIDTH;
+        mInfo.max_height = MAX_JPG_HEIGHT;
+        mInfo.max_thumb_width = MAX_JPG_THUMBNAIL_WIDTH;
+        mInfo.max_thumb_height = MAX_JPG_THUMBNAIL_HEIGHT;
+#else
+        ALOGE("Unable to read driver info.");
+        return;
+#endif
+    }
+
     mArgs.mmapped_addr = (char *)mmap(0,
-                                      JPG_TOTAL_BUF_SIZE,
+                                      mInfo.total_buf_size,
                                       PROT_READ | PROT_WRITE,
                                       MAP_SHARED,
                                       mDevFd,
@@ -82,7 +102,7 @@ JpegEncoder::JpegEncoder() : available(false)
 JpegEncoder::~JpegEncoder()
 {
     if (mArgs.mmapped_addr != (char*)MAP_FAILED)
-        munmap(mArgs.mmapped_addr, JPG_TOTAL_BUF_SIZE);
+        munmap(mArgs.mmapped_addr, mInfo.total_buf_size);
 
     delete mArgs.enc_param;
 
@@ -101,14 +121,14 @@ jpg_return_status JpegEncoder::setConfig(jpeg_conf type, int32_t value)
 
     switch (type) {
     case JPEG_SET_ENCODE_WIDTH:
-        if (value < 0 || value > MAX_JPG_WIDTH)
+        if (value < 0 || value > mInfo.max_width)
             ret = JPG_FAIL;
         else
             mArgs.enc_param->width = value;
         break;
 
     case JPEG_SET_ENCODE_HEIGHT:
-        if (value < 0 || value > MAX_JPG_HEIGHT)
+        if (value < 0 || value > mInfo.max_height)
             ret = JPG_FAIL;
         else
             mArgs.enc_param->height = value;
@@ -140,14 +160,14 @@ jpg_return_status JpegEncoder::setConfig(jpeg_conf type, int32_t value)
         break;
 
     case JPEG_SET_THUMBNAIL_WIDTH:
-        if (value < 0 || value > MAX_JPG_THUMBNAIL_WIDTH)
+        if (value < 0 || value > mInfo.max_thumb_width)
             ret = JPG_FAIL;
         else
             mArgs.thumb_enc_param->width = value;
         break;
 
     case JPEG_SET_THUMBNAIL_HEIGHT:
-        if (value < 0 || value > MAX_JPG_THUMBNAIL_HEIGHT)
+        if (value < 0 || value > mInfo.max_thumb_height)
             ret = JPG_FAIL;
         else
             mArgs.thumb_enc_param->height = value;
@@ -169,7 +189,7 @@ void* JpegEncoder::getInBuf(uint64_t size)
     if (!available)
         return NULL;
 
-    if (size > JPG_FRAME_BUF_SIZE) {
+    if (size > mInfo.frame_buf_size) {
         ALOGE("The buffer size requested is too large");
         return NULL;
     }
@@ -196,7 +216,7 @@ void* JpegEncoder::getThumbInBuf(uint64_t size)
     if (!available)
         return NULL;
 
-    if (size > JPG_FRAME_THUMB_BUF_SIZE) {
+    if (size > mInfo.thumb_frame_buf_size) {
         ALOGE("The buffer size requested is too large");
         return NULL;
     }
@@ -259,7 +279,7 @@ jpg_return_status JpegEncoder::encode(unsigned int *size, exif_attribute_t *exif
             bufSize = EXIF_FILE_SIZE;
         }
 
-        if (mArgs.enc_param->file_size + bufSize > JPG_TOTAL_BUF_SIZE)
+        if (mArgs.enc_param->file_size + bufSize > mInfo.total_buf_size)
             return ret;
 
         exifOut = new unsigned char[bufSize];
