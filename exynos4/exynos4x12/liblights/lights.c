@@ -40,9 +40,9 @@ static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
 char const*const PANEL_FILE = "/sys/class/backlight/panel/brightness";
-#ifndef EXYNOS4X12_TABLET
 char const*const BUTTON_FILE = "/sys/class/sec/sec_touchkey/brightness";
 
+#ifndef EXYNOS4X12_TABLET
 char const*const LED_RED = "/sys/class/sec/led/led_r";
 char const*const LED_GREEN = "/sys/class/sec/led/led_g";
 char const*const LED_BLUE = "/sys/class/sec/led/led_b";
@@ -154,7 +154,6 @@ static int set_light_backlight(struct light_device_t *dev,
 {
     int err = 0;
     int brightness = rgb_to_brightness(state);
-    int previous_brightness = read_int(PANEL_FILE);
 
     pthread_mutex_lock(&g_lock);
     err = write_int(PANEL_FILE, brightness);
@@ -168,7 +167,7 @@ static int
 set_light_buttons(struct light_device_t* dev,
         struct light_state_t const* state)
 {
-#ifdef EXYNOS4X12_TABLET
+#if defined(EXYNOS4X12_TABLET) && !defined(EXYNOS4X12_TABLET_HAS_LED_BUTTONS)
     return 0;
 #else
     int err = 0;
