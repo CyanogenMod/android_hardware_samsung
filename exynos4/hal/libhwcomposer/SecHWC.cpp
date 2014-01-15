@@ -710,6 +710,18 @@ static int hwc_set(hwc_composer_device_1_t *dev,
 #endif
             return HWC_EGL_ERROR;
         }
+    } else {
+        list->dpy = eglGetCurrentDisplay();
+        list->sur = eglGetCurrentSurface(EGL_DRAW);
+
+        // We still don't support fences, close them all
+        for(uint32_t i = 0; i < list->numHwLayers; i++) {
+            if(list->hwLayers[i].acquireFenceFd >= 0) {
+                close(list->hwLayers[i].acquireFenceFd);
+                list->hwLayers[i].acquireFenceFd = -1;
+            }
+        }
+        list->retireFenceFd = -1;
     }
 
     if(ctx->num_of_hwc_layer > NUM_OF_WIN)
@@ -1058,6 +1070,79 @@ static int hwc_blank(struct hwc_composer_device_1 *dev, int dpy, int blank)
     }
 }
 
+int hwc_getDisplayConfigs(struct hwc_composer_device_1* dev, int disp,
+        uint32_t* configs, size_t* numConfigs) {
+    int status = 0;
+    switch(disp) {
+        case HWC_DISPLAY_PRIMARY:
+            if(*numConfigs > 0) {
+                configs[0] = 0;
+                *numConfigs = 1;
+            }
+            status = 0;
+            break;
+        case HWC_DISPLAY_EXTERNAL:
+            status = -1; //Not connected, this is broken atm
+            break;
+    }
+    return status;
+}
+
+int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
+        uint32_t config, const uint32_t* attributes, int32_t* values) {
+
+    hwc_context_t* ctx = (hwc_context_t*)(dev);
+    if(disp == HWC_DISPLAY_EXTERNAL) {
+        return -1;
+    }
+
+    static const uint32_t DISPLAY_ATTRIBUTES[] = {
+        HWC_DISPLAY_VSYNC_PERIOD,
+        HWC_DISPLAY_WIDTH,
+        HWC_DISPLAY_HEIGHT,
+        HWC_DISPLAY_DPI_X,
+        HWC_DISPLAY_DPI_Y,
+        HWC_DISPLAY_NO_ATTRIBUTE,
+    };
+
+    const int NUM_DISPLAY_ATTRIBUTES = (sizeof(DISPLAY_ATTRIBUTES) /
+            sizeof(DISPLAY_ATTRIBUTES)[0]);
+
+    struct fb_var_screeninfo info = ctx->lcd_info;
+
+    for (size_t i = 0; i < NUM_DISPLAY_ATTRIBUTES - 1; i++) {
+        switch (attributes[i]) {
+        case HWC_DISPLAY_VSYNC_PERIOD:
+            values[i] = (int32_t) (1000000000.0 / 57);
+            ALOGD("My vsync period is %d for %d",values[i],disp);
+            break;
+        case HWC_DISPLAY_WIDTH:
+            values[i] = info.xres;
+            ALOGD("My width is %d for %d",values[i],disp);
+            break;
+        case HWC_DISPLAY_HEIGHT:
+            values[i] = info.yres;
+            ALOGD("My height is %d for %d",values[i],disp);
+            break;
+        case HWC_DISPLAY_DPI_X:
+            values[i] = (int32_t) ((info.xres * 25.4f) / info.width);
+            values[i]*=1000;
+            ALOGD("My hdpi is %d for %d",values[i],disp);
+            break;
+        case HWC_DISPLAY_DPI_Y:
+            values[i] = (int32_t) ((info.yres * 25.4f) / info.height);
+            values[i]*=1000;
+            ALOGD("My vdpi is %d for %d",values[i],disp);
+            break;
+        default:
+            ALOGE("Unknown display attribute %d",
+                    attributes[i]);
+            return -EINVAL;
+        }
+    }
+    return 0;
+}
+
 static int hwc_device_open(const struct hw_module_t* module, const char* name,
         struct hw_device_t** device)
 {
@@ -1076,7 +1161,7 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
 
     /* initialize the procs */
     dev->device.common.tag           = HARDWARE_DEVICE_TAG;
-    dev->device.common.version       = HWC_DEVICE_API_VERSION_1_0;
+    dev->device.common.version       = HWC_DEVICE_API_VERSION_1_1;
     dev->device.common.module        = const_cast<hw_module_t*>(module);
     dev->device.common.close         = hwc_device_close;
     dev->device.prepare              = hwc_prepare;
@@ -1085,6 +1170,8 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name,
     dev->device.blank                = hwc_blank;
     dev->device.query                = hwc_query;
     dev->device.registerProcs        = hwc_registerProcs;
+    dev->device.getDisplayConfigs    = hwc_getDisplayConfigs;
+    dev->device.getDisplayAttributes = hwc_getDisplayAttributes;
     *device = &dev->device.common;
 
     //initializing
