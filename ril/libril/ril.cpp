@@ -18,7 +18,6 @@
 #define LOG_TAG "RILC"
 
 #include <hardware_legacy/power.h>
-
 #include <telephony/ril.h>
 #include <telephony/ril_cdma_sms.h>
 #include <cutils/sockets.h>
@@ -29,11 +28,9 @@
 #include <pthread.h>
 #include <binder/Parcel.h>
 #include <cutils/jstring.h>
-
 #include <sys/types.h>
 #include <sys/limits.h>
 #include <pwd.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -49,12 +46,14 @@
 #include <assert.h>
 #include <netinet/in.h>
 #include <cutils/properties.h>
+#include <RilSapSocket.h>
 
-#include <ril_event.h>
-
+extern "C" void
+RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen);
 namespace android {
 
 #define PHONE_PROCESS "radio"
+#define BLUETOOTH_PROCESS "bluetooth"
 
 #define SOCKET_NAME_RIL "rild"
 #define SOCKET2_NAME_RIL "rild2"
@@ -147,17 +146,6 @@ typedef struct UserCallbackInfo {
     struct ril_event event;
     struct UserCallbackInfo *p_next;
 } UserCallbackInfo;
-
-typedef struct SocketListenParam {
-    RIL_SOCKET_ID socket_id;
-    int fdListen;
-    int fdCommand;
-    char* processName;
-    struct ril_event* commands_event;
-    struct ril_event* listen_event;
-    void (*processCommandsCallback)(int fd, short flags, void *param);
-    RecordStream *p_rs;
-} SocketListenParam;
 
 extern "C" const char * requestToString(int request);
 extern "C" const char * failCauseToString(RIL_Errno);
@@ -385,7 +373,7 @@ static char * RIL_getRilSocketName() {
 }
 
 extern "C"
-void RIL_setRilSocketName(char * s) {
+void RIL_setRilSocketName(const char * s) {
     strncpy(rild, s, MAX_SOCKET_NAME_LENGTH);
 }
 
@@ -2127,7 +2115,7 @@ blockingWrite(int fd, const void *buffer, size_t len) {
             return -1;
         }
     }
-
+    RLOGE("RIL Response bytes written:%d", writeOffset);
     return 0;
 }
 
@@ -3898,8 +3886,18 @@ static void listenCallback (int fd, short flags, void *param) {
     int err;
     int is_phone_socket;
     int fdCommand = -1;
+    char* processName;
     RecordStream *p_rs;
+    MySocketListenParam* listenParam;
+    RilSocket *sapSocket = NULL;
+    socketClient *sClient = NULL;
+
     SocketListenParam *p_info = (SocketListenParam *)param;
+
+    if(RIL_SAP_SOCKET == p_info->type) {
+        listenParam = (MySocketListenParam *)param;
+        sapSocket = listenParam->socket;
+    }
 
     struct sockaddr_un peeraddr;
     socklen_t socklen = sizeof (peeraddr);
@@ -3909,15 +3907,27 @@ static void listenCallback (int fd, short flags, void *param) {
 
     struct passwd *pwd = NULL;
 
-    assert (*p_info->fdCommand < 0);
-    assert (fd == *p_info->fdListen);
+    if(NULL == sapSocket) {
+        assert (*p_info->fdCommand < 0);
+        assert (fd == *p_info->fdListen);
+        processName = PHONE_PROCESS;
+    } else {
+        assert (sapSocket->commandFd < 0);
+        assert (fd == sapSocket->listenFd);
+        processName = BLUETOOTH_PROCESS;
+    }
+
 
     fdCommand = accept(fd, (sockaddr *) &peeraddr, &socklen);
 
     if (fdCommand < 0 ) {
         RLOGE("Error on accept() errno:%d", errno);
         /* start listening for new connections again */
-        rilEventAddWakeup(p_info->listen_event);
+        if(NULL == sapSocket) {
+            rilEventAddWakeup(p_info->listen_event);
+        } else {
+            rilEventAddWakeup(sapSocket->getListenEvent());
+        }
         return;
     }
 
@@ -3933,7 +3943,7 @@ static void listenCallback (int fd, short flags, void *param) {
         errno = 0;
         pwd = getpwuid(creds.uid);
         if (pwd != NULL) {
-            if (strcmp(pwd->pw_name, p_info->processName) == 0) {
+            if (strcmp(pwd->pw_name, processName) == 0) {
                 is_phone_socket = 1;
             } else {
                 RLOGE("RILD can't accept socket from process %s", pwd->pw_name);
@@ -3946,17 +3956,24 @@ static void listenCallback (int fd, short flags, void *param) {
     }
 
     if (!is_phone_socket) {
-      RLOGE("RILD must accept socket from %s", p_info->processName);
+        RLOGE("RILD must accept socket from %s", processName);
 
-      close(fdCommand);
-      fdCommand = -1;
+        close(fdCommand);
+        fdCommand = -1;
 
-      onCommandsSocketClosed(p_info->socket_id);
+        if(NULL == sapSocket) {
+            onCommandsSocketClosed(p_info->socket_id);
 
-      /* start listening for new connections again */
-      rilEventAddWakeup(p_info->listen_event);
+            /* start listening for new connections again */
+            rilEventAddWakeup(p_info->listen_event);
+        } else {
+            sapSocket->onCommandsSocketClosed();
 
-      return;
+            /* start listening for new connections again */
+            rilEventAddWakeup(sapSocket->getListenEvent());
+        }
+
+        return;
     }
 
     ret = fcntl(fdCommand, F_SETFL, O_NONBLOCK);
@@ -3965,20 +3982,30 @@ static void listenCallback (int fd, short flags, void *param) {
         RLOGE ("Error setting O_NONBLOCK errno:%d", errno);
     }
 
-    RLOGI("libril: new connection to %s", rilSocketIdToString(p_info->socket_id));
+    if(NULL == sapSocket) {
+        RLOGI("libril: new connection to %s", rilSocketIdToString(p_info->socket_id));
 
-    p_info->fdCommand = fdCommand;
+        p_info->fdCommand = fdCommand;
+        p_rs = record_stream_new(p_info->fdCommand, MAX_COMMAND_BYTES);
+        p_info->p_rs = p_rs;
 
-    p_rs = record_stream_new(p_info->fdCommand, MAX_COMMAND_BYTES);
-
-    p_info->p_rs = p_rs;
-
-    ril_event_set (p_info->commands_event, p_info->fdCommand, 1,
+        ril_event_set (p_info->commands_event, p_info->fdCommand, 1,
         p_info->processCommandsCallback, p_info);
+        rilEventAddWakeup (p_info->commands_event);
 
-    rilEventAddWakeup (p_info->commands_event);
+        onNewCommandConnect(p_info->socket_id);
+    } else {
+        RLOGI("libril: new connection");
 
-    onNewCommandConnect(p_info->socket_id);
+        sapSocket->setCommandFd(fdCommand);
+        p_rs = record_stream_new(sapSocket->getCommandFd(), MAX_COMMAND_BYTES);
+        sClient = new socketClient(sapSocket,p_rs);
+        ril_event_set (sapSocket->getCallbackEvent(), sapSocket->getCommandFd(), 1,
+        sapSocket->getCommandCb(), sClient);
+
+        rilEventAddWakeup(sapSocket->getCallbackEvent());
+        sapSocket->onNewCommandConnect();
+    }
 }
 
 static void freeDebugCallbackArgs(int number, char **args) {
@@ -4462,6 +4489,33 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
     rilEventAddWakeup (&s_debug_event);
 #endif
 
+}
+
+extern "C" void
+RIL_register_socket (RIL_RadioFunctions *(*Init)(const struct RIL_Env *, int, char **),RIL_SOCKET_TYPE socketType, int argc, char **argv) {
+
+    RIL_RadioFunctions* UimFuncs = NULL;
+
+    if(Init) {
+        UimFuncs = Init(&RilSapSocket::uimRilEnv, argc, argv);
+
+        switch(socketType) {
+            case RIL_SAP_SOCKET:
+                RilSapSocket::initSapSocket("sap_uim_socket1", UimFuncs);
+
+#if (SIM_COUNT >= 2)
+                RilSapSocket::initSapSocket("sap_uim_socket2", UimFuncs);
+#endif
+
+#if (SIM_COUNT >= 3)
+                RilSapSocket::initSapSocket("sap_uim_socket3", UimFuncs);
+#endif
+
+#if (SIM_COUNT >= 4)
+                RilSapSocket::initSapSocket("sap_uim_socket4", UimFuncs);
+#endif
+        }
+    }
 }
 
 static int
@@ -5185,3 +5239,15 @@ rilSocketIdToString(RIL_SOCKET_ID socket_id)
 }
 
 } /* namespace android */
+
+void rilEventAddWakeup_helper(struct ril_event *ev) {
+    android::rilEventAddWakeup(ev);
+}
+
+void listenCallback_helper(int fd, short flags, void *param) {
+    android::listenCallback(fd, flags, param);
+}
+
+int blockingWrite_helper(int fd, void *buffer, size_t len) {
+    return android::blockingWrite(fd, buffer, len);
+}
