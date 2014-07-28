@@ -48,11 +48,14 @@
 
 #include "gralloc_priv.h"
 #include "gralloc_helper.h"
+#include "s3c-fb.h"
 
 #include "linux/fb.h"
 
 /* numbers of buffers for page flipping */
 #define NUM_BUFFERS 2
+
+ static int swapInterval = 1;
 
 enum {
     PAGE_FLIP = 0x00000001,
@@ -60,10 +63,17 @@ enum {
 
 static int fb_set_swap_interval(struct framebuffer_device_t* dev, int interval)
 {
-    if (interval < dev->minSwapInterval || interval > dev->maxSwapInterval)
-        return -EINVAL;
+    if (interval < dev->minSwapInterval)
+    {
+        interval = dev->minSwapInterval;
+    }
+    else if (interval > dev->maxSwapInterval)
+    {
+        interval = dev->maxSwapInterval;
+    }
 
-    /* Currently not implemented */
+    swapInterval = interval;
+
     return 0;
 }
 
@@ -89,6 +99,8 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
         m->info.activate = FB_ACTIVATE_VBL;
         m->info.yoffset = offset / m->finfo.line_length;
 
+        ALOGI("%s 1\n",__func__);
+
 #ifdef STANDARD_LINUX_SCREEN
 #define FBIO_WAITFORVSYNC       _IOW('F', 0x20, __u32)
 #define S3CFB_SET_VSYNC_INT     _IOW('F', 206, unsigned int)
@@ -98,7 +110,7 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
             return 0;
         }
 
-        if (m->enableVSync) {
+        if (m->enableVSync || swapInterval == 1) {
             /* enable VSYNC */
             interrupt = 1;
             if (ioctl(m->framebuffer->fd, S3CFB_SET_VSYNC_INT, &interrupt) < 0) {
@@ -156,6 +168,8 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
         void* fb_vaddr;
         void* buffer_vaddr;
 
+        ALOGI("%s\n 2",__func__);
+
         m->base.lock(&m->base, m->framebuffer,  GRALLOC_USAGE_SW_WRITE_RARELY,
                      0, 0, m->info.xres, m->info.yres, &fb_vaddr);
 
@@ -194,6 +208,12 @@ int init_frame_buffer_locked(struct private_module_t* module)
 
     if (fd < 0)
         return -errno;
+
+    if (ioctl(fd, S3CFB_SET_INITIAL_CONFIG) < 0) {
+        ALOGE("%s: S3CFB_SET_INITIAL_CONFIG failed : (%d:%s)",
+                __func__, fd, strerror(errno));
+        return -errno;
+    }
 
     struct fb_fix_screeninfo finfo;
     if (ioctl(fd, FBIOGET_FSCREENINFO, &finfo) == -1)
@@ -430,7 +450,7 @@ int framebuffer_device_open(hw_module_t const* module, const char* name, hw_devi
         ALOGE("Failed to allocate memory for dev");
         gralloc_close(gralloc_device);
         return status;
-    }    
+    }
 
     private_module_t* m = (private_module_t*)module;
     status = init_frame_buffer(m);
@@ -441,8 +461,9 @@ int framebuffer_device_open(hw_module_t const* module, const char* name, hw_devi
         return status;
     }
 
-    memset(dev, 0, sizeof(*dev));
 
+    memset(dev, 0, sizeof(*dev));
+    
     /* initialize the procs */
     dev->common.tag = HARDWARE_DEVICE_TAG;
     dev->common.version = 0;
@@ -455,6 +476,7 @@ int framebuffer_device_open(hw_module_t const* module, const char* name, hw_devi
     dev->enableScreen = &enableScreen;
 
     int stride = m->finfo.line_length / (m->info.bits_per_pixel >> 3);
+
     const_cast<uint32_t&>(dev->flags) = 0;
     const_cast<uint32_t&>(dev->width) = m->info.xres;
     const_cast<uint32_t&>(dev->height) = m->info.yres;
@@ -467,7 +489,7 @@ int framebuffer_device_open(hw_module_t const* module, const char* name, hw_devi
     const_cast<float&>(dev->xdpi) = m->xdpi;
     const_cast<float&>(dev->ydpi) = m->ydpi;
     const_cast<float&>(dev->fps) = m->fps;
-    const_cast<int&>(dev->minSwapInterval) = 1;
+    const_cast<int&>(dev->minSwapInterval) = 0;
     const_cast<int&>(dev->maxSwapInterval) = 1;
     *device = &dev->common;
     status = 0;

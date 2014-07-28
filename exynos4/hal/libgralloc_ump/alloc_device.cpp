@@ -99,191 +99,114 @@ extern int release_rect(int secure_id);
 
 static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                                 buffer_handle_t* pHandle, int w, int h,
-                                int format, int bpp, int stride_raw, int stride)
+                                int format, int bpp, int stride_raw, int stride, int vstride)
 {
     ump_handle ump_mem_handle;
     void *cpu_ptr;
     ump_secure_id ump_id;
-
     size = round_up_to_page_size(size);
-#ifdef INSIGNAL_FIMC1
-    if (usage & GRALLOC_USAGE_HW_FIMC1) {
-        int dev_fd=0;
-        char node[20];
-        int ret;
-        int paddr=0;
-        int offset=0;
+    ion_buffer ion_fd = 0;
+    int priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_UMP;
 
-        struct v4l2_control     vc;
-        sprintf(node, "%s", PFX_NODE_FIMC1);
-
-        if (gfd == 0) {
-            gfd = open(node, O_RDWR);
-
-            if (gfd < 0) {
-                ALOGE("%s:: %s Post processor open error\n", __func__, node);
-                return false;
-            }
+    if (usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1) {
+        ALOGI("%s: GRALLOC_USAGE_HW_ION",__func__);
+        if (!ion_dev_open) {
+            ALOGE("ERROR, failed to open ion");
+            return -1;
         }
 
-        vc.id = V4L2_CID_RESERVED_MEM_BASE_ADDR;
-        vc.value = 0;
-        ret = ioctl(gfd, VIDIOC_G_CTRL, &vc);
-        if (ret < 0) {
-            ALOGE("Error in video VIDIOC_G_CTRL - V4L2_CID_RESERVED_MEM_BAES_ADDR (%d)\n", ret);
-            return false;
-        }
-        paddr = (unsigned int)vc.value;
+        private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
+        ion_fd = ion_alloc(m->ion_client, size, 0, ION_HEAP_EXYNOS_MASK);
 
-        if ((buffer_offset + size) >= FIMC1_RESERVED_SIZE * 1024)
-            buffer_offset = 0;
-
-        paddr += buffer_offset;
-        private_handle_t* hnd = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_IOCTL, size, 0,
-                private_handle_t::LOCK_STATE_MAPPED, 0, 0);
-
-        *pHandle = hnd;
-        hnd->format = format;
-        hnd->usage = usage;
-        hnd->width = w;
-        hnd->height = h;
-        hnd->bpp = bpp;
-        hnd->paddr = paddr;
-        hnd->offset = buffer_offset;
-        hnd->stride = stride;
-        hnd->fd = gfd;
-        hnd->uoffset = (EXYNOS4_ALIGN((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)), 4096));
-        hnd->voffset = (EXYNOS4_ALIGN((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)), 4096));
-        buffer_offset += size;
-
-        if (gMemfd == 0) {
-            gMemfd = open(PFX_NODE_MEM, O_RDWR);
-            if (gMemfd < 0) {
-                ALOGE("%s:: %s exynos-mem open error\n", __func__, PFX_NODE_MEM);
-                return false;
-            }
+        if (ion_fd < 0) {
+            ALOGE("Failed to ion_alloc");
+            return -1;
         }
 
-        size_t size = FIMC1_RESERVED_SIZE * 1024;
+        cpu_ptr = ion_map(ion_fd, size, 0);
 
-        void *mappedAddress = mmap(0, size,
-               PROT_READ|PROT_WRITE, MAP_SHARED, gMemfd, (hnd->paddr - hnd->offset));
-        hnd->base = intptr_t(mappedAddress) + hnd->offset;
-        return 0;
-    } else {
-#endif
-        ion_buffer ion_fd = 0;
-        unsigned int ion_flags = 0;
-        int priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_UMP;
-
-#ifdef  INSIGNAL_FIMC1
-        if (usage & GRALLOC_USAGE_HW_ION) {
-#else
-        if (usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1) {
-#endif
-            if (!ion_dev_open) {
-                ALOGE("ERROR, failed to open ion");
-                return -1;
-            }
-
-            private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
-            ion_flags = ION_HEAP_EXYNOS_MASK;
-            ion_fd = ion_alloc(m->ion_client, size, 0, ion_flags);
-
-            if (ion_fd < 0) {
-                ALOGE("Failed to ion_alloc");
-                return -1;
-            }
-
-            cpu_ptr = ion_map(ion_fd, size, 0);
-
-            if (NULL == cpu_ptr) {
-                ALOGE("Failed to ion_map");
-                ion_free(ion_fd);
-                return -1;
-            }
-
-            ump_mem_handle = ump_ref_drv_ion_import(ion_fd, UMP_REF_DRV_CONSTRAINT_NONE);
-
-            if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
-                priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_ION;
-            } else {
-                ALOGE("gralloc_alloc_buffer() failed to import ION memory");
-                ion_unmap(cpu_ptr, size);
-                ion_free(ion_fd);
-                return -1;
-            }
+        if (NULL == cpu_ptr) {
+            ALOGE("Failed to ion_map");
+            ion_free(ion_fd);
+            return -1;
         }
-#ifdef SAMSUNG_EXYNOS_CACHE_UMP
-        else if ((usage&GRALLOC_USAGE_SW_READ_MASK) == GRALLOC_USAGE_SW_READ_OFTEN)
-            ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_USE_CACHE);
-        else
-            ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_NONE);
-#else
-        else
-            ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_NONE);
-#endif
+
+        ump_mem_handle = ump_ref_drv_ion_import(ion_fd, UMP_REF_DRV_CONSTRAINT_NONE);
+
         if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
-            if (!(usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1))
-                cpu_ptr = ump_mapped_pointer_get(ump_mem_handle);
-            if (NULL != cpu_ptr) {
-                ump_id = ump_secure_id_get(ump_mem_handle);
-                if (UMP_INVALID_SECURE_ID != ump_id) {
-                    private_handle_t* hnd;
-                    hnd = new private_handle_t(priv_alloc_flag, size, (int)cpu_ptr,
-                    private_handle_t::LOCK_STATE_MAPPED, ump_id, ump_mem_handle, ion_fd, 0, 0);
-                    if (NULL != hnd) {
-                        *pHandle = hnd;
-#ifdef USE_PARTIAL_FLUSH
-                        if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
-                            private_handle_rect *psRect;
-                            private_handle_rect *psFRect;
-                            psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
-                            psRect->handle = (int)hnd->ump_id;
-                            psRect->stride = stride_raw;
-                            psFRect = find_last_rect((int)hnd->ump_id);
-                            psFRect->next = psRect;
-                        }
-#endif
-                        hnd->format = format;
-                        hnd->usage = usage;
-                        hnd->width = w;
-                        hnd->height = h;
-                        hnd->bpp = bpp;
-                        hnd->stride = stride;
-                        if(hnd->format == HAL_PIXEL_FORMAT_YV12) {
-                            hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
-                            hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
-                        } else {
-                            hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
-                            hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
-                        }
-                        return 0;
-                    } else {
-                        ALOGE("gralloc_alloc_buffer() failed to allocate handle");
-                    }
-                } else {
-                    ALOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
-                }
-
-                ump_mapped_pointer_release(ump_mem_handle);
-            } else {
-                ALOGE("gralloc_alloc_buffer() failed to map UMP memory");
-            }
-
-            ump_reference_release(ump_mem_handle);
+            priv_alloc_flag = private_handle_t::PRIV_FLAGS_USES_ION;
         } else {
-            ALOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
+            ALOGE("gralloc_alloc_buffer() failed to import ION memory");
+            ion_unmap(cpu_ptr, size);
+            ion_free(ion_fd);
+            return -1;
         }
-#ifdef INSIGNAL_FIMC1
     }
+#ifdef SAMSUNG_EXYNOS_CACHE_UMP
+    else if ((usage&GRALLOC_USAGE_SW_READ_MASK) == GRALLOC_USAGE_SW_READ_OFTEN)
+        ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_USE_CACHE);
+    else
+        ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_NONE);
+#else
+    else
+        ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_NONE);
 #endif
+    if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
+        if (!(usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1))
+            cpu_ptr = ump_mapped_pointer_get(ump_mem_handle);
+        if (NULL != cpu_ptr) {
+            ump_id = ump_secure_id_get(ump_mem_handle);
+            if (UMP_INVALID_SECURE_ID != ump_id) {
+                private_handle_t* hnd;
+                hnd = new private_handle_t(priv_alloc_flag, size, (int)cpu_ptr,
+                private_handle_t::LOCK_STATE_MAPPED, ump_id, ump_mem_handle, ion_fd, 0, 0);
+                if (NULL != hnd) {
+                    *pHandle = hnd;
+#ifdef USE_PARTIAL_FLUSH
+                    if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
+                        private_handle_rect *psRect;
+                        private_handle_rect *psFRect;
+                        psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
+                        psRect->handle = (int)hnd->ump_id;
+                        psRect->stride = hnd->stride_raw;
+                        psFRect = find_last_rect((int)hnd->ump_id);
+                        psFRect->next = psRect;
+                    }
+#endif
+                    hnd->format = format;
+                    hnd->usage = usage;
+                    hnd->width = w;
+                    hnd->height = h;
+                    hnd->bpp = bpp;
+                    hnd->stride = stride;
+                    if(hnd->format == HAL_PIXEL_FORMAT_YV12) {
+                        hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
+                        hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
+                    } else {
+                        hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
+                        hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
+                    }
+                    return 0;
+                } else {
+                    ALOGE("gralloc_alloc_buffer() failed to allocate handle");
+                }
+            } else {
+                ALOGE("gralloc_alloc_buffer() failed to retrieve valid secure id");
+            }
+            ump_mapped_pointer_release(ump_mem_handle);
+        } else {
+            ALOGE("gralloc_alloc_buffer() failed to map UMP memory");
+        }
+        ump_reference_release(ump_mem_handle);
+    } else {
+        ALOGE("gralloc_alloc_buffer() failed to allcoate UMP memory");
+    }
     return -1;
 }
 
 static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, int usage,
                                             buffer_handle_t* pHandle, int w, int h,
-                                            int format, int bpp)
+                                            int format, int bpp, int stride, int vstride)
 {
     private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
     /* allocate the framebuffer */
@@ -305,7 +228,7 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, in
          */
         int newUsage = (usage & ~GRALLOC_USAGE_HW_FB) | GRALLOC_USAGE_HW_2D;
         ALOGE("fallback to single buffering");
-        return gralloc_alloc_buffer(dev, bufferSize, newUsage, pHandle, w, h, format, bpp, 0, 0);
+        return gralloc_alloc_buffer(dev, bufferSize, newUsage, pHandle, w, h, format, bpp, 0, 0, 0);
     }
 
     if (bufferMask >= ((1LU<<numBuffers)-1))
@@ -334,6 +257,8 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, in
     hnd->width = w;
     hnd->height = h;
     hnd->bpp = bpp;
+    hnd->stride = stride;
+    hnd->vstride = vstride;
 
     *pHandle = hnd;
 
@@ -342,11 +267,11 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t* dev, size_t size, in
 
 static int gralloc_alloc_framebuffer(alloc_device_t* dev, size_t size, int usage,
                                      buffer_handle_t* pHandle, int w, int h,
-                                     int format, int bpp)
+                                     int format, int bpp, int stride, int vstride)
 {
     private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
     pthread_mutex_lock(&m->lock);
-    int err = gralloc_alloc_framebuffer_locked(dev, size, usage, pHandle, w, h, format, bpp);
+    int err = gralloc_alloc_framebuffer_locked(dev, size, usage, pHandle, w, h, format, bpp, stride, vstride);
     pthread_mutex_unlock(&m->lock);
     return err;
 }
@@ -360,6 +285,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
     size_t size = 0;
     size_t stride = 0;
     size_t stride_raw = 0;
+    size_t vstride = 0;
 
     if (format == HAL_PIXEL_FORMAT_YCbCr_420_SP ||
         format == HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED ||
@@ -373,9 +299,9 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         format == OMX_COLOR_FormatYUV420Planar ||
         format == OMX_COLOR_FormatYUV420SemiPlanar) {
         /* FIXME: there is no way to return the vstride */
-        int vstride;
         stride = (w + 15) & ~15;
         vstride = (h + 15) & ~15;
+        
         switch (format) {
         case HAL_PIXEL_FORMAT_YCbCr_420_SP:
         case HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED:
@@ -387,11 +313,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         case OMX_COLOR_FormatYUV420Planar:
         case OMX_COLOR_FormatYUV420SemiPlanar:
             size = stride * vstride + EXYNOS4_ALIGN((w / 2), 16) * EXYNOS4_ALIGN((h / 2), 16) * 2;
-#ifdef  INSIGNAL_FIMC1
-            if (usage & GRALLOC_USAGE_HW_FIMC1) {
-#else
             if (usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1) {
-#endif
                 size += PAGE_SIZE * 2;
             }
             break;
@@ -427,15 +349,17 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         size_t bpr = (w*bpp + (align-1)) & ~(align-1);
         size = bpr * h;
         stride = bpr / bpp;
+        vstride = stride;
         stride_raw = bpr;
     }
 
     int err;
     pthread_mutex_lock(&l_surface);
-    if (usage & GRALLOC_USAGE_HW_FB)
-        err = gralloc_alloc_framebuffer(dev, size, usage, pHandle, w, h, format, 32);
-    else
-        err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride);
+    if (usage & GRALLOC_USAGE_HW_FB){
+        err = gralloc_alloc_framebuffer(dev, size, usage, pHandle, w, h, format, 32, (int)stride, (int)vstride);
+    }else{
+        err = gralloc_alloc_buffer(dev, size, usage, pHandle, w, h, format, 0, (int)stride_raw, (int)stride, (int)vstride);
+    }
 
     pthread_mutex_unlock(&l_surface);
 
@@ -443,6 +367,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         return err;
 
     *pStride = stride;
+
     return 0;
 }
 
