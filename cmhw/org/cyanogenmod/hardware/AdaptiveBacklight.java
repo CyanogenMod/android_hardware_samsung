@@ -37,12 +37,7 @@ public class AdaptiveBacklight {
      */
     public static boolean isSupported() {
         File f = new File(FILE_CABC);
-
-        if(f.exists()) {
-            return true;
-        } else {
-            return false;
-        }
+        return f.exists();
     }
 
     /**
