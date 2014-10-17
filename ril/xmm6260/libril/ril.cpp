@@ -87,7 +87,7 @@ namespace android {
 #define PRINTBUF_SIZE 8096
 
 // Enable RILC log
-#define RILC_LOG 0
+#define RILC_LOG 1
 
 #if RILC_LOG
     #define startRequest           sprintf(printBuf, "(")
@@ -114,7 +114,7 @@ namespace android {
     #define appendPrintBuf(x...)
 #endif
 
-#define MAX_RIL_SOL     RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE
+#define MAX_RIL_SOL     RIL_REQUEST_IMS_REGISTRATION_STATE
 #define MAX_RIL_UNSOL   RIL_UNSOL_CELL_INFO_LIST
 
 enum WakeType {DONT_WAKE, WAKE_PARTIAL};
@@ -207,6 +207,7 @@ static void dispatchRaw(Parcel& p, RequestInfo *pRI);
 static void dispatchSmsWrite (Parcel &p, RequestInfo *pRI);
 static void dispatchDataCall (Parcel& p, RequestInfo *pRI);
 static void dispatchVoiceRadioTech (Parcel& p, RequestInfo *pRI);
+static void dispatchSetInitialAttachApn (Parcel& p, RequestInfo *pRI);
 static void dispatchCdmaSubscriptionSource (Parcel& p, RequestInfo *pRI);
 
 static void dispatchCdmaSms(Parcel &p, RequestInfo *pRI);
@@ -653,13 +654,7 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
         }
 
         if (uusPresent == 0) {
-            /* Samsung hack */
-            memset(&uusInfo, 0, sizeof(RIL_UUS_Info));
-            uusInfo.uusType = (RIL_UUS_Type) 0;
-            uusInfo.uusDcs = (RIL_UUS_DCS) 0;
-            uusInfo.uusData = NULL;
-            uusInfo.uusLength = 0;
-            dial.uusInfo = &uusInfo;
+            dial.uusInfo = NULL;
         } else {
             int32_t len;
 
@@ -1308,6 +1303,57 @@ static void dispatchVoiceRadioTech(Parcel& p, RequestInfo *pRI) {
     else
         RIL_onRequestComplete(pRI, RIL_E_SUCCESS, &voiceRadioTech, sizeof(int));
 }
+
+static void dispatchSetInitialAttachApn(Parcel &p, RequestInfo *pRI)
+{
+    RIL_InitialAttachApn pf;
+    int32_t  t;
+    status_t status;
+
+    memset(&pf, 0, sizeof(pf));
+
+    pf.apn = strdupReadString(p);
+    pf.protocol = strdupReadString(p);
+
+    status = p.readInt32(&t);
+    pf.authtype = (int) t;
+
+    pf.username = strdupReadString(p);
+    pf.password = strdupReadString(p);
+
+    startRequest;
+    appendPrintBuf("%sapn=%s, protocol=%s, auth_type=%d, username=%s, password=%s",
+            printBuf, pf.apn, pf.protocol, pf.authtype, pf.username, pf.password);
+    closeRequest;
+    printRequest(pRI->token, pRI->pCI->requestNumber);
+
+    if (status != NO_ERROR) {
+        goto invalid;
+    }
+    s_callbacks.onRequest(pRI->pCI->requestNumber, &pf, sizeof(pf), pRI);
+
+#ifdef MEMSET_FREED
+    memsetString(pf.apn);
+    memsetString(pf.protocol);
+    memsetString(pf.username);
+    memsetString(pf.password);
+#endif
+
+    free(pf.apn);
+    free(pf.protocol);
+    free(pf.username);
+    free(pf.password);
+
+#ifdef MEMSET_FREED
+    memset(&pf, 0, sizeof(pf));
+#endif
+
+    return;
+invalid:
+    invalidCommandBlock(pRI);
+    return;
+}
+
 
 // For backwards compatibility in RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:.
 // When all RILs handle this request, this function can be removed and
@@ -2100,13 +2146,13 @@ static int responseRilSignalStrength(Parcel &p,
                     void *response, size_t responselen) {
 
     int gsmSignalStrength;
+    int cdmaDbm;
+    int evdoDbm;
 
     if (response == NULL && responselen != 0) {
         RLOGE("invalid response: NULL");
         return RIL_ERRNO_INVALID_RESPONSE;
     }
-
-    RLOGE("responseRilSignalStrength()");
 
     if (responselen >= sizeof (RIL_SignalStrength_v5)) {
         RIL_SignalStrength_v6 *p_cur = ((RIL_SignalStrength_v6 *) response);
@@ -2114,60 +2160,85 @@ static int responseRilSignalStrength(Parcel &p,
         /* gsmSignalStrength */
         RLOGD("gsmSignalStrength (raw)=%d", p_cur->GW_SignalStrength.signalStrength);
         gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength & 0xFF;
-        RLOGD("gsmSignalStrength (corrected)=%d", gsmSignalStrength);
-
-        /* 
-         * if gsmSignalStrength isn't a valid value, use cdmaDbm as fallback.
-         * This is needed for old modem firmwares.
-         */
-        if (gsmSignalStrength < 0 || (gsmSignalStrength > 31 && p_cur->GW_SignalStrength.signalStrength != 99)) {
-            RLOGD("gsmSignalStrength-fallback (raw)=%d", p_cur->CDMA_SignalStrength.dbm);
-            gsmSignalStrength = p_cur->CDMA_SignalStrength.dbm;
-            if (gsmSignalStrength < 0) {
-                gsmSignalStrength = 99;
-            } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
-                gsmSignalStrength = 31;
-            }
-            RLOGD("gsmSignalStrength-fallback (corrected)=%d", gsmSignalStrength);
+        if (gsmSignalStrength < 0) {
+            gsmSignalStrength = 99;
+        } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
+            gsmSignalStrength = 31;
         }
+        RLOGD("gsmSignalStrength (corrected)=%d", gsmSignalStrength);
         p.writeInt32(gsmSignalStrength);
 
         /* gsmBitErrorRate */
         p.writeInt32(p_cur->GW_SignalStrength.bitErrorRate);
+
         /* cdmaDbm */
-        p.writeInt32(p_cur->CDMA_SignalStrength.dbm);
+        RLOGD("cdmaDbm (raw)=%d", p_cur->CDMA_SignalStrength.dbm);
+        cdmaDbm = p_cur->CDMA_SignalStrength.dbm & 0xFF;
+        if (cdmaDbm < 0) {
+            cdmaDbm = 99;
+        } else if (cdmaDbm > 31 && cdmaDbm != 99) {
+            cdmaDbm = 31;
+        }
+        //RLOGD("cdmaDbm (corrected)=%d", cdmaDbm);
+        p.writeInt32(cdmaDbm);
+
         /* cdmaEcio */
         p.writeInt32(p_cur->CDMA_SignalStrength.ecio);
+
         /* evdoDbm */
-        p.writeInt32(p_cur->EVDO_SignalStrength.dbm);
+        RLOGD("evdoDbm (raw)=%d", p_cur->EVDO_SignalStrength.dbm);
+        evdoDbm = p_cur->EVDO_SignalStrength.dbm & 0xFF;
+        if (evdoDbm < 0) {
+            evdoDbm = 99;
+        } else if (evdoDbm > 31 && evdoDbm != 99) {
+            evdoDbm = 31;
+        }
+        //RLOGD("evdoDbm (corrected)=%d", evdoDbm);
+        p.writeInt32(evdoDbm);
+
         /* evdoEcio */
         p.writeInt32(p_cur->EVDO_SignalStrength.ecio);
         /* evdoSnr */
         p.writeInt32(p_cur->EVDO_SignalStrength.signalNoiseRatio);
 
         if (responselen >= sizeof (RIL_SignalStrength_v6)) {
-            /* lteSignalStrength */
-            p.writeInt32(p_cur->LTE_SignalStrength.signalStrength);
-
             /*
-             * ril version <=6 receives negative values for rsrp
-             * workaround for backward compatibility
+             * Fixup LTE for backwards compatibility
              */
-            p_cur->LTE_SignalStrength.rsrp =
-                    ((s_callbacks.version <= 6) && (p_cur->LTE_SignalStrength.rsrp < 0 )) ?
-                        -(p_cur->LTE_SignalStrength.rsrp) : p_cur->LTE_SignalStrength.rsrp;
+            if (s_callbacks.version <= 6) {
+                // signalStrength: -1 -> 99
+                if (p_cur->LTE_SignalStrength.signalStrength == -1) {
+                    p_cur->LTE_SignalStrength.signalStrength = 99;
+                }
+                // rsrp: -1 -> INT_MAX all other negative value to positive.
+                // So remap here
+                if (p_cur->LTE_SignalStrength.rsrp == -1) {
+                    p_cur->LTE_SignalStrength.rsrp = INT_MAX;
+                } else if (p_cur->LTE_SignalStrength.rsrp < -1) {
+                    p_cur->LTE_SignalStrength.rsrp = -p_cur->LTE_SignalStrength.rsrp;
+                }
+                // rsrq: -1 -> INT_MAX
+                if (p_cur->LTE_SignalStrength.rsrq == -1) {
+                    p_cur->LTE_SignalStrength.rsrq = INT_MAX;
+                }
+                // Not remapping rssnr is already using INT_MAX
 
-            /* lteRsrp */
+                // cqi: -1 -> INT_MAX
+                if (p_cur->LTE_SignalStrength.cqi == -1) {
+                    p_cur->LTE_SignalStrength.cqi = INT_MAX;
+                }
+            }
+            p.writeInt32(p_cur->LTE_SignalStrength.signalStrength);
             p.writeInt32(p_cur->LTE_SignalStrength.rsrp);
-            /* lteRsrq */
             p.writeInt32(p_cur->LTE_SignalStrength.rsrq);
-            /* lteRssnr */
             p.writeInt32(p_cur->LTE_SignalStrength.rssnr);
-            /* lteCqi */
             p.writeInt32(p_cur->LTE_SignalStrength.cqi);
-
         } else {
-            memset(&p_cur->LTE_SignalStrength, sizeof (RIL_LTE_SignalStrength), 0);
+            p.writeInt32(99);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
         }
 
         startResponse;
@@ -2180,9 +2251,9 @@ static int responseRilSignalStrength(Parcel &p,
                 printBuf,
                 gsmSignalStrength,
                 p_cur->GW_SignalStrength.bitErrorRate,
-                p_cur->CDMA_SignalStrength.dbm,
+                cdmaDbm,
                 p_cur->CDMA_SignalStrength.ecio,
-                p_cur->EVDO_SignalStrength.dbm,
+                evdoDbm,
                 p_cur->EVDO_SignalStrength.ecio,
                 p_cur->EVDO_SignalStrength.signalNoiseRatio,
                 p_cur->LTE_SignalStrength.signalStrength,
@@ -2492,15 +2563,12 @@ static void sendSimStatusAppInfo(Parcel &p, int num_apps, RIL_AppStatus appStatu
 }
 
 static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
-    int i;
-
     if (response == NULL && responselen != 0) {
         RLOGE("invalid response: NULL");
         return RIL_ERRNO_INVALID_RESPONSE;
     }
 
     if (responselen == sizeof (RIL_CardStatus_v6)) {
-        RLOGE("RIL_CardStatus_v6");
         RIL_CardStatus_v6 *p_cur = ((RIL_CardStatus_v6 *) response);
 
         p.writeInt32(p_cur->card_state);
@@ -2511,7 +2579,6 @@ static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
 
         sendSimStatusAppInfo(p, p_cur->num_applications, p_cur->applications);
     } else if (responselen == sizeof (RIL_CardStatus_v5)) {
-        RLOGE("RIL_CardStatus_v5");
         RIL_CardStatus_v5 *p_cur = ((RIL_CardStatus_v5 *) response);
 
         p.writeInt32(p_cur->card_state);
@@ -2523,9 +2590,6 @@ static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
         sendSimStatusAppInfo(p, p_cur->num_applications, p_cur->applications);
     } else {
         RLOGE("responseSimStatus: A RilCardStatus_v6 or _v5 expected\n");
-        RLOGE("responselen=%d", responselen);
-        RLOGE("RIL_CardStatus_v5=%d", sizeof (RIL_CardStatus_v5));
-        RLOGE("RIL_CardStatus_v6=%d", sizeof (RIL_CardStatus_v6));
         return RIL_ERRNO_INVALID_RESPONSE;
     }
 
@@ -3749,6 +3813,8 @@ requestToString(int request) {
         case RIL_REQUEST_VOICE_RADIO_TECH: return "VOICE_RADIO_TECH";
         case RIL_REQUEST_GET_CELL_INFO_LIST: return"GET_CELL_INFO_LIST";
         case RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE: return"SET_UNSOL_CELL_INFO_LIST_RATE";
+        case RIL_REQUEST_SET_INITIAL_ATTACH_APN: return "RIL_REQUEST_SET_INITIAL_ATTACH_APN";
+        case RIL_REQUEST_IMS_REGISTRATION_STATE: return "IMS_REGISTRATION_STATE";
         case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED: return "UNSOL_RESPONSE_RADIO_STATE_CHANGED";
         case RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED: return "UNSOL_RESPONSE_CALL_STATE_CHANGED";
         case RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED: return "UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED";
