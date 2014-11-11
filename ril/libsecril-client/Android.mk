@@ -17,6 +17,5 @@ LOCAL_CFLAGS :=
 
 LOCAL_MODULE:= libsecril-client
 LOCAL_PRELINK_MODULE := false
-LOCAL_LDLIBS += -lpthread
 
 include $(BUILD_SHARED_LIBRARY)
