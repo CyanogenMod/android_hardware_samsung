@@ -114,7 +114,7 @@ namespace android {
     #define appendPrintBuf(x...)
 #endif
 
-#define MAX_RIL_SOL     RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE
+#define MAX_RIL_SOL     RIL_REQUEST_IMS_REGISTRATION_STATE
 #define MAX_RIL_UNSOL   RIL_UNSOL_CELL_INFO_LIST
 
 enum WakeType {DONT_WAKE, WAKE_PARTIAL};
