@@ -24,6 +24,7 @@ LOCAL_SHARED_LIBRARIES := liblog libcutils libEGL \
 			  libGLESv1_CM libhardware libhardware_legacy
 
 LOCAL_C_INCLUDES := \
+    bionic/libc/include \
 	$(TARGET_HAL_PATH)/include
 
 LOCAL_SRC_FILES := SecHWCLog.cpp SecHWCUtils.cpp SecHWC.cpp
