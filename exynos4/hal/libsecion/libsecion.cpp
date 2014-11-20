@@ -124,11 +124,11 @@ int ion_unmap(void *addr, size_t len)
     return munmap(addr, len);
 }
 
-int ion_msync(ion_client client, ion_buffer buffer, enum ION_MSYNC_FLAGS flags, size_t size, off_t offset)
+int ion_msync(ion_client client, ion_buffer buffer, long flags, size_t size, off_t offset)
 {
     struct ion_msync_data arg_cdata;
     arg_cdata.size = size;
-    arg_cdata.dir = flags;
+    arg_cdata.dir = (ION_MSYNC_FLAGS) flags;
     arg_cdata.fd = buffer;
     arg_cdata.offset = offset;
 
