@@ -57,7 +57,15 @@ struct led_config {
     char blink[MAX_WRITE_CMD];
 };
 
-struct led_config g_BatteryStore;
+static struct light_state_t g_BatteryStore;
+static struct light_state_t g_AttentionStore;
+static struct light_state_t g_NotificationStore;
+
+static int
+is_lit(struct light_state_t const* state)
+{
+    return state->color & 0x00ffffff;
+}
 
 void init_g_lock(void)
 {
@@ -189,35 +197,45 @@ static int write_leds(struct led_config led)
     return err;
 }
 
-static int set_light_leds(struct light_state_t const *state, int type)
+static int set_light_leds(struct light_state_t const *state)
 {
     struct led_config led;
+    struct light_state_t *activeState;
+    int onMS, offMS;
     unsigned int colorRGB;
 
-    colorRGB = get_dimmed_color(state, 200);
-
-    switch (state->flashMode) {
-    case LIGHT_FLASH_NONE:
-            // use battery led state stored
-            if (g_BatteryStore.blink == NULL) {
-                led.red = 0;
-                led.green = 0;
-                led.blue = 0;
-                snprintf(g_BatteryStore.blink, MAX_WRITE_CMD, "0x000000 0 0");
-            }
-            led = g_BatteryStore;
-        break;
-    case LIGHT_FLASH_TIMED:
-    case LIGHT_FLASH_HARDWARE:
-            led.red = (colorRGB >> 16) & 0xFF;
-            led.green = (colorRGB >> 8) & 0xFF;
-            led.blue = colorRGB & 0xFF;
-            snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
-            ALOGD("set_light_leds 0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
-        break;
-    default:
-        return -EINVAL;
+    if (is_lit(&g_AttentionStore)) {
+        activeState = &g_AttentionStore;
+        colorRGB = get_dimmed_color(activeState, 200);
+    } else {
+        if (is_lit(&g_BatteryStore) && !is_lit(&g_NotificationStore)) {
+            activeState = &g_BatteryStore;
+            colorRGB = get_dimmed_color(activeState, 20);
+        } else {
+            activeState = &g_NotificationStore;
+            colorRGB = get_dimmed_color(activeState, 200);
+        }
     }
+
+
+    switch (activeState->flashMode) {
+    case LIGHT_FLASH_TIMED:
+        onMS = activeState->flashOnMS;
+        offMS = activeState->flashOffMS;
+        break;
+    case LIGHT_FLASH_HARDWARE:
+    case LIGHT_FLASH_NONE:
+    default:
+        onMS = 0;
+        offMS = 0;
+        break;
+    }
+
+    led.red = (colorRGB >> 16) & 0xFF;
+    led.green = (colorRGB >> 8) & 0xFF;
+    led.blue = colorRGB & 0xFF;
+    snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, onMS, offMS);
+    ALOGD("set_light_leds 0x%x %d %d", colorRGB, onMS, offMS);
 
     return write_leds(led);
 }
@@ -225,39 +243,22 @@ static int set_light_leds(struct light_state_t const *state, int type)
 static int set_light_leds_notifications(struct light_device_t *dev,
             struct light_state_t const *state)
 {
-    return set_light_leds(state, 0);
+    g_NotificationStore = *state;
+    return set_light_leds(state);
 }
 
 static int set_light_battery(struct light_device_t *dev,
             struct light_state_t const *state)
 {
-    struct led_config led;
-    int brightness = rgb_to_brightness(state);
-    unsigned int colorRGB;
-
-    colorRGB = get_dimmed_color(state, 20);
-
-    if (brightness == 0) {
-        led.red = 0;
-        led.green = 0;
-        led.blue = 0;
-        snprintf(led.blink, MAX_WRITE_CMD, "0x000000 0 0");
-    } else {
-        led.red = (colorRGB >> 16) & 0xFF;
-        led.green = (colorRGB >> 8) & 0xFF;
-        led.blue = colorRGB & 0xFF;
-        snprintf(led.blink, MAX_WRITE_CMD, "0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
-        ALOGD("set_light_battery 0x%x %d %d", colorRGB, state->flashOnMS, state->flashOffMS);
-    }
-
-    g_BatteryStore = led;
-    return write_leds(led);
+    g_BatteryStore = *state;
+    return set_light_leds(state);
 }
 
 static int set_light_leds_attention(struct light_device_t *dev,
             struct light_state_t const *state)
 {
-    return set_light_leds(state, 1);
+    g_AttentionStore = *state;
+    return set_light_leds(state);
 }
 
 static int close_lights(struct light_device_t *dev)
@@ -293,10 +294,6 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         return -EINVAL;
 
     pthread_once(&g_init, init_g_lock);
-
-    g_BatteryStore.red = 0;
-    g_BatteryStore.green = 0;
-    g_BatteryStore.blue = 0;
 
     struct light_device_t *dev = malloc(sizeof(struct light_device_t));
     memset(dev, 0, sizeof(*dev));
