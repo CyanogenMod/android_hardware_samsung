@@ -1955,7 +1955,7 @@ static int responseDataCallList(Parcel &p, void *response, size_t responselen)
             writeStringToParcel(p, p_cur[i].ifname);
             writeStringToParcel(p, p_cur[i].addresses);
             writeStringToParcel(p, p_cur[i].dnses);
-            writeStringToParcel(p, p_cur[i].gateways);
+            writeStringToParcel(p, p_cur[i].addresses); // ppp use address as gateway
             appendPrintBuf("%s[status=%d,retry=%d,cid=%d,%s,%s,%s,%s,%s,%s],", printBuf,
                 p_cur[i].status,
                 p_cur[i].suggestedRetryTime,
