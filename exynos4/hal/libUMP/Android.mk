@@ -26,8 +26,8 @@ LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_CFLAGS:= -DLOG_TAG=\"UMP\"
 
 LOCAL_C_INCLUDES:= \
-	$(TOP)/hardware/samsung_slsi/exynos4/include \
-	$(TOP)/hardware/samsung_slsi/exynos4/libUMP/include
+	$(LOCAL_PATH)/../include \
+	$(LOCAL_PATH)/include
 
 UMP_SRCS := \
 	arch_011_udd/ump_frontend.c \
