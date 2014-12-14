@@ -31,10 +31,11 @@ extern "C" {
 
 typedef enum
 {
-	/* This enum must match with the enum found in kernel_directory/drivers/gpu/mali400/r4p0/ump/include/ump_ref_drv.h */
+	/* This enum must match with the enum found in
+	 * <kernel_directory>/drivers/gpu/mali400/<ver>/ump/include/ump_ref_drv.h */
 	UMP_REF_DRV_CONSTRAINT_NONE = 0,
 	UMP_REF_DRV_CONSTRAINT_PHYSICALLY_LINEAR = 1,
-	UMP_REF_DRV_CONSTRAINT_USE_CACHE = 4, /* TODO: for r4p0 it should be 4. Changed in order to test it with stock rom r3p2 */
+	UMP_REF_DRV_CONSTRAINT_USE_CACHE = 128,
 } ump_alloc_constraints;
 
 /** Allocate an UMP handle containing a memory buffer.
