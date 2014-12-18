@@ -657,8 +657,14 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
         }
 
         if (uusPresent == 0) {
-            dial.uusInfo = NULL;
-        } else {
+            /* Samsung hack */
+            memset(&uusInfo, 0, sizeof(RIL_UUS_Info));
+            uusInfo.uusType = (RIL_UUS_Type) 0;
+            uusInfo.uusDcs = (RIL_UUS_DCS) 0;
+            uusInfo.uusData = NULL;
+            uusInfo.uusLength = 0;
+            dial.uusInfo = &uusInfo;
+         } else {
             int32_t len;
 
             memset(&uusInfo, 0, sizeof(RIL_UUS_Info));
@@ -1955,7 +1961,7 @@ static int responseDataCallList(Parcel &p, void *response, size_t responselen)
             writeStringToParcel(p, p_cur[i].ifname);
             writeStringToParcel(p, p_cur[i].addresses);
             writeStringToParcel(p, p_cur[i].dnses);
-            writeStringToParcel(p, p_cur[i].gateways);
+            writeStringToParcel(p, p_cur[i].addresses);
             appendPrintBuf("%s[status=%d,retry=%d,cid=%d,%s,%s,%s,%s,%s,%s],", printBuf,
                 p_cur[i].status,
                 p_cur[i].suggestedRetryTime,
