@@ -19,6 +19,7 @@ package org.cyanogenmod.hardware;
 import org.cyanogenmod.hardware.util.FileUtils;
 
 import android.os.SystemProperties;
+import android.text.TextUtils;
 
 import java.io.File;
 
@@ -47,7 +48,7 @@ public class AdaptiveBacklight {
      * the operation failed while reading the status; true in any other case.
      */
     public static boolean isEnabled() {
-        if (Integer.parseInt(FileUtils.readOneLine(FILE_CABC)) == 1) {
+        if (TextUtils.equals(FileUtils.readOneLine(FILE_CABC), "1")) {
             return true;
         } else {
             return false;
