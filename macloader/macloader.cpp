@@ -82,7 +82,8 @@ int main() {
         strncasecmp(mac_addr_half, "78:4b:87", 9) == 0 ||
         strncasecmp(mac_addr_half, "60:21:c0", 9) == 0 ||
         strncasecmp(mac_addr_half, "88:30:8a", 9) == 0 ||
-        strncasecmp(mac_addr_half, "f0:27:65", 9) == 0) {
+        strncasecmp(mac_addr_half, "f0:27:65", 9) == 0 ||
+        strncasecmp(mac_addr_half, "fc:c2:de", 9) == 0) {
         type = MURATA;
     }
 
