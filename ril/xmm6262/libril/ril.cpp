@@ -633,6 +633,9 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
     int32_t sizeOfDial;
     int32_t t;
     int32_t uusPresent;
+#ifdef MODEM_TYPE_XMM7260
+    char *csv;
+#endif
     status_t status;
 
     memset (&dial, 0, sizeof(dial));
@@ -645,6 +648,25 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
     if (status != NO_ERROR || dial.address == NULL) {
         goto invalid;
     }
+
+#ifdef MODEM_TYPE_XMM7260
+    /* CallDetails.call_type */
+    status = p.readInt32(&t);
+    if (status != NO_ERROR) {
+        goto invalid;
+    }
+    /* CallDetails.call_domain */
+    p.readInt32(&t);
+    if (status != NO_ERROR) {
+        goto invalid;
+    }
+    /* CallDetails.getCsvFromExtra */
+    csv = strdupReadString(p);
+    if (csv == NULL) {
+        goto invalid;
+    }
+    free(csv);
+#endif
 
     if (s_callbacks.version < 3) { // Remove when partners upgrade to version 3
         uusPresent = 0;
@@ -1817,6 +1839,16 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
         p.writeInt32(p_cur->isMT);
         p.writeInt32(p_cur->als);
         p.writeInt32(p_cur->isVoice);
+
+#ifdef MODEM_TYPE_XMM7260
+        p.writeInt32(p_cur->isVideo);
+
+        /* Pass CallDetails */
+        p.writeInt32(0);
+        p.writeInt32(0);
+        writeStringToParcel(p, "");
+#endif
+
         p.writeInt32(p_cur->isVoicePrivacy);
         writeStringToParcel(p, p_cur->number);
         p.writeInt32(p_cur->numberPresentation);
@@ -1845,6 +1877,11 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
             p_cur->als,
             (p_cur->isVoice)?"voc":"nonvoc",
             (p_cur->isVoicePrivacy)?"evp":"noevp");
+#ifdef MODEM_TYPE_XMM7260
+        appendPrintBuf("%s,%s,",
+            printBuf,
+            (p_cur->isVideo) ? "vid" : "novid");
+#endif
         appendPrintBuf("%s%s,cli=%d,name='%s',%d]",
             printBuf,
             p_cur->number,
