@@ -33,7 +33,9 @@ enum Type {
     NONE,
     MURATA,
     SEMCOSH,
-    SEMCOVE
+    SEMCOVE,
+    SEMCO3RD,
+    WISOL
 };
 
 int main() {
@@ -97,6 +99,16 @@ int main() {
         type = SEMCOSH;
     }
 
+    /* semco3rd */
+    if (strncasecmp(mac_addr_half, "f4:09:d8", 9) == 0) {
+        type = SEMCO3RD;
+    }
+
+    /* wisol */
+    if (strncasecmp(mac_addr_half, "48:5A:3F", 9) == 0) {
+        type = WISOL;
+    }
+
     if (type != NONE) {
         /* open cid file */
         cidfile = fopen(CID_PATH, "w");
@@ -124,6 +136,14 @@ int main() {
                 /* write semcove to cid file */
                 ALOGI("Writing semcove to %s\n", CID_PATH);
                 ret = fputs("semcove", cidfile);
+            break;
+            case SEMCO3RD:
+                ALOGI("Writing semco3rd to %s\n", CID_PATH);
+                ret = fputs("semco3rd", cidfile);
+            break;
+            case WISOL:
+                ALOGI("Writing wisol to %s\n", CID_PATH);
+                ret = fputs("wisol", cidfile);
             break;
          }
 
