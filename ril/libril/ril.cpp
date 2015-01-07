@@ -657,6 +657,9 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
         }
 
         if (uusPresent == 0) {
+#ifdef MODEM_6262
+            dial.uusInfo = NULL;
+#elif MODEM_6260
             /* Samsung hack */
             memset(&uusInfo, 0, sizeof(RIL_UUS_Info));
             uusInfo.uusType = (RIL_UUS_Type) 0;
@@ -664,6 +667,7 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
             uusInfo.uusData = NULL;
             uusInfo.uusLength = 0;
             dial.uusInfo = &uusInfo;
+#endif
         } else {
             int32_t len;
 
@@ -2304,6 +2308,136 @@ static int responseCdmaInformationRecords(Parcel &p,
     return 0;
 }
 
+#ifdef MODEM_6262
+static int responseRilSignalStrength(Parcel &p,
+                    void *response, size_t responselen) {
+
+    int gsmSignalStrength;
+    int cdmaDbm;
+    int evdoDbm;
+
+    if (response == NULL && responselen != 0) {
+        RLOGE("invalid response: NULL");
+        return RIL_ERRNO_INVALID_RESPONSE;
+    }
+
+    if (responselen >= sizeof (RIL_SignalStrength_v5)) {
+        RIL_SignalStrength_v6 *p_cur = ((RIL_SignalStrength_v6 *) response);
+
+        /* gsmSignalStrength */
+        RLOGD("gsmSignalStrength (raw)=%d", p_cur->GW_SignalStrength.signalStrength);
+        gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength & 0xFF;
+        if (gsmSignalStrength < 0) {
+            gsmSignalStrength = 99;
+        } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
+            gsmSignalStrength = 31;
+        }
+        RLOGD("gsmSignalStrength (corrected)=%d", gsmSignalStrength);
+        p.writeInt32(gsmSignalStrength);
+
+        /* gsmBitErrorRate */
+        p.writeInt32(p_cur->GW_SignalStrength.bitErrorRate);
+
+        /* cdmaDbm */
+        RLOGD("cdmaDbm (raw)=%d", p_cur->CDMA_SignalStrength.dbm);
+        cdmaDbm = p_cur->CDMA_SignalStrength.dbm & 0xFF;
+        if (cdmaDbm < 0) {
+            cdmaDbm = 99;
+        } else if (cdmaDbm > 31 && cdmaDbm != 99) {
+            cdmaDbm = 31;
+        }
+        //RLOGD("cdmaDbm (corrected)=%d", cdmaDbm);
+        p.writeInt32(cdmaDbm);
+
+        /* cdmaEcio */
+        p.writeInt32(p_cur->CDMA_SignalStrength.ecio);
+
+        /* evdoDbm */
+        RLOGD("evdoDbm (raw)=%d", p_cur->EVDO_SignalStrength.dbm);
+        evdoDbm = p_cur->EVDO_SignalStrength.dbm & 0xFF;
+        if (evdoDbm < 0) {
+            evdoDbm = 99;
+        } else if (evdoDbm > 31 && evdoDbm != 99) {
+            evdoDbm = 31;
+        }
+        //RLOGD("evdoDbm (corrected)=%d", evdoDbm);
+        p.writeInt32(evdoDbm);
+
+        /* evdoEcio */
+        p.writeInt32(p_cur->EVDO_SignalStrength.ecio);
+        /* evdoSnr */
+        p.writeInt32(p_cur->EVDO_SignalStrength.signalNoiseRatio);
+
+        if (responselen >= sizeof (RIL_SignalStrength_v6)) {
+            /*
+             * Fixup LTE for backwards compatibility
+             */
+            if (s_callbacks.version <= 6) {
+                // signalStrength: -1 -> 99
+                if (p_cur->LTE_SignalStrength.signalStrength == -1) {
+                    p_cur->LTE_SignalStrength.signalStrength = 99;
+                }
+                // rsrp: -1 -> INT_MAX all other negative value to positive.
+                // So remap here
+                if (p_cur->LTE_SignalStrength.rsrp == -1) {
+                    p_cur->LTE_SignalStrength.rsrp = INT_MAX;
+                } else if (p_cur->LTE_SignalStrength.rsrp < -1) {
+                    p_cur->LTE_SignalStrength.rsrp = -p_cur->LTE_SignalStrength.rsrp;
+                }
+                // rsrq: -1 -> INT_MAX
+                if (p_cur->LTE_SignalStrength.rsrq == -1) {
+                    p_cur->LTE_SignalStrength.rsrq = INT_MAX;
+                }
+                // Not remapping rssnr is already using INT_MAX
+
+                // cqi: -1 -> INT_MAX
+                if (p_cur->LTE_SignalStrength.cqi == -1) {
+                    p_cur->LTE_SignalStrength.cqi = INT_MAX;
+                }
+            }
+            p.writeInt32(p_cur->LTE_SignalStrength.signalStrength);
+            p.writeInt32(p_cur->LTE_SignalStrength.rsrp);
+            p.writeInt32(p_cur->LTE_SignalStrength.rsrq);
+            p.writeInt32(p_cur->LTE_SignalStrength.rssnr);
+            p.writeInt32(p_cur->LTE_SignalStrength.cqi);
+        } else {
+            p.writeInt32(99);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
+            p.writeInt32(INT_MAX);
+        }
+
+        startResponse;
+        appendPrintBuf("%s[signalStrength=%d,bitErrorRate=%d,\
+                CDMA_SS.dbm=%d,CDMA_SSecio=%d,\
+                EVDO_SS.dbm=%d,EVDO_SS.ecio=%d,\
+                EVDO_SS.signalNoiseRatio=%d,\
+                LTE_SS.signalStrength=%d,LTE_SS.rsrp=%d,LTE_SS.rsrq=%d,\
+                LTE_SS.rssnr=%d,LTE_SS.cqi=%d]",
+                printBuf,
+                gsmSignalStrength,
+                p_cur->GW_SignalStrength.bitErrorRate,
+                cdmaDbm,
+                p_cur->CDMA_SignalStrength.ecio,
+                evdoDbm,
+                p_cur->EVDO_SignalStrength.ecio,
+                p_cur->EVDO_SignalStrength.signalNoiseRatio,
+                p_cur->LTE_SignalStrength.signalStrength,
+                p_cur->LTE_SignalStrength.rsrp,
+                p_cur->LTE_SignalStrength.rsrq,
+                p_cur->LTE_SignalStrength.rssnr,
+                p_cur->LTE_SignalStrength.cqi);
+        closeResponse;
+
+    } else {
+        RLOGE("invalid response length");
+        return RIL_ERRNO_INVALID_RESPONSE;
+    }
+
+    return 0;
+}
+#elif MODEM_6260
 static int responseRilSignalStrength(Parcel &p,
                     void *response, size_t responselen) {
 
@@ -2407,6 +2541,7 @@ static int responseRilSignalStrength(Parcel &p,
 
     return 0;
 }
+#endif
 
 static int responseCallRing(Parcel &p, void *response, size_t responselen) {
     if ((response == NULL) || (responselen == 0)) {
@@ -2700,15 +2835,12 @@ static void sendSimStatusAppInfo(Parcel &p, int num_apps, RIL_AppStatus appStatu
 }
 
 static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
-    int i;
-
     if (response == NULL && responselen != 0) {
         RLOGE("invalid response: NULL");
         return RIL_ERRNO_INVALID_RESPONSE;
     }
 
     if (responselen == sizeof (RIL_CardStatus_v6)) {
-        RLOGE("RIL_CardStatus_v6");
         RIL_CardStatus_v6 *p_cur = ((RIL_CardStatus_v6 *) response);
 
         p.writeInt32(p_cur->card_state);
@@ -2719,7 +2851,6 @@ static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
 
         sendSimStatusAppInfo(p, p_cur->num_applications, p_cur->applications);
     } else if (responselen == sizeof (RIL_CardStatus_v5)) {
-        RLOGE("RIL_CardStatus_v5");
         RIL_CardStatus_v5 *p_cur = ((RIL_CardStatus_v5 *) response);
 
         p.writeInt32(p_cur->card_state);
@@ -2731,9 +2862,6 @@ static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
         sendSimStatusAppInfo(p, p_cur->num_applications, p_cur->applications);
     } else {
         RLOGE("responseSimStatus: A RilCardStatus_v6 or _v5 expected\n");
-        RLOGE("responselen=%d", responselen);
-        RLOGE("RIL_CardStatus_v5=%d", sizeof (RIL_CardStatus_v5));
-        RLOGE("RIL_CardStatus_v6=%d", sizeof (RIL_CardStatus_v6));
         return RIL_ERRNO_INVALID_RESPONSE;
     }
 
