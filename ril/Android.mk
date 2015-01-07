@@ -20,12 +20,7 @@ ifeq ($(BOARD_VENDOR),samsung)
 
 # libril
 ifeq ($(BOARD_PROVIDES_LIBRIL),true)
-ifneq ($(filter xmm6262 xmm6360 xmm7260,$(BOARD_MODEM_TYPE)),)
-include $(RIL_PATH)/xmm6262/libril/Android.mk
-endif
-ifeq ($(BOARD_MODEM_TYPE),xmm6260)
-include $(RIL_PATH)/xmm6260/libril/Android.mk
-endif
+include $(RIL_PATH)/libril/Android.mk
 endif
 
 # ril client
