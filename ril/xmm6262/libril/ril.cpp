@@ -1840,11 +1840,12 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
         p.writeInt32(p_cur->isVoice);
 
 #ifdef MODEM_TYPE_XMM7260
-        /* Samsung CallDetails */
         p.writeInt32(p_cur->isVideo);
-        p.writeInt32(p_cur->call_type);
-        p.writeInt32(p_cur->call_domain);
-        writeStringToParcel(p, p_cur->csv);
+
+        /* Pass CallDetails */
+        p.writeInt32(0);
+        p.writeInt32(0);
+        writeStringToParcel(p, "");
 #endif
 
         p.writeInt32(p_cur->isVoicePrivacy);
@@ -1875,7 +1876,12 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
             p_cur->als,
             (p_cur->isVoice)?"voc":"nonvoc",
             (p_cur->isVoicePrivacy)?"evp":"noevp");
-        appendPrintBuf("%s%s,cli=%d,name='%s',%d]",
+#ifdef MODEM_TYPE_XMM7260
+        appendPrintBuf("%s,%s,",
+                printBuf,
+                (p_cur->isVideo) ? "vid" : "novid");
+#endif
+        appendPrintBuf("%snumber='%s',cli=%d,name='%s',%d]",
             printBuf,
             p_cur->number,
             p_cur->numberPresentation,
