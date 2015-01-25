@@ -33,7 +33,8 @@ enum Type {
     NONE,
     MURATA,
     SEMCOSH,
-    SEMCOVE
+    SEMCOVE,
+    SEMCO
 };
 
 int main() {
@@ -92,6 +93,12 @@ int main() {
         type = SEMCOSH;
     }
 
+    /* semco */
+    if (strncasecmp(mac_addr_half, "c0:bd:d1", 9) == 0 ||
+        strncasecmp(mac_addr_half, "51:f6:6b", 9) == 0) {
+        type = SEMCO;
+    }
+
     if (type != NONE) {
         /* open cid file */
         cidfile = fopen(CID_PATH, "w");
@@ -120,6 +127,11 @@ int main() {
                 ALOGI("Writing semcove to %s\n", CID_PATH);
                 ret = fputs("semcove", cidfile);
             break;
+            case SEMCO:
+                /* write semco to cid file */
+                ALOGI("Writing semco to %s\n", CID_PATH);
+                ret = fputs("semco", cidfile);
+                break;
          }
 
         if (ret != 0) {
