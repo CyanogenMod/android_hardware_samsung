@@ -24,6 +24,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include <cutils/log.h>
 
@@ -118,6 +119,9 @@ int main() {
     }
 
     if (type != NONE) {
+        struct passwd *pwd;
+        int fd;
+
         /* open cid file */
         cidfile = fopen(CID_PATH, "w");
         if(cidfile == 0) {
@@ -172,20 +176,28 @@ int main() {
         fd = fileno(cidfile);
         amode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
         ret = fchmod(fd, amode);
-        fclose(cidfile);
         if (ret != 0) {
+            fclose(cidfile);
             ALOGE("Can't set permissions on %s - %s\n",
                   CID_PATH, strerror(errno));
             return 1;
         }
 
-        char* chown_cmd = (char*) malloc(strlen("chown system ") + strlen(CID_PATH) + 1);
-        char* chgrp_cmd = (char*) malloc(strlen("chgrp system ") + strlen(CID_PATH) + 1);
-        sprintf(chown_cmd, "chown system %s", CID_PATH);
-        sprintf(chgrp_cmd, "chgrp system %s", CID_PATH);
-        system(chown_cmd);
-        system(chgrp_cmd);
+        pwd = getpwnam("system");
+        if (pwd == NULL) {
+            fclose(cidfile);
+            ALOGE("Failed to find 'system' user - %s\n",
+                  strerror(errno));
+            return 1;
+        }
 
+        ret = fchown(fd, pwd->pw_uid, pwd->pw_gid);
+        fclose(cidfile);
+        if (ret != 0) {
+            ALOGE("Failed to change owner of %s - %s\n",
+                  CID_PATH, strerror(errno));
+            return 1;
+        }
     } else {
         /* delete cid file if no specific type */
         ALOGD("Deleting file %s\n", CID_PATH);
