@@ -22,11 +22,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <pwd.h>
 
 #include <cutils/log.h>
+
+#ifndef WIFI_DRIVER_NVRAM_PATH
+#define WIFI_DRIVER_NVRAM_PATH		NULL
+#endif
+
+#ifndef WIFI_DRIVER_NVRAM_PATH_PARAM
+#define WIFI_DRIVER_NVRAM_PATH_PARAM "/sys/module/wlan/parameters/nvram_path"
+#endif
 
 #define MACADDR_PATH "/efs/wifi/.mac.info"
 #define CID_PATH "/data/.cid.info"
@@ -39,6 +49,75 @@ enum Type {
     SEMCO3RD,
     WISOL
 };
+
+static int wifi_change_nvram_calibration(const char *nvram_file,
+                                         const char *type)
+{
+    int len;
+    int fd = -1;
+    int ret = 0;
+    struct stat sb;
+    char nvram_str[1024] = { 0 };
+
+    if (nvram_file == NULL) {
+        return 0;
+    }
+
+    if (type == NULL) {
+        return -1;
+    }
+
+    ret = stat(nvram_file, &sb);
+    if (ret != 0) {
+        ALOGE("NVRAM calibration file '%s' doesn't exist", nvram_file);
+        goto out;
+    }
+
+    ALOGD("Using NVRAM calibration file: %s\n", nvram_file);
+
+    fd = TEMP_FAILURE_RETRY(open(WIFI_DRIVER_NVRAM_PATH_PARAM, O_WRONLY));
+    if (fd < 0) {
+        ALOGE("Failed to open wifi nvram config path %s - error: %s",
+              WIFI_DRIVER_NVRAM_PATH_PARAM, strerror(errno));
+        return -1;
+    }
+
+    len = strlen(nvram_file) + 1;
+    if (TEMP_FAILURE_RETRY(write(fd, nvram_file, len)) != len) {
+        ALOGE("Failed to write to wifi config path %s - error: %s",
+              WIFI_DRIVER_NVRAM_PATH_PARAM, strerror(errno));
+        ret = -1;
+        goto out;
+    }
+
+    snprintf(nvram_str, sizeof(nvram_str), "%s_%s",
+             nvram_file, type);
+
+    ALOGD("Changing NVRAM calibration file for %s chipset\n", type);
+
+    ret = stat(nvram_str, &sb);
+    if (ret != 0) {
+        ALOGE("NVRAM calibration file '%s' doesn't exist", nvram_str);
+        goto out;
+    }
+
+    len = strlen(nvram_str) + 1;
+    if (TEMP_FAILURE_RETRY(write(fd, nvram_str, len)) != len) {
+        ALOGE("Failed to write to wifi config path %s - error: %s",
+              WIFI_DRIVER_NVRAM_PATH_PARAM, strerror(errno));
+        ret = -1;
+        goto out;
+    }
+
+    ALOGD("NVRAM calibration file set to '%s'\n", nvram_str);
+
+    ret = 0;
+out:
+    if (fd != -1) {
+        close(fd);
+    }
+    return ret;
+}
 
 int main() {
     FILE* file;
@@ -108,6 +187,7 @@ int main() {
     }
 
     if (type != NONE) {
+        const char *nvram_file;
         const char *type_str;
         struct passwd *pwd;
         int fd;
@@ -138,6 +218,14 @@ int main() {
             case WISOL:
                 type_str = "wisol";
                 break;
+        }
+
+        nvram_file = WIFI_DRIVER_NVRAM_PATH;
+        if (nvram_file != NULL) {
+            ret = wifi_change_nvram_calibration(nvram_file, type_str);
+            if (ret != 0) {
+                return 1;
+            }
         }
 
         ALOGI("Settting wifi type to %s in %s\n", type_str, CID_PATH);
