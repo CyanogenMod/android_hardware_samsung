@@ -108,6 +108,7 @@ int main() {
     }
 
     if (type != NONE) {
+        const char *type_str;
         struct passwd *pwd;
         int fd;
 
@@ -122,32 +123,26 @@ int main() {
         switch(type) {
             case NONE:
                 return -1;
-            break;
             case MURATA:
-                /* write murata to cid file */
-                ALOGI("Writing murata to %s\n", CID_PATH);
-                ret = fputs("murata", cidfile);
-            break;
+                type_str = "murata";
+                break;
             case SEMCOSH:
-                /* write semcosh to cid file */
-                ALOGI("Writing semcosh to %s\n", CID_PATH);
-                ret = fputs("semcosh", cidfile);
-            break;
+                type_str = "semcosh";
+                break;
             case SEMCOVE:
-                /* write semcove to cid file */
-                ALOGI("Writing semcove to %s\n", CID_PATH);
-                ret = fputs("semcove", cidfile);
-            break;
+                type_str = "semcove";
+                break;
             case SEMCO3RD:
-                ALOGI("Writing semco3rd to %s\n", CID_PATH);
-                ret = fputs("semco3rd", cidfile);
-            break;
+                type_str = "semco3rd";
+                break;
             case WISOL:
-                ALOGI("Writing wisol to %s\n", CID_PATH);
-                ret = fputs("wisol", cidfile);
-            break;
-         }
+                type_str = "wisol";
+                break;
+        }
 
+        ALOGI("Settting wifi type to %s in %s\n", type_str, CID_PATH);
+
+        ret = fputs(type_str, cidfile);
         if (ret != 0) {
             fprintf(stderr, "fputs() to file %s failed\n", CID_PATH);
             ALOGE("Can't write to %s\n", CID_PATH);
