@@ -159,9 +159,8 @@ int main() {
 
         ret = fputs(type_str, cidfile);
         if (ret != 0) {
-            fprintf(stderr, "fputs() to file %s failed\n", CID_PATH);
             ALOGE("Can't write to %s\n", CID_PATH);
-            return -1;
+            return 1;
         }
 
         /* Change permissions of cid file */
