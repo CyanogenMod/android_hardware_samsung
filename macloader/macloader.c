@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <cutils/log.h>
 
@@ -164,12 +165,19 @@ int main() {
             ALOGE("Can't write to %s\n", CID_PATH);
             return -1;
         }
-        fclose(cidfile);
 
-        /* set permissions on cid file */
-        ALOGD("Setting permissions on %s\n", CID_PATH);
+        /* Change permissions of cid file */
+        ALOGD("Change permissions of %s\n", CID_PATH);
+
+        fd = fileno(cidfile);
         amode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-        ret = chmod(CID_PATH, amode);
+        ret = fchmod(fd, amode);
+        fclose(cidfile);
+        if (ret != 0) {
+            ALOGE("Can't set permissions on %s - %s\n",
+                  CID_PATH, strerror(errno));
+            return 1;
+        }
 
         char* chown_cmd = (char*) malloc(strlen("chown system ") + strlen(CID_PATH) + 1);
         char* chgrp_cmd = (char*) malloc(strlen("chgrp system ") + strlen(CID_PATH) + 1);
@@ -177,12 +185,6 @@ int main() {
         sprintf(chgrp_cmd, "chgrp system %s", CID_PATH);
         system(chown_cmd);
         system(chgrp_cmd);
-
-        if (ret != 0) {
-            fprintf(stderr, "chmod() on file %s failed\n", CID_PATH);
-            ALOGE("Can't set permissions on %s\n", CID_PATH);
-            return ret;
-        }
 
     } else {
         /* delete cid file if no specific type */
