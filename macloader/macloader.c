@@ -60,6 +60,7 @@ int main() {
 
     /* get and compare mac addr */
     str = fgets(mac_addr_half, 9, file);
+    fclose(file);
     if (str == 0) {
         fprintf(stderr, "fgets() from file %s failed\n", MACADDR_PATH);
         ALOGE("Can't read from %s\n", MACADDR_PATH);
@@ -203,6 +204,5 @@ int main() {
         ALOGD("Deleting file %s\n", CID_PATH);
         remove(CID_PATH);
     }
-    fclose(file);
     return 0;
 }
