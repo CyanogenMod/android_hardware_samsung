@@ -16,15 +16,15 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "macloader"
+#define LOG_NDEBUG 0
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <cutils/log.h>
 
-#define LOG_TAG "macloader"
-#define LOG_NDEBUG 0
+#include <cutils/log.h>
 
 #define MACADDR_PATH "/efs/wifi/.mac.info"
 #define CID_PATH "/data/.cid.info"
