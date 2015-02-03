@@ -120,18 +120,20 @@ static void addToList(struct ril_event * ev, struct ril_event * list)
 
 static void removeFromList(struct ril_event * ev)
 {
-    dlog("~~~~ Removing event ~~~~");
+    dlog("~~~~ +removeFromList ~~~~");
     dump_event(ev);
 
     ev->next->prev = ev->prev;
     ev->prev->next = ev->next;
     ev->next = NULL;
     ev->prev = NULL;
+    dlog("~~~~ -removeFromList ~~~~");
 }
 
 
 static void removeWatch(struct ril_event * ev, int index)
 {
+    dlog("~~~~ +removeWatch ~~~~");
     watch_table[index] = NULL;
     ev->index = -1;
 
@@ -150,6 +152,7 @@ static void removeWatch(struct ril_event * ev, int index)
         nfds = n + 1;
         dlog("~~~~ nfds = %d ~~~~", nfds);
     }
+    dlog("~~~~ -removeWatch ~~~~");
 }
 
 static void processTimeouts()
