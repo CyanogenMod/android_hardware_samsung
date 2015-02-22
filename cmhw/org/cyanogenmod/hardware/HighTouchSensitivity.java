@@ -31,7 +31,6 @@ import android.util.Log;
 public class HighTouchSensitivity {
 
     private static String TAG = "HighTouchSensitivity";
-
     private static String COMMAND_PATH = "/sys/class/sec/tsp/cmd";
     private static String COMMAND_LIST_PATH = "/sys/class/sec/tsp/cmd_list";
     private static String COMMAND_RESULT_PATH = "/sys/class/sec/tsp/cmd_result";
@@ -71,7 +70,8 @@ public class HighTouchSensitivity {
         return false;
     }
 
-    /** This method returns the current activation status of high touch sensitivity
+    /** 
+     * This method returns the current activation status of high touch sensitivity
      *
      * @return boolean Must be false if high touch sensitivity is not supported or not activated,
      * or the operation failed while reading the status; true in any other case.
