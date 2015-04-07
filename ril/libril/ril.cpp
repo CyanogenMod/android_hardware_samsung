@@ -310,7 +310,7 @@ static int responseDcRtInfo(Parcel &p, void *response, size_t responselen);
 
 static int decodeVoiceRadioTechnology (RIL_RadioState radioState);
 static int decodeCdmaSubscriptionSource (RIL_RadioState radioState);
-static RIL_RadioState processRadioState(RIL_RadioState newRadioState);
+static RIL_RadioState processRadioState(RIL_RadioState newRadioState, RIL_SOCKET_ID socket_id);
 
 #ifdef RIL_SHLIB
 #if defined(ANDROID_MULTI_SIM)
@@ -4336,7 +4336,7 @@ static bool is3gpp2(int radioTech) {
  * returned when telephony framework requests them
  */
 static RIL_RadioState
-processRadioState(RIL_RadioState newRadioState, RIL_SOCKET_ID socket_id) {
+processRadioState(RIL_RadioState newRadioState, RIL_SOCKET_ID socket_id __unused) {
 
     if((newRadioState > RADIO_STATE_UNAVAILABLE) && (newRadioState < RADIO_STATE_ON)) {
         int newVoiceRadioTech;
