@@ -805,7 +805,7 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
         }
 
         if (uusPresent == 0) {
-#ifdef MODEM_TYPE_XMM6262
+#if defined(MODEM_TYPE_XMM6262) || defined(MODEM_TYPE_XMM7260)
             dial.uusInfo = NULL;
 #elif defined(MODEM_TYPE_XMM6260)
             /* Samsung hack */
