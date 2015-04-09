@@ -729,7 +729,7 @@ dispatchSmsWrite (Parcel &p, RequestInfo *pRI) {
     int32_t t;
     status_t status;
 
-    ALOGD("dispatchSmsWrite");
+    RLOGD("dispatchSmsWrite");
     memset (&args, 0, sizeof(args));
 
     status = p.readInt32(&t);
@@ -785,7 +785,7 @@ dispatchDial (Parcel &p, RequestInfo *pRI) {
 #endif
     status_t status;
 
-    ALOGD("dispatchDial");
+    RLOGD("dispatchDial");
     memset (&dial, 0, sizeof(dial));
 
     dial.address = strdupReadString(p);
@@ -919,7 +919,7 @@ dispatchSIM_IO (Parcel &p, RequestInfo *pRI) {
     int size;
     status_t status;
 
-    ALOGD("dispatchSIM_IO");
+    RLOGD("dispatchSIM_IO");
     memset (&simIO, 0, sizeof(simIO));
 
     // note we only check status at the end
@@ -997,7 +997,7 @@ dispatchSIM_APDU (Parcel &p, RequestInfo *pRI) {
     status_t status;
     RIL_SIM_APDU apdu;
 
-    ALOGD("dispatchSIM_APDU");
+    RLOGD("dispatchSIM_APDU");
     memset (&apdu, 0, sizeof(RIL_SIM_APDU));
 
     // Note we only check status at the end. Any single failure leads to
@@ -1067,7 +1067,7 @@ dispatchCallForward(Parcel &p, RequestInfo *pRI) {
     int32_t t;
     status_t status;
 
-    ALOGD("dispatchCallForward");
+    RLOGD("dispatchCallForward");
     memset (&cff, 0, sizeof(cff));
 
     // note we only check status at the end
@@ -1242,7 +1242,7 @@ static void
 dispatchCdmaSms(Parcel &p, RequestInfo *pRI) {
     RIL_CDMA_SMS_Message rcsm;
 
-    ALOGD("dispatchCdmaSms");
+    RLOGD("dispatchCdmaSms");
     if (NO_ERROR != constructCdmaSms(p, pRI, rcsm)) {
         goto invalid;
     }
@@ -1265,7 +1265,7 @@ dispatchImsCdmaSms(Parcel &p, RequestInfo *pRI, uint8_t retry, int32_t messageRe
     RIL_IMS_SMS_Message rism;
     RIL_CDMA_SMS_Message rcsm;
 
-    ALOGD("dispatchImsCdmaSms: retry=%d, messageRef=%d", retry, messageRef);
+    RLOGD("dispatchImsCdmaSms: retry=%d, messageRef=%d", retry, messageRef);
 
     if (NO_ERROR != constructCdmaSms(p, pRI, rcsm)) {
         goto invalid;
@@ -1299,7 +1299,7 @@ dispatchImsGsmSms(Parcel &p, RequestInfo *pRI, uint8_t retry, int32_t messageRef
     status_t status;
     size_t datalen;
     char **pStrings;
-    ALOGD("dispatchImsGsmSms: retry=%d, messageRef=%d", retry, messageRef);
+    RLOGD("dispatchImsGsmSms: retry=%d, messageRef=%d", retry, messageRef);
 
     status = p.readInt32 (&countStrings);
 
@@ -1372,7 +1372,7 @@ dispatchImsSms(Parcel &p, RequestInfo *pRI) {
     uint8_t retry;
     int32_t messageRef;
 
-    ALOGD("dispatchImsSms");
+    RLOGD("dispatchImsSms");
     if (status != NO_ERROR) {
         goto invalid;
     }
@@ -1411,7 +1411,7 @@ dispatchCdmaSmsAck(Parcel &p, RequestInfo *pRI) {
     status_t status;
     int32_t digitCount;
 
-    ALOGD("dispatchCdmaSmsAck");
+    RLOGD("dispatchCdmaSmsAck");
     memset(&rcsa, 0, sizeof(rcsa));
 
     status = p.readInt32(&t);
