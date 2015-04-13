@@ -320,10 +320,10 @@ static bool isServiceTypeCfQuery(RIL_SsServiceType serType, RIL_SsRequestType re
 
 #ifdef RIL_SHLIB
 #if defined(ANDROID_MULTI_SIM)
-extern "C" void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
+extern "C" void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
                                 size_t datalen, RIL_SOCKET_ID socket_id);
 #else
-extern "C" void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
+extern "C" void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
                                 size_t datalen);
 #endif
 #endif
@@ -4719,11 +4719,11 @@ processRadioState(RIL_RadioState newRadioState, RIL_SOCKET_ID socket_id) {
 
 #if defined(ANDROID_MULTI_SIM)
 extern "C"
-void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
+void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
                                 size_t datalen, RIL_SOCKET_ID socket_id)
 #else
 extern "C"
-void RIL_onUnsolicitedResponse(int unsolResponse, void *data,
+void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
                                 size_t datalen)
 #endif
 {
