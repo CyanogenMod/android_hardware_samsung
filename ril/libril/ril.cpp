@@ -2967,6 +2967,10 @@ static int responseCdmaInformationRecords(Parcel &p,
 
 static int responseRilSignalStrength(Parcel &p,
                     void *response, size_t responselen) {
+    int gsmSignalStrength;
+    int cdmaDbm;
+    int evdoDbm;
+
     if (response == NULL && responselen != 0) {
         RLOGE("invalid response: NULL");
         return RIL_ERRNO_INVALID_RESPONSE;
@@ -2975,11 +2979,44 @@ static int responseRilSignalStrength(Parcel &p,
     if (responselen >= sizeof (RIL_SignalStrength_v5)) {
         RIL_SignalStrength_v10 *p_cur = ((RIL_SignalStrength_v10 *) response);
 
-        p.writeInt32(p_cur->GW_SignalStrength.signalStrength);
+#if defined(MODEM_TYPE_XMM6262) || defined(MODEM_TYPE_XMM7260)
+        gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength & 0xFF;
+        if (gsmSignalStrength < 0) {
+            gsmSignalStrength = 99;
+        } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
+            gsmSignalStrength = 31;
+        }
+#else
+        gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength;
+#endif
+        p.writeInt32(gsmSignalStrength);
+
         p.writeInt32(p_cur->GW_SignalStrength.bitErrorRate);
-        p.writeInt32(p_cur->CDMA_SignalStrength.dbm);
+
+#if defined(MODEM_TYPE_XMM6262) || defined(MODEM_TYPE_XMM7260)
+        cdmaDbm = p_cur->CDMA_SignalStrength.dbm & 0xFF;
+        if (cdmaDbm < 0) {
+            cdmaDbm = 99;
+        } else if (cdmaDbm > 31 && cdmaDbm != 99) {
+            cdmaDbm = 31;
+        }
+#else
+        cdmaDbm = p_cur->CDMA_SignalStrength.dbm
+#endif
+        p.writeInt32(cdmaDbm);
         p.writeInt32(p_cur->CDMA_SignalStrength.ecio);
-        p.writeInt32(p_cur->EVDO_SignalStrength.dbm);
+
+#if defined(MODEM_TYPE_XMM6262) || defined(MODEM_TYPE_XMM7260)
+        evdoDbm = p_cur->EVDO_SignalStrength.dbm & 0xFF;
+        if (evdoDbm < 0) {
+            evdoDbm = 99;
+        } else if (evdoDbm > 31 && evdoDbm != 99) {
+            evdoDbm = 31;
+        }
+#else
+        evdoDbm = p_cur->EVDO_SignalStrength.dbm;
+#endif
+        p.writeInt32(evdoDbm);
         p.writeInt32(p_cur->EVDO_SignalStrength.ecio);
         p.writeInt32(p_cur->EVDO_SignalStrength.signalNoiseRatio);
         if (responselen >= sizeof (RIL_SignalStrength_v6)) {
@@ -3036,11 +3073,11 @@ static int responseRilSignalStrength(Parcel &p,
                 LTE_SS.signalStrength=%d,LTE_SS.rsrp=%d,LTE_SS.rsrq=%d,\
                 LTE_SS.rssnr=%d,LTE_SS.cqi=%d,TDSCDMA_SS.rscp=%d]",
                 printBuf,
-                p_cur->GW_SignalStrength.signalStrength,
+                gsmSignalStrength,
                 p_cur->GW_SignalStrength.bitErrorRate,
-                p_cur->CDMA_SignalStrength.dbm,
+                cdmaDbm,
                 p_cur->CDMA_SignalStrength.ecio,
-                p_cur->EVDO_SignalStrength.dbm,
+                evdoDbm,
                 p_cur->EVDO_SignalStrength.ecio,
                 p_cur->EVDO_SignalStrength.signalNoiseRatio,
                 p_cur->LTE_SignalStrength.signalStrength,
