@@ -146,3 +146,6 @@
     {RIL_REQUEST_SHUTDOWN, dispatchVoid, responseVoid},
     {RIL_REQUEST_GET_RADIO_CAPABILITY, dispatchVoid, responseRadioCapability},
     {RIL_REQUEST_SET_RADIO_CAPABILITY, dispatchRadioCapability, responseRadioCapability},
+    {RIL_REQUEST_START_LCE, dispatchInts, responseLceStatus},
+    {RIL_REQUEST_STOP_LCE, dispatchVoid, responseLceStatus},
+    {RIL_REQUEST_PULL_LCEDATA, dispatchVoid, responseLceData},
