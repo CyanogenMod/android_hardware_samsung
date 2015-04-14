@@ -3001,7 +3001,7 @@ static int responseRilSignalStrength(Parcel &p,
             cdmaDbm = 31;
         }
 #else
-        cdmaDbm = p_cur->CDMA_SignalStrength.dbm
+        cdmaDbm = p_cur->CDMA_SignalStrength.dbm;
 #endif
         p.writeInt32(cdmaDbm);
         p.writeInt32(p_cur->CDMA_SignalStrength.ecio);
