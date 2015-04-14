@@ -59,3 +59,4 @@
     {RIL_UNSOL_RADIO_CAPABILITY, responseRadioCapability, WAKE_PARTIAL},
     {RIL_UNSOL_ON_SS, responseSSData, WAKE_PARTIAL},
     {RIL_UNSOL_STK_CC_ALPHA_NOTIFY, responseString, WAKE_PARTIAL},
+    {RIL_UNSOL_LCEDATA_RECV, responseLceData, WAKE_PARTIAL},
