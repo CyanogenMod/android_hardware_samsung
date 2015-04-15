@@ -20,7 +20,7 @@ LOCAL_SHARED_LIBRARIES := \
     librilutils \
 
 LOCAL_STATIC_LIBRARIES := \
-    libnanopb-c-2.8.0-enable_malloc \
+    libprotobuf-c-nano-enable_malloc \
 
 ifneq ($(filter xmm6262 xmm6360,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS := -DMODEM_TYPE_XMM6262
@@ -56,7 +56,8 @@ LOCAL_SRC_FILES:= \
 LOCAL_STATIC_LIBRARIES := \
     libutils_static \
     libcutils \
-    librilutils_static
+    librilutils_static \
+    libprotobuf-c-nano-enable_malloc
 
 ifneq ($(filter xmm6262 xmm6360,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS := -DMODEM_TYPE_XMM6262
