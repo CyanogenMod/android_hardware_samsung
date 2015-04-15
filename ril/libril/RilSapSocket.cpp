@@ -24,6 +24,7 @@
 #define LOG_TAG "RIL_UIM_SOCKET"
 #include <utils/Log.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 RilSapSocket::RilSapSocketList *head;
 
