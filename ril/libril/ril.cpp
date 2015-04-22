@@ -2987,7 +2987,22 @@ static int responseRilSignalStrength(Parcel &p,
             gsmSignalStrength = 31;
         }
 #else
-        gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength;
+        gsmSignalStrength = p_cur->GW_SignalStrength.signalStrength & 0xFF;
+
+        /*
+         * if gsmSignalStrength isn't a valid value, use cdmaDbm as fallback.
+         * This is needed for old modem firmwares.
+         */
+        if (gsmSignalStrength < 0 || (gsmSignalStrength > 31 && p_cur->GW_SignalStrength.signalStrength != 99)) {
+            RLOGD("gsmSignalStrength-fallback (raw)=%d", p_cur->CDMA_SignalStrength.dbm);
+            gsmSignalStrength = p_cur->CDMA_SignalStrength.dbm;
+            if (gsmSignalStrength < 0) {
+                gsmSignalStrength = 99;
+            } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
+                gsmSignalStrength = 31;
+            }
+            RLOGD("gsmSignalStrength-fallback (corrected)=%d", gsmSignalStrength);
+        }
 #endif
         p.writeInt32(gsmSignalStrength);
 
