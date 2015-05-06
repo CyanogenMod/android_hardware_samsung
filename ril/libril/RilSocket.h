@@ -22,6 +22,8 @@
 
 using namespace std;
 
+extern "C" void *ril_socket_process_requests_loop(void *arg);
+
 /**
  * Abstract socket class representing sockets in rild.
  * <p>
