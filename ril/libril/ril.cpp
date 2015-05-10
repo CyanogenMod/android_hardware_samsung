@@ -284,6 +284,7 @@ static void dispatchRadioCapability(Parcel &p, RequestInfo *pRI);
 static int responseInts(Parcel &p, void *response, size_t responselen);
 static int responseIntsGetPreferredNetworkType(Parcel &p, void *response, size_t responselen);
 static int responseStrings(Parcel &p, void *response, size_t responselen);
+static int responseStringsNetworks(Parcel &p, void *response, size_t responselen);
 static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search);
 static int responseString(Parcel &p, void *response, size_t responselen);
 static int responseVoid(Parcel &p, void *response, size_t responselen);
@@ -2209,7 +2210,7 @@ responseInts(Parcel &p, void *response, size_t responselen) {
 
     int *p_int = (int *) response;
 
-    numInts = responselen / sizeof(int);
+    numInts = responselen / sizeof(int *);
     p.writeInt32 (numInts);
 
     /* each int*/
@@ -2240,7 +2241,7 @@ responseIntsGetPreferredNetworkType(Parcel &p, void *response, size_t responsele
 
     int *p_int = (int *) response;
 
-    numInts = responselen / sizeof(int);
+    numInts = responselen / sizeof(int *);
     p.writeInt32 (numInts);
 
     /* each int*/
@@ -2271,6 +2272,10 @@ static int responseStrings(Parcel &p, void *response, size_t responselen) {
     return responseStrings(p, response, responselen, false);
 }
 
+static int responseStringsNetworks(Parcel &p, void *response, size_t responselen) {
+    return responseStrings(p, response, responselen, true);
+}
+
 /** response is a char **, pointing to an array of char *'s */
 static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search) {
     int numStrings;
@@ -2289,15 +2294,32 @@ static int responseStrings(Parcel &p, void *response, size_t responselen, bool n
         p.writeInt32 (0);
     } else {
         char **p_cur = (char **) response;
+        int j = 0;
 
         numStrings = responselen / sizeof(char *);
-        p.writeInt32 (numStrings);
+        if (network_search) {
+            p.writeInt32 ((numStrings / 5) * 4);
+        } else {
+            p.writeInt32 (numStrings);
+        }
 
         /* each string*/
         startResponse;
         for (int i = 0 ; i < numStrings ; i++) {
-            appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
-            writeStringToParcel (p, p_cur[i]);
+            if (network_search) {
+                /* Samsung is sending 5 elements, upper layer expects 4.
+                   Drop every 5th element here */
+                if (j == 4) {
+                    j = 0;
+                } else {
+                    appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
+                    writeStringToParcel (p, p_cur[i]);
+                    j++;
+                }
+            } else {
+                appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
+                writeStringToParcel (p, p_cur[i]);
+            }
         }
         removeLastChar;
         closeResponse;
