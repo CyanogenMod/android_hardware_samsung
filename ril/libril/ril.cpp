@@ -2986,13 +2986,13 @@ static int responseRilSignalStrength(Parcel &p,
                 (gsmSignalStrength > 31 && p_cur->GW_SignalStrength.signalStrength != 99)) {
             gsmSignalStrength = p_cur->CDMA_SignalStrength.dbm;
         }
-#else
+#endif
         if (gsmSignalStrength < 0) {
             gsmSignalStrength = 99;
         } else if (gsmSignalStrength > 31 && gsmSignalStrength != 99) {
             gsmSignalStrength = 31;
         }
-#endif
+
         p.writeInt32(gsmSignalStrength);
 
         p.writeInt32(p_cur->GW_SignalStrength.bitErrorRate);
