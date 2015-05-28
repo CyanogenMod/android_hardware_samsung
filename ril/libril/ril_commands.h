@@ -149,3 +149,4 @@
     {RIL_REQUEST_START_LCE, dispatchInts, responseLceStatus},
     {RIL_REQUEST_STOP_LCE, dispatchVoid, responseLceStatus},
     {RIL_REQUEST_PULL_LCEDATA, dispatchVoid, responseLceData},
+    {RIL_REQUEST_GET_ACTIVITY_INFO, dispatchVoid, responseActivityData},
