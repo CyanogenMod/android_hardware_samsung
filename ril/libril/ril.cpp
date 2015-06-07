@@ -284,7 +284,6 @@ static void dispatchRadioCapability(Parcel &p, RequestInfo *pRI);
 static int responseInts(Parcel &p, void *response, size_t responselen);
 static int responseIntsGetPreferredNetworkType(Parcel &p, void *response, size_t responselen);
 static int responseStrings(Parcel &p, void *response, size_t responselen);
-static int responseStringsNetworks(Parcel &p, void *response, size_t responselen);
 static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search);
 static int responseString(Parcel &p, void *response, size_t responselen);
 static int responseVoid(Parcel &p, void *response, size_t responselen);
@@ -2272,10 +2271,6 @@ static int responseStrings(Parcel &p, void *response, size_t responselen) {
     return responseStrings(p, response, responselen, false);
 }
 
-static int responseStringsNetworks(Parcel &p, void *response, size_t responselen) {
-    return responseStrings(p, response, responselen, true);
-}
-
 /** response is a char **, pointing to an array of char *'s */
 static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search) {
     int numStrings;
@@ -2296,17 +2291,11 @@ static int responseStrings(Parcel &p, void *response, size_t responselen, bool n
         char **p_cur = (char **) response;
 
         numStrings = responselen / sizeof(char *);
-        if (network_search) {
-            p.writeInt32 ((numStrings / 5) * 4);
-        } else {
-            p.writeInt32 (numStrings);
-        }
+        p.writeInt32 (numStrings);
 
         /* each string*/
         startResponse;
         for (int i = 0 ; i < numStrings ; i++) {
-            if (network_search && (i % 5 == 0))
-                continue;
             appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
             writeStringToParcel (p, p_cur[i]);
         }
