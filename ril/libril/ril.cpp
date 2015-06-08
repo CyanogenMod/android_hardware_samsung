@@ -2305,7 +2305,7 @@ static int responseStrings(Parcel &p, void *response, size_t responselen, bool n
         /* each string*/
         startResponse;
         for (int i = 0 ; i < numStrings ; i++) {
-            if (network_search && (i % 5 == 0))
+            if (network_search && ((i + 1) % 5 == 0))
                 continue;
             appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
             writeStringToParcel (p, p_cur[i]);
