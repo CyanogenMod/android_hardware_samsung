@@ -1766,7 +1766,7 @@ static void dispatchSetInitialAttachApn(Parcel &p, RequestInfo *pRI)
 
     startRequest;
     appendPrintBuf("%sapn=%s, protocol=%s, auth_type=%d, username=%s, password=%s",
-            printBuf, pf.apn, pf.protocol, pf.auth_type, pf.username, pf.password);
+            printBuf, pf.apn, pf.protocol, pf.authtype, pf.username, pf.password);
     closeRequest;
     printRequest(pRI->token, pRI->pCI->requestNumber);
 
@@ -1937,7 +1937,7 @@ static void dispatchSimAuthentication(Parcel &p, RequestInfo *pRI)
     pf.aid = strdupReadString(p);
 
     startRequest;
-    appendPrintBuf("authContext=%s, authData=%s, aid=%s", pf.authContext, pf.authData, pf.aid);
+    appendPrintBuf("authContext=%d, authData=%s, aid=%s", pf.authContext, pf.authData, pf.aid);
     closeRequest;
     printRequest(pRI->token, pRI->pCI->requestNumber);
 
@@ -2083,8 +2083,8 @@ static void dispatchRadioCapability(Parcel &p, RequestInfo *pRI){
 
     startRequest;
     appendPrintBuf("%s [version:%d, session:%d, phase:%d, rat:%d, \
-            logicalModemUuid:%s, status:%d", printBuf, rc.version, rc.session
-            rc.phase, rc.rat, rc.logicalModemUuid, rc.session);
+            logicalModemUuid:%s, status:%d", printBuf, rc.version, rc.session,
+            rc.phase, rc.rat, rc.logicalModemUuid, rc.status);
 
     closeRequest;
     printRequest(pRI->token, pRI->pCI->requestNumber);
@@ -3449,7 +3449,7 @@ static int responseRadioCapability(Parcel &p, void *response, size_t responselen
 
     startResponse;
     appendPrintBuf("%s[version=%d,session=%d,phase=%d,\
-            rat=%s,logicalModemUuid=%s,status=%d]",
+            rat=%d,logicalModemUuid=%s,status=%d]",
             printBuf,
             p_cur->version,
             p_cur->session,
@@ -3740,7 +3740,7 @@ static int responseDcRtInfo(Parcel &p, void *response, size_t responselen)
     p.writeInt32(pDcRtInfo->powerState);
     appendPrintBuf("%s[time=%d,powerState=%d]", printBuf,
         pDcRtInfo->time,
-        pDcRtInfo->powerState);
+        (int)pDcRtInfo->powerState);
     closeResponse;
 
     return 0;
