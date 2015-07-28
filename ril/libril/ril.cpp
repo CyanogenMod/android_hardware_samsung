@@ -64,6 +64,8 @@ namespace android {
 
 #define ANDROID_WAKE_LOCK_NAME "radio-interface"
 
+#define ANDROID_WAKE_LOCK_SECS 0
+#define ANDROID_WAKE_LOCK_USECS 200000
 
 #define PROPERTY_RIL_IMPL "gsm.version.ril-impl"
 
@@ -219,7 +221,7 @@ static struct ril_event s_wake_timeout_event;
 static struct ril_event s_debug_event;
 
 
-static const struct timeval TIMEVAL_WAKE_TIMEOUT = {1,0};
+static const struct timeval TIMEVAL_WAKE_TIMEOUT = {ANDROID_WAKE_LOCK_SECS,ANDROID_WAKE_LOCK_USECS};
 
 
 static pthread_mutex_t s_startupMutex = PTHREAD_MUTEX_INITIALIZER;
