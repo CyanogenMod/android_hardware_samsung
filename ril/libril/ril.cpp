@@ -110,7 +110,7 @@ namespace android {
 
     #define clearPrintBuf           printBuf[0] = 0
     #define removeLastChar          printBuf[strlen(printBuf)-1] = 0
-    #define appendPrintBuf(x...)    sprintf(printBuf, x)
+    #define appendPrintBuf(x...)    snprintf(printBuf, PRINTBUF_SIZE, x)
 #else
     #define startRequest
     #define closeRequest
