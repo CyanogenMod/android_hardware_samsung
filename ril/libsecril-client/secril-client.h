@@ -154,10 +154,12 @@ typedef enum _AudioPath {
 /**
  * ExtraVolume
  */
+#ifndef MODEM_TYPE_XMM7260
 typedef enum _ExtraVolume {
     ORIGINAL_PATH,
     EXTRA_VOLUME_PATH
 } ExtraVolume;
+#endif
 
 /**
  * Clock adjustment parameters.
@@ -244,7 +246,11 @@ int SetCallVolume(HRilClient client, SoundType type, int vol_level);
 /**
  * Set external sound device path for noise reduction.
  */
+#ifdef MODEM_TYPE_XMM7260
+int SetCallAudioPath(HRilClient client, AudioPath path);
+#else
 int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode);
+#endif
 
 /**
  * Set modem clock to master or slave.
