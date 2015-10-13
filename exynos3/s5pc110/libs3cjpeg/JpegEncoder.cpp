@@ -26,6 +26,7 @@
 #include <utils/Log.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "JpegEncoder.h"
 

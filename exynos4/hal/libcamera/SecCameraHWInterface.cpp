@@ -3388,22 +3388,22 @@ done:
 }
 
 static hw_module_methods_t camera_module_methods = {
-            open : HAL_camera_device_open
+            .open = HAL_camera_device_open
 };
 
 extern "C" {
     struct camera_module HAL_MODULE_INFO_SYM = {
-      common : {
-          tag           : HARDWARE_MODULE_TAG,
-          version_major : 1,
-          version_minor : 0,
-          id            : CAMERA_HARDWARE_MODULE_ID,
-          name          : "orion camera HAL",
-          author        : "Samsung Corporation",
-          methods       : &camera_module_methods,
+      .common = {
+          .tag           = HARDWARE_MODULE_TAG,
+          .version_major = 1,
+          .version_minor = 0,
+          .id            = CAMERA_HARDWARE_MODULE_ID,
+          .name          = "orion camera HAL",
+          .author        = "Samsung Corporation",
+          .methods       = &camera_module_methods,
       },
-      get_number_of_cameras : HAL_getNumberOfCameras,
-      get_camera_info       : HAL_getCameraInfo
+      .get_number_of_cameras = HAL_getNumberOfCameras,
+      .get_camera_info       = HAL_getCameraInfo
     };
 }
 

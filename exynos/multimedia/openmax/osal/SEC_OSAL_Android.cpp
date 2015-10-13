@@ -134,7 +134,7 @@ OMX_ERRORTYPE SEC_OSAL_LockANBHandle(
     OMX_ERRORTYPE ret = OMX_ErrorNone;
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
     buffer_handle_t bufferHandle = (buffer_handle_t) handle;
-    Rect bounds(width, height);
+    Rect bounds((uint32_t)width, (uint32_t)height);
 
     SEC_OSAL_Log(SEC_LOG_TRACE, "%s: handle: 0x%x", __func__, handle);
 
