@@ -36,6 +36,7 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 #include "sec_format.h"
+#include "graphics.h"
 
 #include "gralloc_priv.h"
 #include "gralloc_helper.h"

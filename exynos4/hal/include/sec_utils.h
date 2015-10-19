@@ -22,6 +22,7 @@
 //---------------------------------------------------------//
 
 #include <hardware/hardware.h>
+#include "graphics.h"
 #include "sec_format.h"
 
 #ifdef __cplusplus
