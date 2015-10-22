@@ -67,6 +67,7 @@ namespace android {
 
 
 #define PROPERTY_RIL_IMPL "gsm.version.ril-impl"
+#define PROPERTY_QAN_ELEMENTS "ro.ril.qanelements"
 
 // match with constant in RIL.java
 #define MAX_COMMAND_BYTES (8 * 1024)
@@ -2297,7 +2298,14 @@ static int responseStrings(Parcel &p, void *response, size_t responselen, bool n
 
         numStrings = responselen / sizeof(char *);
         if (network_search) {
-            p.writeInt32 ((numStrings / 5) * 4);
+            int32_t QANElements;
+
+            /*
+             * This needs to be set to same value as mQANElements in the RIL
+             * Telephony class.
+             */
+            QANElements = property_get_int32(PROPERTY_QAN_ELEMENTS, 4);
+            p.writeInt32 ((numStrings / 5) * QANElements);
         } else {
             p.writeInt32 (numStrings);
         }
