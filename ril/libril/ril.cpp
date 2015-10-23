@@ -2133,7 +2133,7 @@ sendResponseRaw (const void *data, size_t dataSize, RIL_SOCKET_ID socket_id) {
     uint32_t header;
     pthread_mutex_t * writeMutexHook = &s_writeMutex;
 
-    RLOGE("Send Response to %s", rilSocketIdToString(socket_id));
+    RLOGD("Send Response to %s", rilSocketIdToString(socket_id));
 
 #if (SIM_COUNT >= 2)
     if (socket_id == RIL_SOCKET_2) {
