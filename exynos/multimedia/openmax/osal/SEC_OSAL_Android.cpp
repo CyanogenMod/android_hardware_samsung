@@ -124,8 +124,8 @@ EXIT:
 
 OMX_ERRORTYPE SEC_OSAL_LockANBHandle(
     OMX_IN OMX_U32 handle,
-    OMX_IN OMX_U32 width,
-    OMX_IN OMX_U32 height,
+    OMX_IN uint32_t width,
+    OMX_IN uint32_t height,
     OMX_IN OMX_COLOR_FORMATTYPE format,
     OMX_OUT OMX_PTR *vaddr)
 {
