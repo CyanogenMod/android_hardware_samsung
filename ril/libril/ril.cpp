@@ -68,7 +68,7 @@ namespace android {
 #define ANDROID_WAKE_LOCK_USECS 200000
 
 #define PROPERTY_RIL_IMPL "gsm.version.ril-impl"
-#define PROPERTY_QAN_ELEMENTS "ro.ril.qanelements"
+#define PROPERTY_QAN_ELEMENTS "ro.ril.telephony.mqanelements"
 
 // match with constant in RIL.java
 #define MAX_COMMAND_BYTES (8 * 1024)
