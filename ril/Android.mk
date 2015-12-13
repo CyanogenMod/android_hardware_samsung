@@ -20,7 +20,7 @@ ifeq ($(BOARD_VENDOR),samsung)
 
 # libril
 ifeq ($(BOARD_PROVIDES_LIBRIL),true)
-ifneq ($(filter xmm6260 xmm6262 xmm6360 xmm7260 m7450,$(BOARD_MODEM_TYPE)),)
+ifneq ($(filter xmm6260 xmm6262 xmm6360 xmm7260 m7450 ss333,$(BOARD_MODEM_TYPE)),)
 include $(RIL_PATH)/libril/Android.mk
 endif
 endif
