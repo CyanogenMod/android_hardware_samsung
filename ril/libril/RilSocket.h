@@ -16,7 +16,7 @@
 
 #ifndef RIL_SOCKET_H_INCLUDED
 #define RIL_SOCKET_H_INCLUDED
-#include "ril_ex.h"
+#include <libril/ril_ex.h>
 #include "rilSocketQueue.h"
 #include <ril_event.h>
 
