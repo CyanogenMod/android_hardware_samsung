@@ -43,9 +43,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/../include
 
 LOCAL_MODULE:= libril
 
-LOCAL_COPY_HEADERS_TO := libril
-LOCAL_COPY_HEADERS := ril_ex.h
-
 include $(BUILD_SHARED_LIBRARY)
 
 # For RdoServD which needs a static library
