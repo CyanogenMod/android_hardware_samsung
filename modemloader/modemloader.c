@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "modemloader"
+#define LOG_NDEBUG 0
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,9 +33,6 @@
 
 #include <cutils/properties.h>
 #include <cutils/log.h>
-
-#define LOG_TAG "modemloader"
-#define LOG_NDEBUG 0
 
 void parse_hardware_revision(unsigned int *revision)
 {
