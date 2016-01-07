@@ -668,7 +668,7 @@ int SetCallVolume(HRilClient client, SoundType type, int vol_level) {
  * Set external sound device path for noise reduction.
  */
 extern "C"
-#ifdef RIL_CALL_AUIO_PATH_EXTRAVOLUME
+#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
 int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode)
 #else
 int SetCallAudioPath(HRilClient client, AudioPath path)
@@ -701,7 +701,7 @@ int SetCallAudioPath(HRilClient client, AudioPath path)
     data[2] = 0x00;     // data length
     data[3] = 0x06;     // data length
     data[4] = ConvertAudioPath(path); // audio path
-#ifdef RIL_CALL_AUIO_PATH_EXTRAVOLUME
+#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
     data[5] = mode; // ExtraVolume
 #endif
 
