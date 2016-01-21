@@ -3267,7 +3267,7 @@ static int responseSimRefresh(Parcel &p, void *response, size_t responselen) {
 
     startResponse;
     if (s_callbacks.version <= LAST_IMPRECISE_RIL_VERSION) {
-        if (s_callbacks.version == 7) {
+        if (s_callbacks.version >= 7) {
             responseSimRefreshV7(p, response);
         } else {
             int *p_cur = ((int *) response);
