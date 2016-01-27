@@ -2652,7 +2652,7 @@ static int responseDataCallList(Parcel &p, void *response, size_t responselen)
         } else {
             return responseDataCallListV11(p, response, responselen);
         }
-    } else { // RIL version >= 12
+    } else { // RIL version >= 13
         if (responselen % sizeof(RIL_Data_Call_Response_v11) != 0) {
             RLOGE("Data structure expected is RIL_Data_Call_Response_v11");
             if (!isDebuggable()) {
@@ -3112,7 +3112,7 @@ static int responseRilSignalStrength(Parcel &p,
             RLOGE("invalid response length");
             return RIL_ERRNO_INVALID_RESPONSE;
         }
-    } else { // RIL version >= 12
+    } else { // RIL version >= 13
         if (responselen % sizeof(RIL_SignalStrength_v10) != 0) {
             RLOGE("Data structure expected is RIL_SignalStrength_v10");
             if (!isDebuggable()) {
@@ -3213,7 +3213,7 @@ static int responseCdmaCallWaiting(Parcel &p, void *response,
             p.writeInt32(0);
             p.writeInt32(0);
         }
-    } else { // RIL version >= 12
+    } else { // RIL version >= 13
         if (responselen % sizeof(RIL_CDMA_CallWaiting_v6) != 0) {
             RLOGE("Data structure expected is RIL_CDMA_CallWaiting_v6");
             if (!isDebuggable()) {
@@ -3280,7 +3280,7 @@ static int responseSimRefresh(Parcel &p, void *response, size_t responselen) {
                     p_cur[0],
                     p_cur[1]);
         }
-    } else { // RIL version >= 12
+    } else { // RIL version >= 13
         if (responselen % sizeof(RIL_SimRefreshResponse_v7) != 0) {
             RLOGE("Data structure expected is RIL_SimRefreshResponse_v7");
             if (!isDebuggable()) {
@@ -3297,8 +3297,7 @@ static int responseSimRefresh(Parcel &p, void *response, size_t responselen) {
     return 0;
 }
 
-static int responseCellInfoList(Parcel &p, void *response, size_t responselen)
-{
+static int responseCellInfoListV6(Parcel &p, void *response, size_t responselen) {
     if (response == NULL && responselen != 0) {
         RLOGE("invalid response: NULL");
         return RIL_ERRNO_INVALID_RESPONSE;
@@ -3442,6 +3441,240 @@ static int responseCellInfoList(Parcel &p, void *response, size_t responselen)
     }
     removeLastChar;
     closeResponse;
+
+    return 0;
+}
+
+static int responseCellInfoListV12(Parcel &p, void *response, size_t responselen) {
+    if (response == NULL && responselen != 0) {
+        RLOGE("invalid response: NULL");
+        return RIL_ERRNO_INVALID_RESPONSE;
+    }
+
+    if (responselen % sizeof(RIL_CellInfo_v12) != 0) {
+        RLOGE("responseCellInfoList: invalid response length %d expected multiple of %d",
+                (int)responselen, (int)sizeof(RIL_CellInfo_v12));
+        return RIL_ERRNO_INVALID_RESPONSE;
+    }
+
+    int num = responselen / sizeof(RIL_CellInfo_v12);
+    p.writeInt32(num);
+
+    RIL_CellInfo_v12 *p_cur = (RIL_CellInfo_v12 *) response;
+    startResponse;
+    int i;
+    for (i = 0; i < num; i++) {
+        appendPrintBuf("%s[%d: type=%d,registered=%d,timeStampType=%d,timeStamp=%lld", printBuf, i,
+            p_cur->cellInfoType, p_cur->registered, p_cur->timeStampType, p_cur->timeStamp);
+        RLOGE("[%d: type=%d,registered=%d,timeStampType=%d,timeStamp=%lld", i,
+            p_cur->cellInfoType, p_cur->registered, p_cur->timeStampType, p_cur->timeStamp);
+        p.writeInt32((int)p_cur->cellInfoType);
+        p.writeInt32(p_cur->registered);
+        p.writeInt32(p_cur->timeStampType);
+        p.writeInt64(p_cur->timeStamp);
+        switch(p_cur->cellInfoType) {
+            case RIL_CELL_INFO_TYPE_GSM: {
+                appendPrintBuf("%s GSM id: mcc=%d,mnc=%d,lac=%d,cid=%d,arfcn=%d,bsic=%x", printBuf,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.mcc,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.mnc,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.lac,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.cid,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.arfcn,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.bsic);
+                RLOGE("GSM id: mcc=%d,mnc=%d,lac=%d,cid=%d,arfcn=%d,bsic=%x",
+                    p_cur->CellInfo.gsm.cellIdentityGsm.mcc,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.mnc,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.lac,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.cid,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.arfcn,
+                    p_cur->CellInfo.gsm.cellIdentityGsm.bsic);
+                RLOGE("gsmSS: ss=%d,ber=%d, ta=%d],",
+                    p_cur->CellInfo.gsm.signalStrengthGsm.signalStrength,
+                    p_cur->CellInfo.gsm.signalStrengthGsm.bitErrorRate,
+                    p_cur->CellInfo.gsm.signalStrengthGsm.timingAdvance);
+                appendPrintBuf("%s gsmSS: ss=%d,ber=%d, ta=%d],", printBuf,
+                    p_cur->CellInfo.gsm.signalStrengthGsm.signalStrength,
+                    p_cur->CellInfo.gsm.signalStrengthGsm.bitErrorRate,
+                    p_cur->CellInfo.gsm.signalStrengthGsm.timingAdvance);
+
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.mcc);
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.mnc);
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.lac);
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.cid);
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.arfcn);
+                p.writeInt32(p_cur->CellInfo.gsm.cellIdentityGsm.bsic);
+                p.writeInt32(p_cur->CellInfo.gsm.signalStrengthGsm.signalStrength);
+                p.writeInt32(p_cur->CellInfo.gsm.signalStrengthGsm.bitErrorRate);
+                p.writeInt32(p_cur->CellInfo.gsm.signalStrengthGsm.timingAdvance);
+                break;
+            }
+            case RIL_CELL_INFO_TYPE_WCDMA: {
+                RLOGE("WCDMA id: mcc=%d,mnc=%d,lac=%d,cid=%d,psc=%d,uarfcn=%d",
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.mcc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.mnc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.lac,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.cid,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.psc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.uarfcn);
+                RLOGE("wcdmaSS: ss=%d,ber=%d],",
+                    p_cur->CellInfo.wcdma.signalStrengthWcdma.signalStrength,
+                    p_cur->CellInfo.wcdma.signalStrengthWcdma.bitErrorRate);
+                appendPrintBuf("%s WCDMA id: mcc=%d,mnc=%d,lac=%d,cid=%d,psc=%d,uarfcn=%d", printBuf,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.mcc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.mnc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.lac,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.cid,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.psc,
+                    p_cur->CellInfo.wcdma.cellIdentityWcdma.uarfcn);
+                appendPrintBuf("%s wcdmaSS: ss=%d,ber=%d],", printBuf,
+                    p_cur->CellInfo.wcdma.signalStrengthWcdma.signalStrength,
+                    p_cur->CellInfo.wcdma.signalStrengthWcdma.bitErrorRate);
+
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.mcc);
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.mnc);
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.lac);
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.cid);
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.psc);
+                p.writeInt32(p_cur->CellInfo.wcdma.cellIdentityWcdma.uarfcn);
+                p.writeInt32(p_cur->CellInfo.wcdma.signalStrengthWcdma.signalStrength);
+                p.writeInt32(p_cur->CellInfo.wcdma.signalStrengthWcdma.bitErrorRate);
+                break;
+            }
+            case RIL_CELL_INFO_TYPE_CDMA: {
+                RLOGE("CDMA id: nId=%d,sId=%d,bsId=%d,long=%d,lat=%d",
+                    p_cur->CellInfo.cdma.cellIdentityCdma.networkId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.systemId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.basestationId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.longitude,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.latitude);
+
+                appendPrintBuf("%s CDMA id: nId=%d,sId=%d,bsId=%d,long=%d,lat=%d", printBuf,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.networkId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.systemId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.basestationId,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.longitude,
+                    p_cur->CellInfo.cdma.cellIdentityCdma.latitude);
+
+                p.writeInt32(p_cur->CellInfo.cdma.cellIdentityCdma.networkId);
+                p.writeInt32(p_cur->CellInfo.cdma.cellIdentityCdma.systemId);
+                p.writeInt32(p_cur->CellInfo.cdma.cellIdentityCdma.basestationId);
+                p.writeInt32(p_cur->CellInfo.cdma.cellIdentityCdma.longitude);
+                p.writeInt32(p_cur->CellInfo.cdma.cellIdentityCdma.latitude);
+
+                RLOGE("cdmaSS: dbm=%d ecio=%d evdoSS: dbm=%d,ecio=%d,snr=%d",
+                    p_cur->CellInfo.cdma.signalStrengthCdma.dbm,
+                    p_cur->CellInfo.cdma.signalStrengthCdma.ecio,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.dbm,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.ecio,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.signalNoiseRatio);
+
+                appendPrintBuf("%s cdmaSS: dbm=%d ecio=%d evdoSS: dbm=%d,ecio=%d,snr=%d", printBuf,
+                    p_cur->CellInfo.cdma.signalStrengthCdma.dbm,
+                    p_cur->CellInfo.cdma.signalStrengthCdma.ecio,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.dbm,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.ecio,
+                    p_cur->CellInfo.cdma.signalStrengthEvdo.signalNoiseRatio);
+
+                p.writeInt32(p_cur->CellInfo.cdma.signalStrengthCdma.dbm);
+                p.writeInt32(p_cur->CellInfo.cdma.signalStrengthCdma.ecio);
+                p.writeInt32(p_cur->CellInfo.cdma.signalStrengthEvdo.dbm);
+                p.writeInt32(p_cur->CellInfo.cdma.signalStrengthEvdo.ecio);
+                p.writeInt32(p_cur->CellInfo.cdma.signalStrengthEvdo.signalNoiseRatio);
+                break;
+            }
+            case RIL_CELL_INFO_TYPE_LTE: {
+                RLOGE("LTE id: mcc=%d,mnc=%d,ci=%d,pci=%d,tac=%d,earfcn=%d",
+                    p_cur->CellInfo.lte.cellIdentityLte.mcc,
+                    p_cur->CellInfo.lte.cellIdentityLte.mnc,
+                    p_cur->CellInfo.lte.cellIdentityLte.ci,
+                    p_cur->CellInfo.lte.cellIdentityLte.pci,
+                    p_cur->CellInfo.lte.cellIdentityLte.tac,
+                    p_cur->CellInfo.lte.cellIdentityLte.earfcn);
+
+                appendPrintBuf("%s LTE id: mcc=%d,mnc=%d,ci=%d,pci=%d,tac=%d,earfcn=%d", printBuf,
+                    p_cur->CellInfo.lte.cellIdentityLte.mcc,
+                    p_cur->CellInfo.lte.cellIdentityLte.mnc,
+                    p_cur->CellInfo.lte.cellIdentityLte.ci,
+                    p_cur->CellInfo.lte.cellIdentityLte.pci,
+                    p_cur->CellInfo.lte.cellIdentityLte.tac,
+                    p_cur->CellInfo.lte.cellIdentityLte.earfcn);
+
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.mcc);
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.mnc);
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.ci);
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.pci);
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.tac);
+                p.writeInt32(p_cur->CellInfo.lte.cellIdentityLte.earfcn);
+
+                RLOGE("lteSS: ss=%d,rsrp=%d,rsrq=%d,rssnr=%d,cqi=%d,ta=%d",
+                    p_cur->CellInfo.lte.signalStrengthLte.signalStrength,
+                    p_cur->CellInfo.lte.signalStrengthLte.rsrp,
+                    p_cur->CellInfo.lte.signalStrengthLte.rsrq,
+                    p_cur->CellInfo.lte.signalStrengthLte.rssnr,
+                    p_cur->CellInfo.lte.signalStrengthLte.cqi,
+                    p_cur->CellInfo.lte.signalStrengthLte.timingAdvance);
+                appendPrintBuf("%s lteSS: ss=%d,rsrp=%d,rsrq=%d,rssnr=%d,cqi=%d,ta=%d", printBuf,
+                    p_cur->CellInfo.lte.signalStrengthLte.signalStrength,
+                    p_cur->CellInfo.lte.signalStrengthLte.rsrp,
+                    p_cur->CellInfo.lte.signalStrengthLte.rsrq,
+                    p_cur->CellInfo.lte.signalStrengthLte.rssnr,
+                    p_cur->CellInfo.lte.signalStrengthLte.cqi,
+                    p_cur->CellInfo.lte.signalStrengthLte.timingAdvance);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.signalStrength);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.rsrp);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.rsrq);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.rssnr);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.cqi);
+                p.writeInt32(p_cur->CellInfo.lte.signalStrengthLte.timingAdvance);
+                break;
+            }
+            case RIL_CELL_INFO_TYPE_TD_SCDMA: {
+                appendPrintBuf("%s TDSCDMA id: mcc=%d,mnc=%d,lac=%d,cid=%d,cpid=%d,", printBuf,
+                    p_cur->CellInfo.tdscdma.cellIdentityTdscdma.mcc,
+                    p_cur->CellInfo.tdscdma.cellIdentityTdscdma.mnc,
+                    p_cur->CellInfo.tdscdma.cellIdentityTdscdma.lac,
+                    p_cur->CellInfo.tdscdma.cellIdentityTdscdma.cid,
+                    p_cur->CellInfo.tdscdma.cellIdentityTdscdma.cpid);
+                appendPrintBuf("%s tdscdmaSS: rscp=%d],", printBuf,
+                    p_cur->CellInfo.tdscdma.signalStrengthTdscdma.rscp);
+
+                p.writeInt32(p_cur->CellInfo.tdscdma.cellIdentityTdscdma.mcc);
+                p.writeInt32(p_cur->CellInfo.tdscdma.cellIdentityTdscdma.mnc);
+                p.writeInt32(p_cur->CellInfo.tdscdma.cellIdentityTdscdma.lac);
+                p.writeInt32(p_cur->CellInfo.tdscdma.cellIdentityTdscdma.cid);
+                p.writeInt32(p_cur->CellInfo.tdscdma.cellIdentityTdscdma.cpid);
+                p.writeInt32(p_cur->CellInfo.tdscdma.signalStrengthTdscdma.rscp);
+                break;
+            }
+        }
+        p_cur += 1;
+    }
+    removeLastChar;
+    closeResponse;
+    return 0;
+}
+
+static int responseCellInfoList(Parcel &p, void *response, size_t responselen)
+{
+    if (s_callbacks.version <= LAST_IMPRECISE_RIL_VERSION) {
+        if (s_callbacks.version < 12) {
+            RLOGD("responseCellInfoList: v6");
+            return responseCellInfoListV6(p, response, responselen);
+        } else {
+            RLOGD("responseCellInfoList: v12");
+            return responseCellInfoListV12(p, response, responselen);
+        }
+    } else { // RIL version >= 13
+        if (responselen % sizeof(RIL_CellInfo_v12) != 0) {
+            RLOGE("Data structure expected is RIL_CellInfo_v12");
+            if (!isDebuggable()) {
+                return RIL_ERRNO_INVALID_RESPONSE;
+            } else {
+                assert(0);
+            }
+        }
+        return responseCellInfoListV12(p, response, responselen);
+    }
 
     return 0;
 }
@@ -3693,7 +3926,7 @@ static int responseSimStatus(Parcel &p, void *response, size_t responselen) {
             RLOGE("responseSimStatus: A RilCardStatus_v6 or _v5 expected\n");
             return RIL_ERRNO_INVALID_RESPONSE;
         }
-    } else { // RIL version >= 12
+    } else { // RIL version >= 13
         if (responselen % sizeof(RIL_CardStatus_v6) != 0) {
             RLOGE("Data structure expected is RIL_CardStatus_v6");
             if (!isDebuggable()) {
