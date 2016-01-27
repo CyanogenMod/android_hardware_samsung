@@ -51,6 +51,9 @@
 
 extern "C" void
 RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen);
+
+extern "C" void
+RIL_onRequestAck(RIL_Token t);
 namespace android {
 
 #define PHONE_PROCESS "radio"
@@ -85,6 +88,8 @@ namespace android {
 /* Constants for response types */
 #define RESPONSE_SOLICITED 0
 #define RESPONSE_UNSOLICITED 1
+#define RESPONSE_SOLICITED_ACK 2
+#define RESPONSE_SOLICITED_ACK_EXP 3
 
 /* Negative values for private RIL errno's */
 #define RIL_ERRNO_INVALID_RESPONSE -1
@@ -144,6 +149,7 @@ typedef struct RequestInfo {
     char cancelled;
     char local;         // responses to local commands do not go back to command process
     RIL_SOCKET_ID socket_id;
+    int wasAckSent;    // Indicates whether an ack was sent earlier
 } RequestInfo;
 
 typedef struct UserCallbackInfo {
@@ -179,6 +185,8 @@ static int s_fdDebug_socket2 = -1;
 static int s_fdWakeupRead;
 static int s_fdWakeupWrite;
 
+int s_wakelock_count = 0;
+
 static struct ril_event s_commands_event;
 static struct ril_event s_wakeupfd_event;
 static struct ril_event s_listen_event;
@@ -186,6 +194,7 @@ static SocketListenParam s_ril_param_socket;
 
 static pthread_mutex_t s_pendingRequestsMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_writeMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t s_wakeLockCountMutex = PTHREAD_MUTEX_INITIALIZER;
 static RequestInfo *s_pendingRequests = NULL;
 
 #if (SIM_COUNT >= 2)
@@ -311,6 +320,9 @@ static int responseActivityData(Parcel &p, void *response, size_t responselen);
 static int decodeVoiceRadioTechnology (RIL_RadioState radioState);
 static int decodeCdmaSubscriptionSource (RIL_RadioState radioState);
 static RIL_RadioState processRadioState(RIL_RadioState newRadioState);
+static void grabPartialWakeLock();
+static void releaseWakeLock();
+static void wakeTimeoutCallback(void *);
 
 static bool isServiceTypeCfQuery(RIL_SsServiceType serType, RIL_SsRequestType reqType);
 
@@ -554,6 +566,13 @@ processCommandBuffer(void *buffer, size_t buflen, RIL_SOCKET_ID socket_id) {
         pErr.writeInt32 (RIL_E_GENERIC_FAILURE);
 
         sendResponse(pErr, socket_id);
+        return 0;
+    }
+
+    // Received an Ack for the previous result sent to RIL.java,
+    // so release wakelock and exit
+    if (request == RIL_RESPONSE_ACKNOWLEDGEMENT) {
+        releaseWakeLock();
         return 0;
     }
 
@@ -4926,8 +4945,9 @@ RIL_register_socket (RIL_RadioFunctions *(*Init)(const struct RIL_Env *, int, ch
     }
 }
 
+// Check and remove RequestInfo if its a response and not just ack sent back
 static int
-checkAndDequeueRequestInfo(struct RequestInfo *pRI) {
+checkAndDequeueRequestInfoIfAck(struct RequestInfo *pRI, bool isAck) {
     int ret = 0;
     /* Hook for current context
        pendingRequestsMutextHook refer to &s_pendingRequestsMutex */
@@ -4965,8 +4985,15 @@ checkAndDequeueRequestInfo(struct RequestInfo *pRI) {
     ) {
         if (pRI == *ppCur) {
             ret = 1;
-
-            *ppCur = (*ppCur)->p_next;
+            if (isAck) { // Async ack
+                if (pRI->wasAckSent == 1) {
+                    RLOGD("Ack was already sent for %s", requestToString(pRI->pCI->requestNumber));
+                } else {
+                    pRI->wasAckSent = 1;
+                }
+            } else {
+                *ppCur = (*ppCur)->p_next;
+            }
             break;
         }
     }
@@ -4976,31 +5003,16 @@ checkAndDequeueRequestInfo(struct RequestInfo *pRI) {
     return ret;
 }
 
-
-extern "C" void
-RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
-    RequestInfo *pRI;
-    int ret;
+static int findFd(int socket_id) {
     int fd = s_ril_param_socket.fdCommand;
-    size_t errorOffset;
-    RIL_SOCKET_ID socket_id = RIL_SOCKET_1;
-
-    pRI = (RequestInfo *)t;
-
-    if (!checkAndDequeueRequestInfo(pRI)) {
-        RLOGE ("RIL_onRequestComplete: invalid RIL_Token");
-        return;
-    }
-
-    socket_id = pRI->socket_id;
 #if (SIM_COUNT >= 2)
     if (socket_id == RIL_SOCKET_2) {
         fd = s_ril_param_socket2.fdCommand;
     }
 #if (SIM_COUNT >= 3)
-        if (socket_id == RIL_SOCKET_3) {
-            fd = s_ril_param_socket3.fdCommand;
-        }
+    if (socket_id == RIL_SOCKET_3) {
+        fd = s_ril_param_socket3.fdCommand;
+    }
 #endif
 #if (SIM_COUNT >= 4)
     if (socket_id == RIL_SOCKET_4) {
@@ -5008,6 +5020,65 @@ RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responsel
     }
 #endif
 #endif
+    return fd;
+}
+
+extern "C" void
+RIL_onRequestAck(RIL_Token t) {
+    RequestInfo *pRI;
+    int ret, fd;
+
+    size_t errorOffset;
+    RIL_SOCKET_ID socket_id = RIL_SOCKET_1;
+
+    pRI = (RequestInfo *)t;
+
+    if (!checkAndDequeueRequestInfoIfAck(pRI, true)) {
+        RLOGE ("RIL_onRequestAck: invalid RIL_Token");
+        return;
+    }
+
+    socket_id = pRI->socket_id;
+    fd = findFd(socket_id);
+
+#if VDBG
+    RLOGD("Request Ack, %s", rilSocketIdToString(socket_id));
+#endif
+
+    appendPrintBuf("Ack [%04d]< %s", pRI->token, requestToString(pRI->pCI->requestNumber));
+
+    if (pRI->cancelled == 0) {
+        Parcel p;
+
+        p.writeInt32 (RESPONSE_SOLICITED_ACK);
+        p.writeInt32 (pRI->token);
+
+        if (fd < 0) {
+            RLOGD ("RIL onRequestComplete: Command channel closed");
+        }
+
+        sendResponse(p, socket_id);
+    }
+}
+
+extern "C" void
+RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
+    RequestInfo *pRI;
+    int ret;
+    int fd;
+    size_t errorOffset;
+    RIL_SOCKET_ID socket_id = RIL_SOCKET_1;
+
+    pRI = (RequestInfo *)t;
+
+    if (!checkAndDequeueRequestInfoIfAck(pRI, false)) {
+        RLOGE ("RIL_onRequestComplete: invalid RIL_Token");
+        return;
+    }
+
+    socket_id = pRI->socket_id;
+    fd = findFd(socket_id);
+
 #if VDBG
     RLOGD("RequestComplete, %s", rilSocketIdToString(socket_id));
 #endif
@@ -5026,7 +5097,14 @@ RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responsel
     if (pRI->cancelled == 0) {
         Parcel p;
 
-        p.writeInt32 (RESPONSE_SOLICITED);
+        if (s_callbacks.version >= 13 && pRI->wasAckSent == 1) {
+            // If ack was already sent, then this call is an asynchronous response. So we need to
+            // send id indicating that we expect an ack from RIL.java as we acquire wakelock here.
+            p.writeInt32 (RESPONSE_SOLICITED_ACK_EXP);
+            grabPartialWakeLock();
+        } else {
+            p.writeInt32 (RESPONSE_SOLICITED);
+        }
         p.writeInt32 (pRI->token);
         errorOffset = p.dataPosition();
 
@@ -5058,15 +5136,50 @@ done:
     free(pRI);
 }
 
-
 static void
 grabPartialWakeLock() {
-    acquire_wake_lock(PARTIAL_WAKE_LOCK, ANDROID_WAKE_LOCK_NAME);
+    if (s_callbacks.version >= 13) {
+        int ret;
+        ret = pthread_mutex_lock(&s_wakeLockCountMutex);
+        assert(ret == 0);
+        acquire_wake_lock(PARTIAL_WAKE_LOCK, ANDROID_WAKE_LOCK_NAME);
+        s_wakelock_count++;
+        if (s_last_wake_timeout_info != NULL) {
+            s_last_wake_timeout_info->userParam = (void *)1;
+        }
+
+        s_last_wake_timeout_info
+                = internalRequestTimedCallback(wakeTimeoutCallback, NULL, &TIMEVAL_WAKE_TIMEOUT);
+
+        ret = pthread_mutex_unlock(&s_wakeLockCountMutex);
+        assert(ret == 0);
+    } else {
+        acquire_wake_lock(PARTIAL_WAKE_LOCK, ANDROID_WAKE_LOCK_NAME);
+    }
 }
 
 static void
 releaseWakeLock() {
-    release_wake_lock(ANDROID_WAKE_LOCK_NAME);
+    if (s_callbacks.version >= 13) {
+        int ret;
+        ret = pthread_mutex_lock(&s_wakeLockCountMutex);
+        assert(ret == 0);
+
+        if (s_wakelock_count > 1) {
+            s_wakelock_count--;
+        } else {
+            s_wakelock_count = 0;
+            release_wake_lock(ANDROID_WAKE_LOCK_NAME);
+            if (s_last_wake_timeout_info != NULL) {
+                s_last_wake_timeout_info->userParam = (void *)1;
+            }
+        }
+
+        ret = pthread_mutex_unlock(&s_wakeLockCountMutex);
+        assert(ret == 0);
+    } else {
+        release_wake_lock(ANDROID_WAKE_LOCK_NAME);
+    }
 }
 
 /**
@@ -5075,8 +5188,20 @@ releaseWakeLock() {
 static void
 wakeTimeoutCallback (void *param) {
     // We're using "param != NULL" as a cancellation mechanism
-    if (param == NULL) {
-        releaseWakeLock();
+    if (s_callbacks.version >= 13) {
+        if (param == NULL) {
+            int ret;
+            ret = pthread_mutex_lock(&s_wakeLockCountMutex);
+            assert(ret == 0);
+            s_wakelock_count = 0;
+            release_wake_lock(ANDROID_WAKE_LOCK_NAME);
+            ret = pthread_mutex_unlock(&s_wakeLockCountMutex);
+            assert(ret == 0);
+        }
+    } else {
+        if (param == NULL) {
+            releaseWakeLock();
+        }
     }
 }
 
@@ -5272,7 +5397,6 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
     appendPrintBuf("[UNSL]< %s", requestToString(unsolResponse));
 
     Parcel p;
-
     p.writeInt32 (RESPONSE_UNSOLICITED);
     p.writeInt32 (unsolResponse);
 
@@ -5324,18 +5448,17 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         memcpy(s_lastNITZTimeData, p.data(), p.dataSize());
     }
 
-    // For now, we automatically go back to sleep after TIMEVAL_WAKE_TIMEOUT
-    // FIXME The java code should handshake here to release wake lock
+    if (s_callbacks.version < 13) {
+        if (shouldScheduleTimeout) {
+                // Cancel the previous request
+            if (s_last_wake_timeout_info != NULL) {
+                s_last_wake_timeout_info->userParam = (void *)1;
+            }
 
-    if (shouldScheduleTimeout) {
-        // Cancel the previous request
-        if (s_last_wake_timeout_info != NULL) {
-            s_last_wake_timeout_info->userParam = (void *)1;
+            s_last_wake_timeout_info
+                    = internalRequestTimedCallback(wakeTimeoutCallback, NULL,
+                            &TIMEVAL_WAKE_TIMEOUT);
         }
-
-        s_last_wake_timeout_info
-            = internalRequestTimedCallback(wakeTimeoutCallback, NULL,
-                                            &TIMEVAL_WAKE_TIMEOUT);
     }
 
     // Normal exit
@@ -5623,6 +5746,7 @@ requestToString(int request) {
         case RIL_UNSOL_ON_SS: return "UNSOL_ON_SS";
         case RIL_UNSOL_STK_CC_ALPHA_NOTIFY: return "UNSOL_STK_CC_ALPHA_NOTIFY";
         case RIL_REQUEST_SHUTDOWN: return "SHUTDOWN";
+        case RIL_RESPONSE_ACKNOWLEDGEMENT: return "RIL_RESPONSE_ACKNOWLEDGEMENT";
         default: return "<unknown request>";
     }
 }
