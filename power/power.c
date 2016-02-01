@@ -183,7 +183,8 @@ static void find_input_nodes(struct samsung_power_module *samsung_pwr, char *dir
                     ALOGE("Out of memory: %s\n", errno_str);
                     return;
                 }
-                snprintf(samsung_pwr->touchkey_power_path, node_pathsize, node_path);
+                snprintf(samsung_pwr->touchkey_power_path, node_pathsize,
+                         "%s", node_path);
             }
 
             if (strncmp(file_content, "sec_touchscreen", 15) == 0) {
@@ -194,7 +195,8 @@ static void find_input_nodes(struct samsung_power_module *samsung_pwr, char *dir
                     ALOGE("Out of memory: %s\n", errno_str);
                     return;
                 }
-                snprintf(samsung_pwr->touchscreen_power_path, node_pathsize, node_path);
+                snprintf(samsung_pwr->touchscreen_power_path, node_pathsize,
+                         "%s", node_path);
             }
         }
     }
