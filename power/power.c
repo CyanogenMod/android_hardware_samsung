@@ -35,7 +35,20 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
+#define NSEC_PER_SEC 1000000000
+#define USEC_PER_SEC 1000000
+#define NSEC_PER_USEC 100
+
+#define POWERHAL_STRINGIFY(s) POWERHAL_TOSTRING(s)
+#define POWERHAL_TOSTRING(s) #s
+
 #define BOOSTPULSE_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse"
+
+#define BOOST_PULSE_DURATION 400000
+#define BOOST_PULSE_DURATION_STR POWERHAL_STRINGIFY(BOOST_PULSE_DURATION)
+
+#define BOOST_CPU0_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/boost"
+#define BOOST_CPU4_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/boost"
 
 #define IO_IS_BUSY_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/io_is_busy"
 
@@ -43,6 +56,9 @@
 #define CPU0_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU4_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq"
 #define CPU4_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
+
+#define LOW_POWER_MAX_FREQ "800000"
+#define NORMAL_MAX_FREQ "1700000"
 
 struct samsung_power_module {
     struct power_module base;
@@ -58,8 +74,17 @@ struct samsung_power_module {
     bool touchkey_blocked;
 };
 
-/* POWER_HINT_LOW_POWER */
-static bool low_power_mode = false;
+/* POWER_HINT_INTERACTION and POWER_HINT_VSYNC */
+static unsigned int vsync_count;
+static struct timespec last_touch_boost;
+static bool touch_boost;
+
+enum power_profile_e {
+    PROFILE_POWER_SAVE = 0,
+    PROFILE_BALANCED,
+    PROFILE_HIGH_PERFORMANCE
+};
+static enum power_profile_e current_power_profile = PROFILE_BALANCED;
 
 /**********************************************************
  *** HELPER FUNCTIONS
@@ -117,9 +142,32 @@ static void sysfs_write(const char *path, char *s)
     close(fd);
 }
 
+static struct timespec timespec_diff(struct timespec lhs, struct timespec rhs)
+{
+    struct timespec result;
+    if (rhs.tv_nsec > lhs.tv_nsec) {
+        result.tv_sec = lhs.tv_sec - rhs.tv_sec - 1;
+        result.tv_nsec = NSEC_PER_SEC + lhs.tv_nsec - rhs.tv_nsec;
+    } else {
+        result.tv_sec = lhs.tv_sec - rhs.tv_sec;
+        result.tv_nsec = lhs.tv_nsec - rhs.tv_nsec;
+    }
+    return result;
+}
+
 /**********************************************************
  *** POWER FUNCTIONS
  **********************************************************/
+
+static int check_boostpulse_on(struct timespec diff)
+{
+    long boost_ns = (BOOST_PULSE_DURATION * NSEC_PER_USEC) % NSEC_PER_SEC;
+    long boost_s = BOOST_PULSE_DURATION / USEC_PER_SEC;
+
+    if (diff.tv_sec == boost_s)
+        return (diff.tv_nsec < boost_ns);
+    return (diff.tv_sec < boost_s);
+}
 
 /* You need to request the powerhal lock before calling this function */
 static int boostpulse_open(struct samsung_power_module *samsung_pwr)
@@ -138,6 +186,48 @@ static int boostpulse_open(struct samsung_power_module *samsung_pwr)
     }
 
     return samsung_pwr->boostpulse_fd;
+}
+
+static void set_power_profile(enum power_profile_e profile)
+{
+    int rc;
+    struct stat sb;
+
+    if (current_power_profile == profile) {
+        return;
+    }
+
+    ALOGV("%s: profile=%d", __func__, profile);
+
+    switch (profile) {
+        case PROFILE_POWER_SAVE:
+            sysfs_write(CPU0_MAX_FREQ_PATH, LOW_POWER_MAX_FREQ);
+            rc = stat(CPU4_MAX_FREQ_PATH, &sb);
+            if (rc == 0) {
+                sysfs_write(CPU4_MAX_FREQ_PATH, LOW_POWER_MAX_FREQ);
+            }
+
+            ALOGD("%s: set powersave mode", __func__);
+            break;
+        case PROFILE_BALANCED:
+            sysfs_write(CPU0_MAX_FREQ_PATH, NORMAL_MAX_FREQ);
+            rc = stat(CPU4_MAX_FREQ_PATH, &sb);
+            if (rc == 0) {
+                sysfs_write(CPU4_MAX_FREQ_PATH, NORMAL_MAX_FREQ);
+            }
+            ALOGD("%s: set balanced mode", __func__);
+            break;
+        case PROFILE_HIGH_PERFORMANCE:
+            sysfs_write(CPU0_MAX_FREQ_PATH, NORMAL_MAX_FREQ);
+            rc = stat(CPU4_MAX_FREQ_PATH, &sb);
+            if (rc == 0) {
+                sysfs_write(CPU4_MAX_FREQ_PATH, NORMAL_MAX_FREQ);
+            }
+            ALOGD("%s: set performance mode", __func__);
+            break;
+    }
+
+    current_power_profile = profile;
 }
 
 static void find_input_nodes(struct samsung_power_module *samsung_pwr, char *dir)
@@ -371,53 +461,89 @@ static void samsung_power_hint(struct power_module *module,
 
     switch (hint) {
         case POWER_HINT_INTERACTION: {
+            char errno_str[64];
+            ssize_t len;
+            int fd;
+
+            if (current_power_profile == PROFILE_POWER_SAVE) {
+                return;
+            }
 
             ALOGV("%s: POWER_HINT_INTERACTION", __func__);
 
-            if (boostpulse_open(samsung_pwr) >= 0) {
+            pthread_mutex_lock(&samsung_pwr->lock);
+            fd = boostpulse_open(samsung_pwr);
+            if (fd >= 0) {
                 len = write(samsung_pwr->boostpulse_fd, "1", 1);
-
                 if (len < 0) {
                     strerror_r(errno, errno_str, sizeof(errno_str));
                     ALOGE("Error writing to %s: %s\n", BOOSTPULSE_PATH, errno_str);
+                } else {
+                    clock_gettime(CLOCK_MONOTONIC, &last_touch_boost);
+                    touch_boost = true;
                 }
             }
+            pthread_mutex_unlock(&samsung_pwr->lock);
 
             break;
         }
         case POWER_HINT_VSYNC: {
+            struct timespec now, diff;
 
             ALOGV("%s: POWER_HINT_VSYNC", __func__);
 
+            pthread_mutex_lock(&samsung_pwr->lock);
+            if (data) {
+                if (vsync_count < UINT_MAX)
+                    vsync_count++;
+            } else {
+                if (vsync_count) {
+                    vsync_count--;
+                }
+                if (vsync_count == 0 && touch_boost) {
+                    touch_boost = false;
+
+                    clock_gettime(CLOCK_MONOTONIC, &now);
+                    diff = timespec_diff(now, last_touch_boost);
+
+                    if (check_boostpulse_on(diff)) {
+                        struct stat sb;
+                        int rc;
+
+                        sysfs_write(BOOST_CPU0_PATH, "0");
+                        rc = stat(CPU4_MAX_FREQ_PATH, &sb);
+                        if (rc == 0) {
+                            sysfs_write(BOOST_CPU4_PATH, "0");
+                        }
+                    }
+                }
+            }
+            pthread_mutex_unlock(&samsung_pwr->lock);
+
+            break;
+        }
+        case POWER_HINT_SET_PROFILE: {
+            int profile = *((intptr_t *)data);
+
+            ALOGV("%s: POWER_HINT_SET_PROFILE", __func__);
+
+            set_power_profile(profile);
             break;
         }
         case POWER_HINT_LOW_POWER: {
             int rc;
             struct stat sb;
+            int low_power = *((intptr_t *)data);
 
             ALOGV("%s: POWER_HINT_LOW_POWER", __func__);
 
             pthread_mutex_lock(&samsung_pwr->lock);
 
-            /*
-             * TODO: We fail to restore the max freqs after low power mode has been
-             * disabled for some reason (big.LITTLE specific issue?)
-             *
-            if (data) {
-                sysfs_write(CPU0_MAX_FREQ_PATH, samsung_pwr->cpu0_hispeed_freq);
-                rc = stat(CPU4_MAX_FREQ_PATH, &sb);
-                if (rc == 0) {
-                    sysfs_write(CPU4_MAX_FREQ_PATH, samsung_pwr->cpu4_hispeed_freq);
-                }
+            if (low_power == 1) {
+                set_power_profile(PROFILE_POWER_SAVE);
             } else {
-                sysfs_write(CPU0_MAX_FREQ_PATH, samsung_pwr->cpu0_max_freq);
-                rc = stat(CPU4_MAX_FREQ_PATH, &sb);
-                if (rc == 0) {
-                    sysfs_write(CPU4_MAX_FREQ_PATH, samsung_pwr->cpu4_max_freq);
-                }
+                set_power_profile(PROFILE_BALANCED);
             }
-            */
-            low_power_mode = data;
 
             pthread_mutex_unlock(&samsung_pwr->lock);
             break;
@@ -425,6 +551,16 @@ static void samsung_power_hint(struct power_module *module,
         default:
             break;
     }
+}
+
+static int samsung_get_feature(struct power_module *module __unused,
+                               feature_t feature)
+{
+    if (feature == POWER_FEATURE_SUPPORTED_PROFILES) {
+        return 3;
+    }
+
+    return -1;
 }
 
 static struct hw_module_methods_t power_module_methods = {
@@ -446,6 +582,7 @@ struct samsung_power_module HAL_MODULE_INFO_SYM = {
         .init = samsung_power_init,
         .setInteractive = samsung_power_set_interactive,
         .powerHint = samsung_power_hint,
+        .getFeature = samsung_get_feature
     },
 
     .lock = PTHREAD_MUTEX_INITIALIZER,
