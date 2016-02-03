@@ -90,6 +90,7 @@ namespace android {
 #define RESPONSE_UNSOLICITED 1
 #define RESPONSE_SOLICITED_ACK 2
 #define RESPONSE_SOLICITED_ACK_EXP 3
+#define RESPONSE_UNSOLICITED_ACK_EXP 4
 
 /* Negative values for private RIL errno's */
 #define RIL_ERRNO_INVALID_RESPONSE -1
@@ -5397,7 +5398,12 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
     appendPrintBuf("[UNSL]< %s", requestToString(unsolResponse));
 
     Parcel p;
-    p.writeInt32 (RESPONSE_UNSOLICITED);
+    if (s_callbacks.version >= 13
+                && pRI->wakeType == WAKE_PARTIAL) {
+        p.writeInt32 (RESPONSE_UNSOLICITED_ACK_EXP);
+    } else {
+        p.writeInt32 (RESPONSE_UNSOLICITED);
+    }
     p.writeInt32 (unsolResponse);
 
     ret = pRI->responseFunction(p, const_cast<void*>(data), datalen);
