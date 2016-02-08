@@ -5534,6 +5534,34 @@ failCauseToString(RIL_Errno e) {
         case RIL_E_SUBSCRIPTION_NOT_AVAILABLE:return "E_SUBSCRIPTION_NOT_AVAILABLE";
         case RIL_E_MODE_NOT_SUPPORTED:return "E_MODE_NOT_SUPPORTED";
 #endif
+        case RIL_E_FDN_CHECK_FAILURE: return "E_FDN_CHECK_FAILURE";
+        case RIL_E_MISSING_RESOURCE: return "E_MISSING_RESOURCE";
+        case RIL_E_NO_SUCH_ELEMENT: return "E_NO_SUCH_ELEMENT";
+        case RIL_E_DIAL_MODIFIED_TO_USSD: return "E_DIAL_MODIFIED_TO_USSD";
+        case RIL_E_DIAL_MODIFIED_TO_SS: return "E_DIAL_MODIFIED_TO_SS";
+        case RIL_E_DIAL_MODIFIED_TO_DIAL: return "E_DIAL_MODIFIED_TO_DIAL";
+        case RIL_E_USSD_MODIFIED_TO_DIAL: return "E_USSD_MODIFIED_TO_DIAL";
+        case RIL_E_USSD_MODIFIED_TO_SS: return "E_USSD_MODIFIED_TO_SS";
+        case RIL_E_USSD_MODIFIED_TO_USSD: return "E_USSD_MODIFIED_TO_USSD";
+        case RIL_E_SS_MODIFIED_TO_DIAL: return "E_SS_MODIFIED_TO_DIAL";
+        case RIL_E_SS_MODIFIED_TO_USSD: return "E_SS_MODIFIED_TO_USSD";
+        case RIL_E_SUBSCRIPTION_NOT_SUPPORTED: return "E_SUBSCRIPTION_NOT_SUPPORTED";
+        case RIL_E_SS_MODIFIED_TO_SS: return "E_SS_MODIFIED_TO_SS";
+        case RIL_E_LCE_NOT_SUPPORTED: return "E_LCE_NOT_SUPPORTED";
+        case RIL_E_NO_MEMORY: return "E_NO_MEMORY";
+        case RIL_E_INTERNAL_ERR: return "E_INTERNAL_ERR";
+        case RIL_E_SYSTEM_ERR: return "E_SYSTEM_ERR";
+        case RIL_E_MODEM_ERR: return "E_MODEM_ERR";
+        case RIL_E_INVALID_STATE: return "E_INVALID_STATE";
+        case RIL_E_NO_RESOURCES: return "E_NO_RESOURCES";
+        case RIL_E_SIM_ERR: return "E_SIM_ERR";
+        case RIL_E_INVALID_ARGUMENTS: return "E_INVALID_ARGUMENTS";
+        case RIL_E_INVALID_SIM_STATE: return "E_INVALID_SIM_STATE";
+        case RIL_E_INVALID_MODEM_STATE: return "E_INVALID_MODEM_STATE";
+        case RIL_E_INVALID_CALL_ID: return "E_INVALID_CALL_ID";
+        case RIL_E_NO_SMS_TO_ACK: return "E_NO_SMS_TO_ACK";
+        case RIL_E_NETWORK_ERR: return "E_NETWORK_ERR";
+        case RIL_E_REQUEST_RATE_LIMITED: return "E_REQUEST_RATE_LIMITED";
         default: return "<unknown error>";
     }
 }
