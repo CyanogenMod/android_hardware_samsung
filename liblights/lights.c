@@ -34,6 +34,7 @@
 #define PANEL_FILE "/sys/class/backlight/panel/brightness"
 #define BUTTON_FILE "/sys/class/sec/sec_touchkey/brightness"
 #define LED_BLINK "/sys/class/sec/led/led_blink"
+#define COLORTONE_FILE "/sys/devices/platform/s5p-mipi-dsim.1/lcd/panel/mdnie/mode"
 
 #define COLOR_MASK 0x00ffffff
 
@@ -263,6 +264,19 @@ static int set_light_leds_notifications(struct light_device_t *dev __unused,
     return set_light_leds(state, 1);
 }
 
+static int set_light_colortone(struct light_device_t *dev,
+            struct light_state_t const *state)
+{
+    int err = 0;
+    int colortone = rgb_to_brightness(state);
+
+    pthread_mutex_lock(&g_lock);
+    err = write_int(COLORTONE_FILE, colortone);
+    pthread_mutex_unlock(&g_lock);
+
+    return err;
+}
+
 static int set_light_leds_attention(struct light_device_t *dev __unused,
                                     struct light_state_t const *state)
 {
@@ -305,6 +319,8 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         set_light = set_light_leds_notifications;
     else if (0 == strcmp(LIGHT_ID_ATTENTION, name))
         set_light = set_light_leds_attention;
+    else if (0 == strcmp(LIGHT_ID_COLORTONE, name))
+        set_light = set_light_colortone;
     else
         return -EINVAL;
 
