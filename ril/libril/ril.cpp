@@ -5562,6 +5562,31 @@ failCauseToString(RIL_Errno e) {
         case RIL_E_NO_SMS_TO_ACK: return "E_NO_SMS_TO_ACK";
         case RIL_E_NETWORK_ERR: return "E_NETWORK_ERR";
         case RIL_E_REQUEST_RATE_LIMITED: return "E_REQUEST_RATE_LIMITED";
+        case RIL_E_OEM_ERROR_1: return "E_OEM_ERROR_1";
+        case RIL_E_OEM_ERROR_2: return "E_OEM_ERROR_2";
+        case RIL_E_OEM_ERROR_3: return "E_OEM_ERROR_3";
+        case RIL_E_OEM_ERROR_4: return "E_OEM_ERROR_4";
+        case RIL_E_OEM_ERROR_5: return "E_OEM_ERROR_5";
+        case RIL_E_OEM_ERROR_6: return "E_OEM_ERROR_6";
+        case RIL_E_OEM_ERROR_7: return "E_OEM_ERROR_7";
+        case RIL_E_OEM_ERROR_8: return "E_OEM_ERROR_8";
+        case RIL_E_OEM_ERROR_9: return "E_OEM_ERROR_9";
+        case RIL_E_OEM_ERROR_10: return "E_OEM_ERROR_10";
+        case RIL_E_OEM_ERROR_11: return "E_OEM_ERROR_11";
+        case RIL_E_OEM_ERROR_12: return "E_OEM_ERROR_12";
+        case RIL_E_OEM_ERROR_13: return "E_OEM_ERROR_13";
+        case RIL_E_OEM_ERROR_14: return "E_OEM_ERROR_14";
+        case RIL_E_OEM_ERROR_15: return "E_OEM_ERROR_15";
+        case RIL_E_OEM_ERROR_16: return "E_OEM_ERROR_16";
+        case RIL_E_OEM_ERROR_17: return "E_OEM_ERROR_17";
+        case RIL_E_OEM_ERROR_18: return "E_OEM_ERROR_18";
+        case RIL_E_OEM_ERROR_19: return "E_OEM_ERROR_19";
+        case RIL_E_OEM_ERROR_20: return "E_OEM_ERROR_20";
+        case RIL_E_OEM_ERROR_21: return "E_OEM_ERROR_21";
+        case RIL_E_OEM_ERROR_22: return "E_OEM_ERROR_22";
+        case RIL_E_OEM_ERROR_23: return "E_OEM_ERROR_23";
+        case RIL_E_OEM_ERROR_24: return "E_OEM_ERROR_24";
+        case RIL_E_OEM_ERROR_25: return "E_OEM_ERROR_25";
         default: return "<unknown error>";
     }
 }
