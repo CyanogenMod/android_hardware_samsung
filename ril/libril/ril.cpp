@@ -94,6 +94,7 @@ namespace android {
 
 /* Negative values for private RIL errno's */
 #define RIL_ERRNO_INVALID_RESPONSE -1
+#define RIL_ERRNO_NO_MEMORY -12
 
 // request, response, and unsolicited msg print macro
 #define PRINTBUF_SIZE 8096
@@ -474,6 +475,10 @@ issueLocalRequest(int request, void *data, int len, RIL_SOCKET_ID socket_id) {
 #endif
 
     pRI = (RequestInfo *)calloc(1, sizeof(RequestInfo));
+    if (pRI == NULL) {
+        RLOGE("Memory allocation failed for request %s", requestToString(request));
+        return;
+    }
 
     pRI->local = 1;
     pRI->token = 0xffffffff;        // token is not used in this context
@@ -578,6 +583,10 @@ processCommandBuffer(void *buffer, size_t buflen, RIL_SOCKET_ID socket_id) {
     }
 
     pRI = (RequestInfo *)calloc(1, sizeof(RequestInfo));
+    if (pRI == NULL) {
+        RLOGE("Memory allocation failed for request %s", requestToString(request));
+        return 0;
+    }
 
     pRI->token = token;
     pRI->pCI = pCI;
@@ -660,6 +669,13 @@ dispatchStrings (Parcel &p, RequestInfo *pRI) {
     if (countStrings == 0) {
         // just some non-null pointer
         pStrings = (char **)alloca(sizeof(char *));
+        if (pStrings == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            closeRequest;
+            return;
+        }
+
         datalen = 0;
     } else if (((int)countStrings) == -1) {
         pStrings = NULL;
@@ -668,6 +684,12 @@ dispatchStrings (Parcel &p, RequestInfo *pRI) {
         datalen = sizeof(char *) * countStrings;
 
         pStrings = (char **)alloca(datalen);
+        if (pStrings == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            closeRequest;
+            return;
+        }
 
         for (int i = 0 ; i < countStrings ; i++) {
             pStrings[i] = strdupReadString(p);
@@ -715,6 +737,10 @@ dispatchInts (Parcel &p, RequestInfo *pRI) {
 
     datalen = sizeof(int) * count;
     pInts = (int *)alloca(datalen);
+    if (pInts == NULL) {
+        RLOGE("Memory allocation failed for request %s", requestToString(pRI->pCI->requestNumber));
+        return;
+    }
 
     startRequest;
     for (int i = 0 ; i < count ; i++) {
@@ -1351,6 +1377,13 @@ dispatchImsGsmSms(Parcel &p, RequestInfo *pRI, uint8_t retry, int32_t messageRef
     if (countStrings == 0) {
         // just some non-null pointer
         pStrings = (char **)alloca(sizeof(char *));
+        if (pStrings == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            closeRequest;
+            return;
+        }
+
         datalen = 0;
     } else if (((int)countStrings) == -1) {
         pStrings = NULL;
@@ -1359,6 +1392,12 @@ dispatchImsGsmSms(Parcel &p, RequestInfo *pRI, uint8_t retry, int32_t messageRef
         datalen = sizeof(char *) * countStrings;
 
         pStrings = (char **)alloca(datalen);
+        if (pStrings == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            closeRequest;
+            return;
+        }
 
         for (int i = 0 ; i < countStrings ; i++) {
             pStrings[i] = strdupReadString(p);
@@ -2002,8 +2041,21 @@ static void dispatchDataProfile(Parcel &p, RequestInfo *pRI) {
     }
 
     {
-        RIL_DataProfileInfo dataProfiles[num];
-        RIL_DataProfileInfo *dataProfilePtrs[num];
+        RIL_DataProfileInfo *dataProfiles =
+                (RIL_DataProfileInfo *)malloc(num * sizeof(RIL_DataProfileInfo));
+        if (dataProfiles == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            return;
+        }
+        RIL_DataProfileInfo **dataProfilePtrs =
+                (RIL_DataProfileInfo **)malloc(num * sizeof(RIL_DataProfileInfo *));
+        if (dataProfilePtrs == NULL) {
+            RLOGE("Memory allocation failed for request %s",
+                    requestToString(pRI->pCI->requestNumber));
+            free(dataProfiles);
+            return;
+        }
 
         startRequest;
         for (int i = 0 ; i < num ; i++ ) {
@@ -2045,6 +2097,8 @@ static void dispatchDataProfile(Parcel &p, RequestInfo *pRI) {
         printRequest(pRI->token, pRI->pCI->requestNumber);
 
         if (status != NO_ERROR) {
+            free(dataProfiles);
+            free(dataProfilePtrs);
             goto invalid;
         }
         CALL_ONREQUEST(pRI->pCI->requestNumber,
@@ -2056,6 +2110,8 @@ static void dispatchDataProfile(Parcel &p, RequestInfo *pRI) {
         memset(dataProfiles, 0, num * sizeof(RIL_DataProfileInfo));
         memset(dataProfilePtrs, 0, num * sizeof(RIL_DataProfileInfo *));
 #endif
+        free(dataProfiles);
+        free(dataProfilePtrs);
     }
 
     return;
@@ -2893,6 +2949,11 @@ static int responseCdmaInformationRecords(Parcel &p,
                 }
                 string8 = (char*) malloc((infoRec->rec.display.alpha_len + 1)
                                                              * sizeof(char) );
+                if (string8 == NULL) {
+                    RLOGE("Memory allocation failed for responseCdmaInformationRecords");
+                    closeRequest;
+                    return RIL_ERRNO_NO_MEMORY;
+                }
                 for (int i = 0 ; i < infoRec->rec.display.alpha_len ; i++) {
                     string8[i] = infoRec->rec.display.alpha_buf[i];
                 }
@@ -2913,6 +2974,11 @@ static int responseCdmaInformationRecords(Parcel &p,
                 }
                 string8 = (char*) malloc((infoRec->rec.number.len + 1)
                                                              * sizeof(char) );
+                if (string8 == NULL) {
+                    RLOGE("Memory allocation failed for responseCdmaInformationRecords");
+                    closeRequest;
+                    return RIL_ERRNO_NO_MEMORY;
+                }
                 for (int i = 0 ; i < infoRec->rec.number.len; i++) {
                     string8[i] = infoRec->rec.number.buf[i];
                 }
@@ -2950,6 +3016,11 @@ static int responseCdmaInformationRecords(Parcel &p,
                 }
                 string8 = (char*) malloc((infoRec->rec.redir.redirectingNumber
                                           .len + 1) * sizeof(char) );
+                if (string8 == NULL) {
+                    RLOGE("Memory allocation failed for responseCdmaInformationRecords");
+                    closeRequest;
+                    return RIL_ERRNO_NO_MEMORY;
+                }
                 for (int i = 0;
                          i < infoRec->rec.redir.redirectingNumber.len;
                          i++) {
@@ -4475,23 +4546,39 @@ static void debugCallback (int fd, short flags, void *param) {
 
     if (recv(acceptFD, &number, sizeof(int), 0) != sizeof(int)) {
         RLOGE ("error reading on socket: number of Args: \n");
+        close(acceptFD);
         return;
     }
+
     args = (char **) malloc(sizeof(char*) * number);
+    if (args == NULL) {
+        RLOGE("Memory allocation failed for debug args");
+        close(acceptFD);
+        return;
+    }
 
     for (int i = 0; i < number; i++) {
         int len;
         if (recv(acceptFD, &len, sizeof(int), 0) != sizeof(int)) {
             RLOGE ("error reading on socket: Len of Args: \n");
             freeDebugCallbackArgs(i, args);
+            close(acceptFD);
             return;
         }
+
         // +1 for null-term
         args[i] = (char *) malloc((sizeof(char) * len) + 1);
+        if (args[i] == NULL) {
+            RLOGE("Memory allocation failed for debug args");
+            freeDebugCallbackArgs(i, args);
+            close(acceptFD);
+            return;
+        }
         if (recv(acceptFD, args[i], sizeof(char) * len, 0)
             != (int)sizeof(char) * len) {
             RLOGE ("error reading on socket: Args[%d] \n", i);
             freeDebugCallbackArgs(i, args);
+            close(acceptFD);
             return;
         }
         char * buf = args[i];
@@ -5144,14 +5231,18 @@ grabPartialWakeLock() {
         ret = pthread_mutex_lock(&s_wakeLockCountMutex);
         assert(ret == 0);
         acquire_wake_lock(PARTIAL_WAKE_LOCK, ANDROID_WAKE_LOCK_NAME);
-        s_wakelock_count++;
-        if (s_last_wake_timeout_info != NULL) {
-            s_last_wake_timeout_info->userParam = (void *)1;
+
+        UserCallbackInfo *p_info =
+                internalRequestTimedCallback(wakeTimeoutCallback, NULL, &TIMEVAL_WAKE_TIMEOUT);
+        if (p_info == NULL) {
+            release_wake_lock(ANDROID_WAKE_LOCK_NAME);
+        } else {
+            s_wakelock_count++;
+            if (s_last_wake_timeout_info != NULL) {
+                s_last_wake_timeout_info->userParam = (void *)1;
+            }
+            s_last_wake_timeout_info = p_info;
         }
-
-        s_last_wake_timeout_info
-                = internalRequestTimedCallback(wakeTimeoutCallback, NULL, &TIMEVAL_WAKE_TIMEOUT);
-
         ret = pthread_mutex_unlock(&s_wakeLockCountMutex);
         assert(ret == 0);
     } else {
@@ -5433,6 +5524,23 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         break;
     }
 
+    if (s_callbacks.version < 13) {
+        if (shouldScheduleTimeout) {
+            UserCallbackInfo *p_info = internalRequestTimedCallback(wakeTimeoutCallback, NULL,
+                    &TIMEVAL_WAKE_TIMEOUT);
+
+            if (p_info == NULL) {
+                goto error_exit;
+            } else {
+                // Cancel the previous request
+                if (s_last_wake_timeout_info != NULL) {
+                    s_last_wake_timeout_info->userParam = (void *)1;
+                }
+                s_last_wake_timeout_info = p_info;
+            }
+        }
+    }
+
 #if VDBG
     RLOGI("%s UNSOLICITED: %s length:%d", rilSocketIdToString(soc_id), requestToString(unsolResponse), p.dataSize());
 #endif
@@ -5450,21 +5558,12 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         }
 
         s_lastNITZTimeData = malloc(p.dataSize());
+        if (s_lastNITZTimeData == NULL) {
+             RLOGE("Memory allocation failed in RIL_onUnsolicitedResponse");
+             goto error_exit;
+        }
         s_lastNITZTimeDataSize = p.dataSize();
         memcpy(s_lastNITZTimeData, p.data(), p.dataSize());
-    }
-
-    if (s_callbacks.version < 13) {
-        if (shouldScheduleTimeout) {
-                // Cancel the previous request
-            if (s_last_wake_timeout_info != NULL) {
-                s_last_wake_timeout_info->userParam = (void *)1;
-            }
-
-            s_last_wake_timeout_info
-                    = internalRequestTimedCallback(wakeTimeoutCallback, NULL,
-                            &TIMEVAL_WAKE_TIMEOUT);
-        }
     }
 
     // Normal exit
@@ -5487,6 +5586,11 @@ internalRequestTimedCallback (RIL_TimedCallback callback, void *param,
     UserCallbackInfo *p_info;
 
     p_info = (UserCallbackInfo *) malloc (sizeof(UserCallbackInfo));
+    if (p_info == NULL) {
+        RLOGE("Memory allocation failed in internalRequestTimedCallback");
+        return p_info;
+
+    }
 
     p_info->p_callback = callback;
     p_info->userParam = param;
