@@ -5666,6 +5666,11 @@ failCauseToString(RIL_Errno e) {
         case RIL_E_NO_SMS_TO_ACK: return "E_NO_SMS_TO_ACK";
         case RIL_E_NETWORK_ERR: return "E_NETWORK_ERR";
         case RIL_E_REQUEST_RATE_LIMITED: return "E_REQUEST_RATE_LIMITED";
+        case RIL_E_SIM_BUSY: return "E_SIM_BUSY";
+        case RIL_E_SIM_FULL: return "E_SIM_FULL";
+        case RIL_E_NETWORK_REJECT: return "E_NETWORK_REJECT";
+        case RIL_E_OPERATION_NOT_ALLOWED: return "E_OPERATION_NOT_ALLOWED";
+        case RIL_E_EMPTY_RECORD: "E_EMPTY_RECORD";
         case RIL_E_OEM_ERROR_1: return "E_OEM_ERROR_1";
         case RIL_E_OEM_ERROR_2: return "E_OEM_ERROR_2";
         case RIL_E_OEM_ERROR_3: return "E_OEM_ERROR_3";
