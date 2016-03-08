@@ -84,7 +84,7 @@ namespace android {
 #define OEM_SND_TYPE_HEADSET        0x31 // Headset(0x30) + Voice(0x01)
 #define OEM_SND_TYPE_BTVOICE        0x41 // BT(0x40) + Voice(0x01)
 
-#ifdef MODEM_TYPE_XMM7260
+#ifdef SAMSUNG_NEXT_GEN_MODEM
 #define OEM_SND_AUDIO_PATH_HANDSET            0x01
 #define OEM_SND_AUDIO_PATH_HEADSET            0x02
 #define OEM_SND_AUDIO_PATH_HFK                0x06
