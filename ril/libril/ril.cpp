@@ -5671,6 +5671,12 @@ failCauseToString(RIL_Errno e) {
         case RIL_E_NETWORK_REJECT: return "E_NETWORK_REJECT";
         case RIL_E_OPERATION_NOT_ALLOWED: return "E_OPERATION_NOT_ALLOWED";
         case RIL_E_EMPTY_RECORD: "E_EMPTY_RECORD";
+        case RIL_E_INVALID_SMS_FORMAT: return "E_INVALID_SMS_FORMAT";
+        case RIL_E_ENCODING_ERR: return "E_ENCODING_ERR";
+        case RIL_E_INVALID_SMSC_ADDRESS: return "E_INVALID_SMSC_ADDRESS";
+        case RIL_E_NO_SUCH_ENTRY: return "E_NO_SUCH_ENTRY";
+        case RIL_E_NETWORK_NOT_READY: return "E_NETWORK_NOT_READY";
+        case RIL_E_NOT_PROVISIONED: return "E_NOT_PROVISIONED";
         case RIL_E_OEM_ERROR_1: return "E_OEM_ERROR_1";
         case RIL_E_OEM_ERROR_2: return "E_OEM_ERROR_2";
         case RIL_E_OEM_ERROR_3: return "E_OEM_ERROR_3";
