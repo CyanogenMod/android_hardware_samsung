@@ -223,8 +223,6 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         psFRect->next = psRect;
     }
 #endif
-    if (hnd->pid == getpid())
-        return 0;
 
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION)
         err = gralloc_map(module, handle, &vaddr);
@@ -240,6 +238,8 @@ static int gralloc_register_buffer(gralloc_module_t const* module, buffer_handle
         }
         s_ump_is_open = 1;
     }
+
+    hnd->pid = getpid();
 
     if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
         hnd->ump_mem_handle = (int)ump_handle_create_from_secure_id(hnd->ump_id);
@@ -320,8 +320,8 @@ static int gralloc_unregister_buffer(gralloc_module_t const* module, buffer_hand
     ALOGE_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK,
             "[unregister] handle %p still locked (state=%08x)", hnd, hnd->lockState);
 
-    /* never unmap buffers that were created in this process */
-    if (hnd->pid != getpid()) {
+    /* never unmap buffers that were not registered in this process */
+    if (hnd->pid == getpid()) {
         pthread_mutex_lock(&s_map_lock);
         if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_UMP) {
             ump_mapped_pointer_release((ump_handle)hnd->ump_mem_handle);
@@ -464,7 +464,6 @@ struct private_module_t HAL_MODULE_INFO_SYM =
             author: "ARM Ltd.",
             methods: &gralloc_module_methods,
             dso: NULL,
-            reserved : {0,},
         },
         registerBuffer: gralloc_register_buffer,
         unregisterBuffer: gralloc_unregister_buffer,
@@ -472,7 +471,6 @@ struct private_module_t HAL_MODULE_INFO_SYM =
         unlock: gralloc_unlock,
         getphys: gralloc_getphys,
         perform: NULL,
-        reserved_proc: {0,},
     },
     framebuffer: NULL,
     flags: 0,
@@ -480,5 +478,4 @@ struct private_module_t HAL_MODULE_INFO_SYM =
     bufferMask: 0,
     lock: PTHREAD_MUTEX_INITIALIZER,
     currentBuffer: NULL,
-    ion_client: -1,
 };

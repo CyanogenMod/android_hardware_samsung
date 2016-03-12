@@ -263,8 +263,8 @@ int init_frame_buffer_locked(struct private_module_t* module)
 
     int refreshRate = 1000000000000000LLU /
     (
-        uint64_t( info.upper_margin + info.lower_margin + info.yres )
-        * ( info.left_margin  + info.right_margin + info.xres )
+        uint64_t( info.upper_margin + info.lower_margin + info.vsync_len + info.yres )
+        * ( info.left_margin  + info.right_margin + info.hsync_len + info.xres )
         * info.pixclock
     );
 
@@ -322,7 +322,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
     module->ydpi = ydpi;
     module->fps = fps;
 
-    char value[32];
+    char value[PROPERTY_VALUE_MAX];
     property_get("debug.gralloc.vsync", value, "1");
     module->enableVSync = atoi(value);
     /*

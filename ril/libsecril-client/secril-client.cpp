@@ -84,6 +84,20 @@ namespace android {
 #define OEM_SND_TYPE_HEADSET        0x31 // Headset(0x30) + Voice(0x01)
 #define OEM_SND_TYPE_BTVOICE        0x41 // BT(0x40) + Voice(0x01)
 
+#ifdef MODEM_TYPE_XMM7260
+#define OEM_SND_AUDIO_PATH_HANDSET            0x01
+#define OEM_SND_AUDIO_PATH_HEADSET            0x02
+#define OEM_SND_AUDIO_PATH_HFK                0x06
+#define OEM_SND_AUDIO_PATH_BLUETOOTH          0x04
+#define OEM_SND_AUDIO_PATH_STEREO_BLUETOOTH   0x05
+#define OEM_SND_AUDIO_PATH_SPEAKER            0x07
+#define OEM_SND_AUDIO_PATH_HEADPHONE          0x08
+#define OEM_SND_AUDIO_PATH_BT_NSEC_OFF        0x09
+#define OEM_SND_AUDIO_PATH_MIC1               0x0A
+#define OEM_SND_AUDIO_PATH_MIC2               0x0B
+#define OEM_SND_AUDIO_PATH_BT_WB              0x0C
+#define OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF     0x0D
+#else
 #define OEM_SND_AUDIO_PATH_HANDSET      0x01
 #define OEM_SND_AUDIO_PATH_HEADSET      0x02
 #define OEM_SND_AUDIO_PATH_HFK                0x03
@@ -96,6 +110,7 @@ namespace android {
 #define OEM_SND_AUDIO_PATH_MIC2 0x0A
 #define OEM_SND_AUDIO_PATH_BT_WB  0x0B
 #define OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF  0x0C
+#endif
 
 //---------------------------------------------------------------------------
 // Type definitions
@@ -653,7 +668,12 @@ int SetCallVolume(HRilClient client, SoundType type, int vol_level) {
  * Set external sound device path for noise reduction.
  */
 extern "C"
-int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode) {
+#ifdef RIL_CALL_AUIO_PATH_EXTRAVOLUME
+int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode)
+#else
+int SetCallAudioPath(HRilClient client, AudioPath path)
+#endif
+{
     RilClientPrv *client_prv;
     int ret;
     char data[6] = {0,};
@@ -681,7 +701,9 @@ int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode) {
     data[2] = 0x00;     // data length
     data[3] = 0x06;     // data length
     data[4] = ConvertAudioPath(path); // audio path
+#ifdef RIL_CALL_AUIO_PATH_EXTRAVOLUME
     data[5] = mode; // ExtraVolume
+#endif
 
     RegisterRequestCompleteHandler(client, REQ_SET_AUDIO_PATH, NULL);
 

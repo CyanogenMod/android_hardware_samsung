@@ -36,6 +36,7 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 #include "sec_format.h"
+#include "graphics.h"
 
 #include "gralloc_priv.h"
 #include "gralloc_helper.h"
@@ -56,13 +57,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include "format.h"
 
-#if HAVE_ANDROID_OS
-#include <linux/android_pmem.h>
-#include <pixelflinger/format.h>
-#endif
-
-#include "videodev2.h"
+#include <linux/videodev2.h>
 #include "s5p_fimc.h"
 
 #ifdef SAMSUNG_EXYNOS4x12
@@ -224,7 +221,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
             ump_mem_handle = ump_ref_drv_allocate(size, UMP_REF_DRV_CONSTRAINT_NONE);
 #endif
         if (UMP_INVALID_MEMORY_HANDLE != ump_mem_handle) {
-            if (!(usage & GRALLOC_USAGE_HW_ION))
+            if (!(usage & GRALLOC_USAGE_HW_ION || usage & GRALLOC_USAGE_HW_FIMC1))
                 cpu_ptr = ump_mapped_pointer_get(ump_mem_handle);
             if (NULL != cpu_ptr) {
                 ump_id = ump_secure_id_get(ump_mem_handle);
@@ -240,7 +237,7 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             private_handle_rect *psFRect;
                             psRect = (private_handle_rect *)calloc(1, sizeof(private_handle_rect));
                             psRect->handle = (int)hnd->ump_id;
-                            psRect->stride = (int)hnd->stride_raw;
+                            psRect->stride = stride_raw;
                             psFRect = find_last_rect((int)hnd->ump_id);
                             psFRect->next = psRect;
                         }
@@ -255,22 +252,8 @@ static int gralloc_alloc_buffer(alloc_device_t* dev, size_t size, int usage,
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * hnd->height));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * (hnd->height >> 1)));
                         } else {
-#ifndef INSIGNAL_FIMC1
                             hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
                             hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
-#else
-                            if(usage & GRALLOC_USAGE_HW_FIMC1) {
-                                /* FIMC1 allocs had an additional alignment to a 4k boundary.  This solves the issues with
-                                 * NHK World Live TV and a few other apps
-                                 */
-                                hnd->uoffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)),4096);
-                                hnd->voffset = (EXYNOS4_ALIGN(EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)),4096);
-                            }
-                            else {
-                                hnd->uoffset = ((EXYNOS4_ALIGN(hnd->width, 16) * EXYNOS4_ALIGN(hnd->height, 16)));
-                                hnd->voffset = ((EXYNOS4_ALIGN((hnd->width >> 1), 16) * EXYNOS4_ALIGN((hnd->height >> 1), 16)));
-                            }
-#endif
                         }
                         return 0;
                     } else {

@@ -965,7 +965,8 @@ static void *hwc_vsync_sysfs_loop(void *data)
     do {
         ssize_t len = read(vsync_timestamp_fd, buf, sizeof(buf));
         timestamp = strtoull(buf, NULL, 0);
-        ctx->procs->vsync(ctx->procs, 0, timestamp);
+        if(ctx->procs)
+            ctx->procs->vsync(ctx->procs, 0, timestamp);
         select(vsync_timestamp_fd + 1, NULL, NULL, &exceptfds, NULL);
         lseek(vsync_timestamp_fd, 0, SEEK_SET);
     } while (1);

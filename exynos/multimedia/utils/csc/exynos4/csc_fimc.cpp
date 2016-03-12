@@ -28,6 +28,7 @@
  */
 
 #include <utils/Log.h>
+#include <errno.h>
 #include <dlfcn.h>
 
 #include "SEC_OMX_Def.h"

@@ -22,6 +22,7 @@
 //---------------------------------------------------------//
 
 #include <hardware/hardware.h>
+#include "graphics.h"
 #include "sec_format.h"
 
 #ifdef __cplusplus
@@ -29,7 +30,8 @@ extern "C" {
 #endif
 
 #include <linux/videodev2.h>
-#include "videodev2_samsung.h"
+//#include "videodev2_exynos_camera.h"
+//#include "videodev2_exynos_media.h"
 
 #ifdef __cplusplus
 }

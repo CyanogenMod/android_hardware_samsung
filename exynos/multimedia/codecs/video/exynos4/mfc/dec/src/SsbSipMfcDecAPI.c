@@ -243,6 +243,7 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit (void *openHandle, SSBSIP_MFC_CODEC_TYPE 
     int packedPB = 0;
     struct mfc_common_args DecArg;
     _MFCLIB *pCTX;
+    int retries = 3;
 
     if (openHandle == NULL) {
         ALOGE("SsbSipMfcDecInit] openHandle is NULL");
@@ -298,8 +299,14 @@ SSBSIP_MFC_ERROR_CODE SsbSipMfcDecInit (void *openHandle, SSBSIP_MFC_CODEC_TYPE 
     /* sequence start args */
     /* no needs */
 
+retry:
     r = ioctl(pCTX->hMFC, IOCTL_MFC_DEC_INIT, &DecArg);
     if (DecArg.ret_code != MFC_OK) {
+        if (retries) {
+            retries--;
+            usleep(100000);
+            goto retry;
+        }
         ALOGE("SsbSipMfcDecInit] IOCTL_MFC_DEC_INIT failed");
         return MFC_RET_DEC_INIT_FAIL;
     }

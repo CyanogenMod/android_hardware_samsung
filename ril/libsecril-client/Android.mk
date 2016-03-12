@@ -2,10 +2,10 @@
 
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := eng
 
 LOCAL_SRC_FILES:= \
-    secril-client-sap.cpp
+    secril-client.cpp
 
 LOCAL_SHARED_LIBRARIES := \
     libutils \
@@ -15,8 +15,11 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_CFLAGS := 
 
-LOCAL_MODULE:= libsecril-client-sap
+ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
+LOCAL_CFLAGS += -DRIL_CALL_AUIO_PATH_EXTRAVOLUME
+endif
+
+LOCAL_MODULE:= libsecril-client
 LOCAL_PRELINK_MODULE := false
-LOCAL_LDLIBS += -lpthread
 
 include $(BUILD_SHARED_LIBRARY)
