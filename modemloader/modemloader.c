@@ -89,7 +89,7 @@ int main(void)
 
     parse_hardware_revision(&revision);
     snprintf(ro_revision, PROP_VALUE_MAX, "%d", revision);
-    property_set("ro.revision", ro_revision);
+    property_set("hw.revision", ro_revision);
 
     return 0;
 }
