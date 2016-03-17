@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2013 The Android Open-Source Project
+# Copyright (C) 2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-RIL_PATH := $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
-ifeq ($(BOARD_VENDOR),samsung)
+include $(CLEAR_VARS)
 
-# libril
-ifeq ($(BOARD_PROVIDES_LIBRIL),true)
-ifneq ($(filter xmm6260 xmm6262 xmm6360 xmm7260 m7450 ss333 mdm9x35,$(BOARD_MODEM_TYPE)),)
-include $(RIL_PATH)/libril/Android.mk
-endif
-endif
+LOCAL_SRC_FILES := modemloader.c
 
-# ril client
-SECRIL_CLIENT_DIRS := libsecril-client libsecril-client-sap
-include $(foreach client_dirs,$(SECRIL_CLIENT_DIRS),$(RIL_PATH)/$(client_dirs)/Android.mk)
+LOCAL_SHARED_LIBRARIES := liblog libcutils
 
-endif
+LOCAL_MODULE := modemloader
+LOCAL_MODULE_TAGS := optional
 
+include $(BUILD_EXECUTABLE)

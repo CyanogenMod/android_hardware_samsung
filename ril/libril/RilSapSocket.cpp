@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-RilSapSocket::RilSapSocketList *head;
+static RilSapSocket::RilSapSocketList *head = NULL;
 
 void ril_sap_on_request_complete (
         RIL_Token t, RIL_Errno e,
@@ -62,6 +62,9 @@ void RilSapSocket::sOnRequestComplete (RIL_Token t,
         sap_socket->onRequestComplete(t,e,response,responselen);
     } else {
         RLOGE("Invalid socket id");
+        if (request->curr->payload) {
+            free(request->curr->payload);
+        }
         free(request->curr);
         free(request);
     }
@@ -150,11 +153,15 @@ void RilSapSocket::initSapSocket(const char *socketName,
 void RilSapSocket::addSocketToList(const char *socketName, RIL_SOCKET_ID socketid,
         RIL_RadioFunctions *uimFuncs) {
     RilSapSocket* socket = NULL;
-    RilSapSocketList* listItem = (RilSapSocketList*)malloc(sizeof(RilSapSocketList));
     RilSapSocketList *current;
 
     if(!SocketExists(socketName)) {
         socket = new RilSapSocket(socketName, socketid, uimFuncs);
+        RilSapSocketList* listItem = (RilSapSocketList*)malloc(sizeof(RilSapSocketList));
+        if (!listItem) {
+            RLOGE("addSocketToList: OOM");
+            return;
+        }
         listItem->socket = socket;
         listItem->next = NULL;
 
@@ -188,16 +195,15 @@ bool RilSapSocket::SocketExists(const char *socketName) {
 }
 
 void* RilSapSocket::processRequestsLoop(void) {
-    SapSocketRequest *req = (SapSocketRequest*)malloc(sizeof(SapSocketRequest));
     RLOGI("UIM_SOCKET:Request loop started");
 
     while(true) {
-        req = dispatchQueue.dequeue();
+        SapSocketRequest *req = dispatchQueue.dequeue();
 
         RLOGI("New request from the dispatch Queue");
 
         if (req != NULL) {
-            processRequest(req->curr);
+            dispatchRequest(req->curr);
             free(req);
         } else {
             RLOGE("Fetched null buffer from queue!");
@@ -213,11 +219,6 @@ RilSapSocket::RilSapSocket(const char *socketName,
     if (inputUimFuncs) {
         uimFuncs = inputUimFuncs;
     }
-}
-
-int RilSapSocket::processRequest(MsgHeader *request) {
-    dispatchRequest(request);
-    return 0;
 }
 
 #define BYTES_PER_LINE 16
@@ -264,7 +265,14 @@ void log_hex(const char *who, const uint8_t *buffer, int length) {
 }
 
 void RilSapSocket::dispatchRequest(MsgHeader *req) {
+    // SapSocketRequest will be deallocated in onRequestComplete()
     SapSocketRequest* currRequest=(SapSocketRequest*)malloc(sizeof(SapSocketRequest));
+    if (!currRequest) {
+        RLOGE("dispatchRequest: OOM");
+        // Free MsgHeader allocated in pushRecord()
+        free(req);
+        return;
+    }
     currRequest->token = req->token;
     currRequest->curr = req;
     currRequest->p_next = NULL;
@@ -291,27 +299,36 @@ void RilSapSocket::onRequestComplete(RIL_Token t, RIL_Errno e, void *response,
         size_t response_len) {
     SapSocketRequest* request= (SapSocketRequest*)t;
     MsgHeader *hdr = request->curr;
-    pb_bytes_array_t *payload = (pb_bytes_array_t *)
-        calloc(1,sizeof(pb_bytes_array_t) + response_len);
 
-    if (hdr && payload) {
-        memcpy(payload->bytes, response, response_len);
-        payload->size = response_len;
-        hdr->payload = payload;
-        hdr->type = MsgType_RESPONSE;
-        hdr->error = (Error) e;
+    if (response && response_len > 0) {
+        MsgHeader rsp;
+        rsp.token = request->curr->token;
+        rsp.type = MsgType_RESPONSE;
+        rsp.id = request->curr->id;
+        rsp.error = (Error)e;
+        rsp.payload = (pb_bytes_array_t *)calloc(1,
+                sizeof(pb_bytes_array_t) + response_len);
+        if (!rsp.payload) {
+            RLOGE("onRequestComplete: OOM");
+        } else {
+            memcpy(rsp.payload->bytes, response, response_len);
+            rsp.payload->size = response_len;
 
-        RLOGE("Token:%d, MessageId:%d", hdr->token, hdr->id);
-
-        if(!pendingResponseQueue.checkAndDequeue(hdr->id, hdr->token)) {
             RLOGE("Token:%d, MessageId:%d", hdr->token, hdr->id);
-            RLOGE ("RilSapSocket::onRequestComplete: invalid Token or Message Id");
-            return;
-        }
 
-        sendResponse(hdr);
-        free(hdr);
+            sendResponse(&rsp);
+            free(rsp.payload);
+        }
     }
+
+    // Deallocate SapSocketRequest
+    if(!pendingResponseQueue.checkAndDequeue(hdr->id, hdr->token)) {
+        RLOGE("Token:%d, MessageId:%d", hdr->token, hdr->id);
+        RLOGE ("RilSapSocket::onRequestComplete: invalid Token or Message Id");
+    }
+
+    // Deallocate MsgHeader
+    free(hdr);
 }
 
 void RilSapSocket::sendResponse(MsgHeader* hdr) {
@@ -357,36 +374,48 @@ void RilSapSocket::sendResponse(MsgHeader* hdr) {
 }
 
 void RilSapSocket::onUnsolicitedResponse(int unsolResponse, void *data, size_t datalen) {
-    MsgHeader *hdr = new MsgHeader;
-    pb_bytes_array_t *payload = (pb_bytes_array_t *)
-        calloc(1, sizeof(pb_bytes_array_t) + datalen);
-    if (hdr && payload) {
+    if (data && datalen > 0) {
+        pb_bytes_array_t *payload = (pb_bytes_array_t *)calloc(1,
+                sizeof(pb_bytes_array_t) + datalen);
+        if (!payload) {
+            RLOGE("onUnsolicitedResponse: OOM");
+            return;
+        }
         memcpy(payload->bytes, data, datalen);
         payload->size = datalen;
-        hdr->payload = payload;
-        hdr->type = MsgType_UNSOL_RESPONSE;
-        hdr->id = (MsgId)unsolResponse;
-        hdr->error = Error_RIL_E_SUCCESS;
-        sendResponse(hdr);
-        delete hdr;
+        MsgHeader rsp;
+        rsp.payload = payload;
+        rsp.type = MsgType_UNSOL_RESPONSE;
+        rsp.id = (MsgId)unsolResponse;
+        rsp.error = Error_RIL_E_SUCCESS;
+        sendResponse(&rsp);
+        free(payload);
     }
 }
 
 void RilSapSocket::pushRecord(void *p_record, size_t recordlen) {
-    int ret;
-    SapSocketRequest *recv = (SapSocketRequest*)malloc(sizeof(SapSocketRequest));
-    MsgHeader  *reqHeader;
-    pb_istream_t stream;
-
-    stream = pb_istream_from_buffer((uint8_t *)p_record, recordlen);
-    reqHeader = (MsgHeader *)malloc(sizeof (MsgHeader));
+    pb_istream_t stream = pb_istream_from_buffer((uint8_t *)p_record, recordlen);
+    // MsgHeader will be deallocated in onRequestComplete()
+    MsgHeader *reqHeader = (MsgHeader *)malloc(sizeof (MsgHeader));
+    if (!reqHeader) {
+        RLOGE("pushRecord: OOM");
+        return;
+    }
     memset(reqHeader, 0, sizeof(MsgHeader));
 
     log_hex("BtSapTest-Payload", (const uint8_t*)p_record, recordlen);
 
     if (!pb_decode(&stream, MsgHeader_fields, reqHeader) ) {
         RLOGE("Error decoding protobuf buffer : %s", PB_GET_ERROR(&stream));
+        free(reqHeader);
     } else {
+        // SapSocketRequest will be deallocated in processRequestsLoop()
+        SapSocketRequest *recv = (SapSocketRequest*)malloc(sizeof(SapSocketRequest));
+        if (!recv) {
+            RLOGE("pushRecord: OOM");
+            free(reqHeader);
+            return;
+        }
         recv->token = reqHeader->token;
         recv->curr = reqHeader;
         recv->socketId = id;
@@ -396,14 +425,11 @@ void RilSapSocket::pushRecord(void *p_record, size_t recordlen) {
 }
 
 void RilSapSocket::sendDisconnect() {
-    MsgHeader *hdr = new MsgHeader;
-    pb_bytes_array_t *payload ;
     size_t encoded_size = 0;
     uint32_t written_size;
     size_t buffer_size = 0;
     pb_ostream_t ostream;
     bool success = false;
-    ssize_t written_bytes;
 
     RIL_SIM_SAP_DISCONNECT_REQ disconnectReq;
 
@@ -417,11 +443,22 @@ void RilSapSocket::sendDisconnect() {
         success = pb_encode(&ostream, RIL_SIM_SAP_DISCONNECT_REQ_fields, buffer);
 
         if(success) {
-            pb_bytes_array_t *payload = (pb_bytes_array_t *)
-        calloc(1,sizeof(pb_bytes_array_t) + written_size);
-
+            // Buffer will be deallocated in sOnRequestComplete()
+            pb_bytes_array_t *payload = (pb_bytes_array_t *)calloc(1,
+                    sizeof(pb_bytes_array_t) + written_size);
+            if (!payload) {
+                RLOGE("sendDisconnect: OOM");
+                return;
+            }
             memcpy(payload->bytes, buffer, written_size);
             payload->size = written_size;
+            // MsgHeader will be deallocated in sOnRequestComplete()
+            MsgHeader *hdr = (MsgHeader *)malloc(sizeof(MsgHeader));
+            if (!hdr) {
+                RLOGE("sendDisconnect: OOM");
+                free(payload);
+                return;
+            }
             hdr->payload = payload;
             hdr->type = MsgType_REQUEST;
             hdr->id = MsgId_RIL_SIM_SAP_DISCONNECT;
@@ -430,14 +467,20 @@ void RilSapSocket::sendDisconnect() {
         }
         else {
             RLOGE("Encode failed in send disconnect!");
-            delete hdr;
-            free(payload);
         }
     }
 }
 
 void RilSapSocket::dispatchDisconnect(MsgHeader *req) {
+    // SapSocketRequest will be deallocated in sOnRequestComplete()
     SapSocketRequest* currRequest=(SapSocketRequest*)malloc(sizeof(SapSocketRequest));
+    if (!currRequest) {
+        RLOGE("dispatchDisconnect: OOM");
+        // Free memory allocated in sendDisconnect
+        free(req->payload);
+        free(req);
+        return;
+    }
     currRequest->token = -1;
     currRequest->curr = req;
     currRequest->p_next = NULL;
