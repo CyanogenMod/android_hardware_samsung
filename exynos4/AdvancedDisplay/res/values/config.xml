@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2013 The CyanogenMod Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- These resources are around just to allow their values to be customized
+     for different hardware and product builds. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Vibrator Tuning -->
+    <bool name="has_vibrator_tuning">true</bool>
+    <string name="vibrator_sysfs_file" translatable="false">"/sys/vibrator/pwm_val"</string>
+    <string name="intensity_max_value" translatable="false">100</string>
+    <string name="intensity_warning_threshold" translatable="false">75</string>
+    <string name="intensity_default_value" translatable="false">50</string>
+    <string name="intensity_min_value" translatable="false">0</string>
+
+    <!-- S-Pen -->
+    <string name="spen_sysfs_file" translatable="false">"/sys/class/sec/sec_epen"</string>
+    <string name="spen_powersaving_sysfs_file" translatable="false">"/sys/class/sec/sec_epen/epen_saving_mode"</string>
+
+    <!-- Audio Tuning -->
+    <bool name="has_incall_audio_tuning">false</bool>
+    <bool name="has_output_audio_tuning">false</bool>
+
+    <string name="incall_max_value" translatable="false">10</string>
+    <string name="incall_warning_threshold" translatable="false">9</string>
+    <string name="incall_default_value" translatable="false">5</string>
+    <string name="incall_min_value" translatable="false">1</string>
+    <string name="audioout_max_value" translatable="false">63</string>
+    <string name="audioout_warning_threshold" translatable="false">60</string>
+    <string name="audioout_default_value" translatable="false">50</string>
+    <string name="audioout_min_value" translatable="false">0</string>
+
+    <!-- HSPA -->
+    <bool name="has_hspa">true</bool>
+
+    <!-- Touchkey -->
+    <bool name="has_touchkey">true</bool>
+
+    <!-- MDNIE -->
+    <string name="mdnie_cabc_sysfs_file" translatable="false">"/sys/class/lcd/panel/power_reduce"</string>
+    <string name="mdnie_scenario_sysfs_file" translatable="false">"/sys/class/mdnie/mdnie/scenario"</string>
+    <string name="mdnie_mode_sysfs_file" translatable="false">"/sys/class/mdnie/mdnie/mode"</string>
+    <string name="mdnie_negative_sysfs_file" translatable="false">"/sys/class/mdnie/mdnie/negative"</string>
+
+</resources>
