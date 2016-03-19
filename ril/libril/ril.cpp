@@ -5677,6 +5677,10 @@ failCauseToString(RIL_Errno e) {
         case RIL_E_NO_SUCH_ENTRY: return "E_NO_SUCH_ENTRY";
         case RIL_E_NETWORK_NOT_READY: return "E_NETWORK_NOT_READY";
         case RIL_E_NOT_PROVISIONED: return "E_NOT_PROVISIONED";
+        case RIL_E_NO_SUBSCRIPTION: return "E_NO_SUBSCRIPTION";
+        case RIL_E_NO_NETWORK_FOUND: return "E_NO_NETWORK_FOUND";
+        case RIL_E_DEVICE_IN_USE: return "E_DEVICE_IN_USE";
+        case RIL_E_ABORTED: return "E_ABORTED";
         case RIL_E_OEM_ERROR_1: return "E_OEM_ERROR_1";
         case RIL_E_OEM_ERROR_2: return "E_OEM_ERROR_2";
         case RIL_E_OEM_ERROR_3: return "E_OEM_ERROR_3";
