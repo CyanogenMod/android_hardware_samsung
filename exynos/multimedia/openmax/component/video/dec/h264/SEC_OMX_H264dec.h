@@ -43,6 +43,7 @@ typedef struct _SEC_MFC_H264DEC_HANDLE
     OMX_U32  indexTimestamp;
     OMX_U32  outputIndexTimestamp;
     OMX_BOOL bConfiguredMFC;
+    OMX_BOOL bConfiguringMFC;
     OMX_BOOL bFlashPlayerMode;
 #ifdef S3D_SUPPORT
     OMX_BOOL bS3DMode;

@@ -599,6 +599,8 @@ OMX_ERRORTYPE SEC_MFC_H264Dec_GetConfig(
         OMX_CONFIG_RECTTYPE *pDstRectType = NULL;
         pH264Dec = (SEC_H264DEC_HANDLE *)((SEC_OMX_VIDEODEC_COMPONENT *)pSECComponent->hComponentHandle)->hCodecHandle;
 
+        while (pH264Dec->hMFCH264Handle.bConfiguringMFC == OMX_TRUE) {}
+
         if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
             ret = OMX_ErrorNotReady;
             break;
@@ -806,6 +808,7 @@ OMX_ERRORTYPE SEC_MFC_H264Dec_Init(OMX_COMPONENTTYPE *pOMXComponent)
 
     pH264Dec = (SEC_H264DEC_HANDLE *)((SEC_OMX_VIDEODEC_COMPONENT *)pSECComponent->hComponentHandle)->hCodecHandle;
     pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_FALSE;
+    pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
     pSECComponent->bUseFlagEOF = OMX_FALSE;
     pSECComponent->bSaveFlagEOS = OMX_FALSE;
 
@@ -970,6 +973,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Nonblock(OMX_COMPONENTTYPE *pOMXComponent, SEC
     FunctionIn();
 
     if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
+        pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_TRUE;
         SSBSIP_MFC_CODEC_TYPE eCodecType = H264_DEC;
 
         if ((oneFrameSize <= 0) && (pInputData->nFlags & OMX_BUFFERFLAG_EOS)) {
@@ -1019,6 +1023,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Nonblock(OMX_COMPONENTTYPE *pOMXComponent, SEC
             pSECOutputPort->cropRectangle.nHeight = imgResol.height - cropInfo.crop_top_offset - cropInfo.crop_bottom_offset;
 
             pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_TRUE;
+            pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
 
             /** Update Frame Size **/
             if ((cropInfo.crop_left_offset != 0) || (cropInfo.crop_right_offset != 0) ||
@@ -1497,6 +1502,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Block(OMX_COMPONENTTYPE *pOMXComponent, SEC_OM
     FunctionIn();
 
     if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
+        pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_TRUE;
         SSBSIP_MFC_CODEC_TYPE eCodecType = H264_DEC;
 
         if ((oneFrameSize <= 0) && (pInputData->nFlags & OMX_BUFFERFLAG_EOS)) {
@@ -1541,6 +1547,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Block(OMX_COMPONENTTYPE *pOMXComponent, SEC_OM
             pSECOutputPort->cropRectangle.nHeight = imgResol.height - cropInfo.crop_top_offset - cropInfo.crop_bottom_offset;
 
             pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_TRUE;
+            pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
 
             /** Update Frame Size **/
             if ((cropInfo.crop_left_offset != 0) || (cropInfo.crop_right_offset != 0) ||
