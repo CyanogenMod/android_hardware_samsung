@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "SEC_OMX_Macros.h"
 #include "SEC_OMX_Basecomponent.h"
@@ -599,6 +600,10 @@ OMX_ERRORTYPE SEC_MFC_H264Dec_GetConfig(
         OMX_CONFIG_RECTTYPE *pDstRectType = NULL;
         pH264Dec = (SEC_H264DEC_HANDLE *)((SEC_OMX_VIDEODEC_COMPONENT *)pSECComponent->hComponentHandle)->hCodecHandle;
 
+        int i;
+        for (i = 0; i < 3 && pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE; i++) {
+            usleep(10000);
+        }
         if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
             ret = OMX_ErrorNotReady;
             break;
