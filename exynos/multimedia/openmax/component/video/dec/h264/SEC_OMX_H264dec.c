@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "SEC_OMX_Macros.h"
 #include "SEC_OMX_Basecomponent.h"
@@ -49,6 +50,8 @@
 #ifdef USE_CSC_FIMC
 #include "csc_fimc.h"
 #endif
+
+#define SECOND_TO_MICROSECOND 1000000
 
 #undef  SEC_LOG_TAG
 #define SEC_LOG_TAG    "SEC_H264_DEC"
@@ -599,6 +602,19 @@ OMX_ERRORTYPE SEC_MFC_H264Dec_GetConfig(
         OMX_CONFIG_RECTTYPE *pDstRectType = NULL;
         pH264Dec = (SEC_H264DEC_HANDLE *)((SEC_OMX_VIDEODEC_COMPONENT *)pSECComponent->hComponentHandle)->hCodecHandle;
 
+        struct timeval ts;
+        gettimeofday(&ts, NULL);
+        int64_t start = ts.tv_sec * SECOND_TO_MICROSECOND + ts.tv_usec;
+        int64_t cur = start;
+        while (pH264Dec->hMFCH264Handle.bConfiguringMFC == OMX_TRUE && (cur - start) < 100000) {
+            gettimeofday(&ts, NULL);
+            cur = ts.tv_sec * SECOND_TO_MICROSECOND + ts.tv_usec;
+        }
+
+        if (pH264Dec->hMFCH264Handle.bConfiguringMFC == OMX_TRUE)
+            SEC_OSAL_Log(SEC_LOG_ERROR, "%s: timed out waiting for MFC configure - %llu", __func__, (cur-start));
+        else SEC_OSAL_Log(SEC_LOG_ERROR, "%s: MFC configured in %llu us", __func__, (cur-start));
+
         if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
             ret = OMX_ErrorNotReady;
             break;
@@ -806,6 +822,7 @@ OMX_ERRORTYPE SEC_MFC_H264Dec_Init(OMX_COMPONENTTYPE *pOMXComponent)
 
     pH264Dec = (SEC_H264DEC_HANDLE *)((SEC_OMX_VIDEODEC_COMPONENT *)pSECComponent->hComponentHandle)->hCodecHandle;
     pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_FALSE;
+    pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
     pSECComponent->bUseFlagEOF = OMX_FALSE;
     pSECComponent->bSaveFlagEOS = OMX_FALSE;
 
@@ -970,6 +987,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Nonblock(OMX_COMPONENTTYPE *pOMXComponent, SEC
     FunctionIn();
 
     if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
+        pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_TRUE;
         SSBSIP_MFC_CODEC_TYPE eCodecType = H264_DEC;
 
         if ((oneFrameSize <= 0) && (pInputData->nFlags & OMX_BUFFERFLAG_EOS)) {
@@ -1019,6 +1037,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Nonblock(OMX_COMPONENTTYPE *pOMXComponent, SEC
             pSECOutputPort->cropRectangle.nHeight = imgResol.height - cropInfo.crop_top_offset - cropInfo.crop_bottom_offset;
 
             pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_TRUE;
+            pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
 
             /** Update Frame Size **/
             if ((cropInfo.crop_left_offset != 0) || (cropInfo.crop_right_offset != 0) ||
@@ -1497,6 +1516,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Block(OMX_COMPONENTTYPE *pOMXComponent, SEC_OM
     FunctionIn();
 
     if (pH264Dec->hMFCH264Handle.bConfiguredMFC == OMX_FALSE) {
+        pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_TRUE;
         SSBSIP_MFC_CODEC_TYPE eCodecType = H264_DEC;
 
         if ((oneFrameSize <= 0) && (pInputData->nFlags & OMX_BUFFERFLAG_EOS)) {
@@ -1541,6 +1561,7 @@ OMX_ERRORTYPE SEC_MFC_H264_Decode_Block(OMX_COMPONENTTYPE *pOMXComponent, SEC_OM
             pSECOutputPort->cropRectangle.nHeight = imgResol.height - cropInfo.crop_top_offset - cropInfo.crop_bottom_offset;
 
             pH264Dec->hMFCH264Handle.bConfiguredMFC = OMX_TRUE;
+            pH264Dec->hMFCH264Handle.bConfiguringMFC = OMX_FALSE;
 
             /** Update Frame Size **/
             if ((cropInfo.crop_left_offset != 0) || (cropInfo.crop_right_offset != 0) ||
