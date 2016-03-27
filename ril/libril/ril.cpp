@@ -345,16 +345,16 @@ static CommandInfo s_commands[] = {
 #include "ril_commands.h"
 };
 
-static CommandInfo s_commands_v[] = {
-#include "ril_commands_vendor.h"
-};
-
 static UnsolResponseInfo s_unsolResponses[] = {
 #include "ril_unsol_commands.h"
 };
 
+static CommandInfo s_commands_v[] = {
+#include <telephony/ril_commands_vendor.h>
+};
+
 static UnsolResponseInfo s_unsolResponses_v[] = {
-#include "ril_unsol_commands_vendor.h"
+#include <telephony/ril_unsol_commands_vendor.h>
 };
 
 /* For older RILs that do not support new commands RIL_REQUEST_VOICE_RADIO_TECH and
