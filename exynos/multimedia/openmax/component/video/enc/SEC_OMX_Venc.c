@@ -866,6 +866,11 @@ OMX_BOOL SEC_Preprocessor_InputData(OMX_COMPONENTTYPE *pOMXComponent)
         }
 
         ret = OMX_TRUE;
+    } else if (flagEOS == OMX_TRUE) {
+        SEC_OMX_DATABUFFER *outputUseBuffer = &pSECComponent->secDataBuffer[OUTPUT_PORT_INDEX];
+        outputUseBuffer->nFlags = inputUseBuffer->nFlags;
+        SEC_OutputBufferReturn(pOMXComponent);
+        ret = OMX_FALSE;
     } else {
         ret = OMX_FALSE;
     }
