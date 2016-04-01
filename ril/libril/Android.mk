@@ -32,7 +32,7 @@ ifneq ($(filter m7450 mdm9x35 ss333 xmm7260,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS := -DSAMSUNG_NEXT_GEN_MODEM
 endif
 
-ifneq ($(filter m7450 xmm7260,$(BOARD_MODEM_TYPE)),)
+ifneq ($(filter m7450,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS += -DNEEDS_VIDEO_CALL_FIELD
 endif
 
