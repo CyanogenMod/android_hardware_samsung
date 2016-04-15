@@ -372,8 +372,8 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         format == OMX_COLOR_FormatYUV420SemiPlanar) {
         /* FIXME: there is no way to return the vstride */
         int vstride;
-        stride = (w + 15) & ~15;
-        vstride = (h + 15) & ~15;
+        stride = EXYNOS4_ALIGN(w, 16);
+        vstride = EXYNOS4_ALIGN(h, 16);
         switch (format) {
         case HAL_PIXEL_FORMAT_YCbCr_420_SP:
         case HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED:
@@ -403,7 +403,6 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
             return -EINVAL;
         }
     } else {
-        int align = 8;
         int bpp = 0;
         switch (format) {
         case HAL_PIXEL_FORMAT_RGBA_8888:
@@ -422,7 +421,7 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         default:
             return -EINVAL;
         }
-        size_t bpr = (w*bpp + (align-1)) & ~(align-1);
+        size_t bpr = EXYNOS4_ALIGN((w*bpp), 8);
         size = bpr * h;
         stride = bpr / bpp;
         stride_raw = bpr;
