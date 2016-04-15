@@ -28,7 +28,7 @@ endif
 ifeq ($(BOARD_MODEM_TYPE),xmm6260)
 LOCAL_CFLAGS := -DMODEM_TYPE_XMM6260
 endif
-ifneq ($(filter m7450 mdm9x35 ss333 xmm7260 tss310,$(BOARD_MODEM_TYPE)),)
+ifneq ($(filter m7450 mdm9x35 ss333 tss310 xmm7260,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS := -DSAMSUNG_NEXT_GEN_MODEM
 endif
 
