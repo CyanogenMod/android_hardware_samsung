@@ -92,14 +92,6 @@ inline int HAL_PIXEL_FORMAT_2_V4L2_PIX(int HAL_PIXEL_FORMAT)
 #endif
         break;
 
-    case HAL_PIXEL_FORMAT_RGBA_5551:
-        V4L2_PIX = V4L2_PIX_FMT_RGB555X;
-        break;
-
-    case HAL_PIXEL_FORMAT_RGBA_4444:
-        V4L2_PIX = V4L2_PIX_FMT_RGB444;
-        break;
-
     case HAL_PIXEL_FORMAT_YV12:
     case HAL_PIXEL_FORMAT_YCbCr_420_P:
         V4L2_PIX = V4L2_PIX_FMT_YUV420M;

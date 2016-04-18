@@ -22,7 +22,6 @@
 //---------------------------------------------------------//
 
 #include <hardware/hardware.h>
-#include "graphics.h"
 #include "sec_format.h"
 
 #ifdef __cplusplus
@@ -70,14 +69,6 @@ inline int HAL_PIXEL_FORMAT_2_V4L2_PIX(int HAL_PIXEL_FORMAT)
 
     case HAL_PIXEL_FORMAT_BGRA_8888:
         V4L2_PIX = V4L2_PIX_FMT_RGB32;
-        break;
-
-    case HAL_PIXEL_FORMAT_RGBA_5551:
-        V4L2_PIX = V4L2_PIX_FMT_RGB555X;
-        break;
-
-    case HAL_PIXEL_FORMAT_RGBA_4444:
-        V4L2_PIX = V4L2_PIX_FMT_RGB444;
         break;
 
     case HAL_PIXEL_FORMAT_YV12:
@@ -161,14 +152,6 @@ inline int V4L2_PIX_2_HAL_PIXEL_FORMAT(int V4L2_PIX)
         HAL_PIXEL_FORMAT = HAL_PIXEL_FORMAT_BGRA_8888;
         break;
 
-    case V4L2_PIX_FMT_RGB555X:
-        HAL_PIXEL_FORMAT = HAL_PIXEL_FORMAT_RGBA_5551;
-        break;
-
-    case V4L2_PIX_FMT_RGB444:
-        HAL_PIXEL_FORMAT = HAL_PIXEL_FORMAT_RGBA_4444;
-        break;
-
     case V4L2_PIX_FMT_YUV420:
         HAL_PIXEL_FORMAT = HAL_PIXEL_FORMAT_YCbCr_420_P;
         break;
@@ -238,8 +221,6 @@ inline unsigned int FRAME_SIZE(int HAL_PIXEL_FORMAT, int w, int h)
     switch (HAL_PIXEL_FORMAT) {
     // 16bpp
     case HAL_PIXEL_FORMAT_RGB_565:
-    case HAL_PIXEL_FORMAT_RGBA_5551:
-    case HAL_PIXEL_FORMAT_RGBA_4444:
         frame_size = GET_16BPP_FRAME_SIZE(w, h);
         break;
 
