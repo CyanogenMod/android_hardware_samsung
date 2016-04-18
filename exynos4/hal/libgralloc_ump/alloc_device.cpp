@@ -36,7 +36,6 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 #include "sec_format.h"
-#include "graphics.h"
 
 #include "gralloc_priv.h"
 #include "gralloc_helper.h"
@@ -58,7 +57,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include "format.h"
 
 #include <linux/videodev2.h>
 #include "s5p_fimc.h"
@@ -367,7 +365,6 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         format == HAL_PIXEL_FORMAT_YV12 ||
         format == HAL_PIXEL_FORMAT_CUSTOM_YCrCb_420_SP ||
         format == HAL_PIXEL_FORMAT_CUSTOM_YCbCr_420_SP_TILED ||
-        format == GGL_PIXEL_FORMAT_L_8 ||
         format == OMX_COLOR_FormatYUV420Planar ||
         format == OMX_COLOR_FormatYUV420SemiPlanar) {
         /* FIXME: there is no way to return the vstride */
@@ -396,9 +393,6 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
         case HAL_PIXEL_FORMAT_YCbCr_422_SP:
             size = (stride * vstride) + (w/2 * h/2) * 2;
             break;
-        case GGL_PIXEL_FORMAT_L_8:
-            size = (stride * vstride);
-            break;
         default:
             return -EINVAL;
         }
@@ -414,8 +408,6 @@ static int alloc_device_alloc(alloc_device_t* dev, int w, int h, int format,
             bpp = 3;
             break;
         case HAL_PIXEL_FORMAT_RGB_565:
-        case HAL_PIXEL_FORMAT_RGBA_5551:
-        case HAL_PIXEL_FORMAT_RGBA_4444:
             bpp = 2;
             break;
         default:
