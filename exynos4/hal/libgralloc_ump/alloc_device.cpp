@@ -44,7 +44,6 @@
 
 #include "ump.h"
 #include "ump_ref_drv.h"
-#include "secion.h"
 
 /*****************************************************************************/
 #include <limits.h>
