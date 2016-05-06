@@ -563,6 +563,13 @@ processCommandBuffer(void *buffer, size_t buflen, RIL_SOCKET_ID socket_id) {
             pCI = &(s_commands[request]);
     }
 
+    // Received an Ack for the previous result sent to RIL.java,
+    // so release wakelock and exit
+    if (request == RIL_RESPONSE_ACKNOWLEDGEMENT) {
+        releaseWakeLock();
+        return 0;
+    }
+
     if (pCI == NULL) {
         Parcel pErr;
         RLOGE("unsupported request code %d token %d", request, token);
@@ -575,14 +582,7 @@ processCommandBuffer(void *buffer, size_t buflen, RIL_SOCKET_ID socket_id) {
         return 0;
     }
 
-    // Received an Ack for the previous result sent to RIL.java,
-    // so release wakelock and exit
-    if (request == RIL_RESPONSE_ACKNOWLEDGEMENT) {
-        releaseWakeLock();
-        return 0;
-    }
-
-    pRI = (RequestInfo *)calloc(1, sizeof(RequestInfo));
+	pRI = (RequestInfo *)calloc(1, sizeof(RequestInfo));
     if (pRI == NULL) {
         RLOGE("Memory allocation failed for request %s", requestToString(request));
         return 0;
