@@ -3178,9 +3178,10 @@ static int responseRilSignalStrength(Parcel &p,
         return RIL_ERRNO_INVALID_RESPONSE;
     }
 
+    RIL_SignalStrength_v10 *p_cur;
     if (s_callbacks.version <= LAST_IMPRECISE_RIL_VERSION) {
         if (responselen >= sizeof (RIL_SignalStrength_v5)) {
-            RIL_SignalStrength_v10 *p_cur = ((RIL_SignalStrength_v10 *) response);
+            p_cur = ((RIL_SignalStrength_v10 *) response);
 
             responseRilSignalStrengthV5(p, p_cur);
 
@@ -3212,7 +3213,7 @@ static int responseRilSignalStrength(Parcel &p,
                 assert(0);
             }
         }
-        RIL_SignalStrength_v10 *p_cur = ((RIL_SignalStrength_v10 *) response);
+        p_cur = ((RIL_SignalStrength_v10 *) response);
         responseRilSignalStrengthV10(p, p_cur);
     }
 
