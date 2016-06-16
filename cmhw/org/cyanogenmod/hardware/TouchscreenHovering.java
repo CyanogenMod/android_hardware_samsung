@@ -16,10 +16,9 @@
 
 package org.cyanogenmod.hardware;
 
-import org.cyanogenmod.hardware.util.FileUtils;
+import org.cyanogenmod.internal.util.FileUtils;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -46,8 +45,7 @@ public class TouchscreenHovering {
      * @return boolean Supported devices must return always true
      */
     public static boolean isSupported() {
-        File f = new File(COMMAND_PATH);
-        if (f.exists()) {
+        if (FileUtils.isFileWritable(COMMAND_PATH)) {
             BufferedReader reader = null;
             try {
                 String currentLine;

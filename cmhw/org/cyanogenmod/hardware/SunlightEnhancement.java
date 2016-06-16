@@ -16,7 +16,7 @@
 
 package org.cyanogenmod.hardware;
 
-import org.cyanogenmod.hardware.util.FileUtils;
+import org.cyanogenmod.internal.util.FileUtils;
 
 import android.os.SystemProperties;
 
@@ -38,7 +38,7 @@ public class SunlightEnhancement {
      * @return boolean Supported devices must return always true
      */
     public static boolean isSupported() {
-        return new File(sOutdoorModePath).exists();
+        return FileUtils.isFileWritable(sOutdoorModePath);
     }
 
     /**
