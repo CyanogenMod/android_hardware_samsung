@@ -16,9 +16,7 @@
 
 package org.cyanogenmod.hardware;
 
-import org.cyanogenmod.hardware.util.FileUtils;
-
-import java.io.File;
+import org.cyanogenmod.internal.util.FileUtils;
 
 public class VibratorHW {
 
@@ -29,8 +27,7 @@ public class VibratorHW {
     private static String LEVEL_THRESHOLD_PATH = "/sys/class/timed_output/vibrator/pwm_threshold";
 
     public static boolean isSupported() {
-        File f = new File(LEVEL_PATH);
-        return f.exists();
+        return FileUtils.isFileWritable(LEVEL_PATH);
     }
 
     public static int getMaxIntensity()  {
