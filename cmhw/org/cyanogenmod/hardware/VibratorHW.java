@@ -16,9 +16,7 @@
 
 package org.cyanogenmod.hardware;
 
-import org.cyanogenmod.hardware.util.FileUtils;
-
-import java.io.File;
+import org.cyanogenmod.internal.util.FileUtils;
 
 public class VibratorHW {
 
@@ -29,14 +27,11 @@ public class VibratorHW {
     private static String LEVEL_THRESHOLD_PATH = "/sys/class/timed_output/vibrator/pwm_threshold";
 
     public static boolean isSupported() {
-        File f = new File(LEVEL_PATH);
-        return f.exists();
+        return FileUtils.isFileWritable(LEVEL_PATH);
     }
 
     public static int getMaxIntensity()  {
-        File f = new File(LEVEL_MAX_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileReadable(LEVEL_MAX_PATH)) {
             return Integer.parseInt(FileUtils.readOneLine(LEVEL_MAX_PATH));
         } else {
             return 100;
@@ -44,9 +39,7 @@ public class VibratorHW {
     }
 
     public static int getMinIntensity()  {
-        File f = new File(LEVEL_MIN_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileReadable(LEVEL_MIN_PATH)) {
             return Integer.parseInt(FileUtils.readOneLine(LEVEL_MIN_PATH));
         } else {
             return 0;
@@ -54,9 +47,7 @@ public class VibratorHW {
     }
 
     public static int getWarningThreshold()  {
-        File f = new File(LEVEL_THRESHOLD_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileReadable(LEVEL_THRESHOLD_PATH)) {
             return Integer.parseInt(FileUtils.readOneLine(LEVEL_THRESHOLD_PATH));
         } else {
             return 75;
@@ -64,9 +55,7 @@ public class VibratorHW {
     }
 
     public static int getCurIntensity()  {
-        File f = new File(LEVEL_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileReadable(LEVEL_PATH)) {
             return Integer.parseInt(FileUtils.readOneLine(LEVEL_PATH));
         } else {
             return 0;
@@ -74,9 +63,7 @@ public class VibratorHW {
     }
 
     public static int getDefaultIntensity()  {
-        File f = new File(LEVEL_DEFAULT_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileReadable(LEVEL_DEFAULT_PATH)) {
             return Integer.parseInt(FileUtils.readOneLine(LEVEL_DEFAULT_PATH));
         } else {
             return 50;
@@ -84,9 +71,7 @@ public class VibratorHW {
     }
 
     public static boolean setIntensity(int intensity)  {
-        File f = new File(LEVEL_PATH);
-
-        if(f.exists()) {
+        if(FileUtils.isFileWritable(LEVEL_PATH)) {
             return FileUtils.writeLine(LEVEL_PATH, String.valueOf(intensity));
         } else {
             return false;
