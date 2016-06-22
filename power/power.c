@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 
 #define LOG_TAG "SamsungPowerHAL"
-/* #define LOG_NDEBUG 0 */
+#define LOG_NDEBUG 0
 #include <utils/Log.h>
 
 #include <hardware/hardware.h>
@@ -56,6 +56,7 @@ struct samsung_power_module {
     char* touchscreen_power_path;
     char* touchkey_power_path;
     bool touchkey_blocked;
+    char* dt2w_path;
 };
 
 enum power_profile_e {
@@ -294,6 +295,15 @@ static void init_touch_input_power_path(struct samsung_power_module *samsung_pwr
         snprintf(dir, sizeof(dir), "/sys/class/input/input%d", i);
         find_input_nodes(samsung_pwr, dir);
     }
+
+#ifdef DT2W_PATH
+    samsung_pwr->dt2w_path = DT2W_PATH;
+#else
+    samsung_pwr->dt2w_path = NULL;
+#endif
+
+    ALOGV("%s: Double tap to wake is %s", __func__,
+          samsung_pwr->dt2w_path != NULL ? "supported" : "unsupported");
 }
 
 /*
@@ -339,11 +349,26 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     char buf[80];
     char touchkey_node[2];
     int touchkey_enabled;
+    char dt2w_node[2];
+    int dt2w_enabled;
     int rc;
 
     ALOGV("power_set_interactive: %d\n", on);
 
+#ifdef DT2W_PATH
+    /*
+     * If dt2w is enabled, block touchscreen suspend and continue.
+     * Otherwise, power off the touchscreen controller.
+     */
+    if (sysfs_read(samsung_pwr->dt2w_path, dt2w_node, sizeof(dt2w_node)) == 0) {
+        dt2w_enabled = dt2w_node[0] - '0';
+        if (dt2w_enabled == 0) {
+            sysfs_write(samsung_pwr->touchscreen_power_path, on ? "1" : "0");
+        }
+    }
+#else
     sysfs_write(samsung_pwr->touchscreen_power_path, on ? "1" : "0");
+#endif
 
     rc = stat(samsung_pwr->touchkey_power_path, &sb);
     if (rc < 0) {
@@ -471,6 +496,20 @@ static int samsung_get_feature(struct power_module *module __unused,
     return -1;
 }
 
+static void samsung_set_feature(struct power_module *module, feature_t feature, int state)
+{
+    struct samsung_power_module *samsung_pwr = (struct samsung_power_module *) module;
+
+    switch (feature) {
+        case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
+            ALOGV("%s: %s double tap to wake", __func__, state ? "enabling" : "disabling");
+            sysfs_write(samsung_pwr->dt2w_path, state > 0 ? "0" : "1");
+            break;
+        default:
+            break;
+    }
+}
+
 static struct hw_module_methods_t power_module_methods = {
     .open = NULL,
 };
@@ -490,7 +529,8 @@ struct samsung_power_module HAL_MODULE_INFO_SYM = {
         .init = samsung_power_init,
         .setInteractive = samsung_power_set_interactive,
         .powerHint = samsung_power_hint,
-        .getFeature = samsung_get_feature
+        .getFeature = samsung_get_feature,
+        .setFeature = samsung_set_feature
     },
 
     .lock = PTHREAD_MUTEX_INITIALIZER,
