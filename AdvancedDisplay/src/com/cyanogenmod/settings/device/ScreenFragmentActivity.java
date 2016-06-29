@@ -31,6 +31,7 @@ import android.preference.PreferenceScreen;
 import android.util.Log;
 
 import com.cyanogenmod.settings.device.R;
+import org.cyanogenmod.internal.util.FileUtils;
 
 public class ScreenFragmentActivity extends PreferenceFragment {
 
@@ -69,8 +70,8 @@ public class ScreenFragmentActivity extends PreferenceFragment {
         return true;
     }
 
-    public static boolean isSupported(String FILE) {
-        return Utils.fileExists(FILE);
+    public static boolean isSupported(String filePath) {
+        return FileUtils.isFileWritable(filePath);
     }
 
     public static void restore(Context context) {
