@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The CyanogenMod Project
+ * Copyright (C) 2013-2016 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,80 +16,46 @@
 
 package org.cyanogenmod.hardware;
 
-import org.cyanogenmod.hardware.util.FileUtils;
-
-import java.io.File;
+import org.cyanogenmod.internal.util.FileUtils;
 
 public class VibratorHW {
 
-    private static String LEVEL_PATH = "/sys/class/timed_output/vibrator/pwm_value";
-    private static String LEVEL_MAX_PATH = "/sys/class/timed_output/vibrator/pwm_max";
-    private static String LEVEL_MIN_PATH = "/sys/class/timed_output/vibrator/pwm_min";
-    private static String LEVEL_DEFAULT_PATH = "/sys/class/timed_output/vibrator/pwm_default";
-    private static String LEVEL_THRESHOLD_PATH = "/sys/class/timed_output/vibrator/pwm_threshold";
+    private static final String LEVEL_PATH = "/sys/class/timed_output/vibrator/pwm_value";
+    private static final String LEVEL_MAX_PATH = "/sys/class/timed_output/vibrator/pwm_max";
+    private static final String LEVEL_MIN_PATH = "/sys/class/timed_output/vibrator/pwm_min";
+    private static final String LEVEL_DEFAULT_PATH = "/sys/class/timed_output/vibrator/pwm_default";
+    private static final String LEVEL_THRESHOLD_PATH = "/sys/class/timed_output/vibrator/pwm_threshold";
 
     public static boolean isSupported() {
-        File f = new File(LEVEL_PATH);
-        return f.exists();
+        return FileUtils.isFileWritable(LEVEL_PATH) &&
+                FileUtils.isFileReadable(LEVEL_PATH) &&
+                FileUtils.isFileReadable(LEVEL_DEFAULT_PATH) &&
+                FileUtils.isFileReadable(LEVEL_MAX_PATH) &&
+                FileUtils.isFileReadable(LEVEL_MIN_PATH) &&
+                FileUtils.isFileReadable(LEVEL_THRESHOLD_PATH);
     }
 
     public static int getMaxIntensity()  {
-        File f = new File(LEVEL_MAX_PATH);
-
-        if(f.exists()) {
-            return Integer.parseInt(FileUtils.readOneLine(LEVEL_MAX_PATH));
-        } else {
-            return 100;
-        }
+        return Integer.parseInt(FileUtils.readOneLine(LEVEL_MAX_PATH));
     }
 
     public static int getMinIntensity()  {
-        File f = new File(LEVEL_MIN_PATH);
-
-        if(f.exists()) {
-            return Integer.parseInt(FileUtils.readOneLine(LEVEL_MIN_PATH));
-        } else {
-            return 0;
-        }
+        return Integer.parseInt(FileUtils.readOneLine(LEVEL_MIN_PATH));
     }
 
     public static int getWarningThreshold()  {
-        File f = new File(LEVEL_THRESHOLD_PATH);
-
-        if(f.exists()) {
-            return Integer.parseInt(FileUtils.readOneLine(LEVEL_THRESHOLD_PATH));
-        } else {
-            return 75;
-        }
+        return Integer.parseInt(FileUtils.readOneLine(LEVEL_THRESHOLD_PATH));
     }
 
     public static int getCurIntensity()  {
-        File f = new File(LEVEL_PATH);
-
-        if(f.exists()) {
-            return Integer.parseInt(FileUtils.readOneLine(LEVEL_PATH));
-        } else {
-            return 0;
-        }
+        return Integer.parseInt(FileUtils.readOneLine(LEVEL_PATH));
     }
 
     public static int getDefaultIntensity()  {
-        File f = new File(LEVEL_DEFAULT_PATH);
-
-        if(f.exists()) {
-            return Integer.parseInt(FileUtils.readOneLine(LEVEL_DEFAULT_PATH));
-        } else {
-            return 50;
-        }
+        return Integer.parseInt(FileUtils.readOneLine(LEVEL_DEFAULT_PATH));
     }
 
     public static boolean setIntensity(int intensity)  {
-        File f = new File(LEVEL_PATH);
-
-        if(f.exists()) {
-            return FileUtils.writeLine(LEVEL_PATH, String.valueOf(intensity));
-        } else {
-            return false;
-        }
+        return FileUtils.writeLine(LEVEL_PATH, String.valueOf(intensity));
     }
 }
