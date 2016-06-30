@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenariu</string>
   <string name="mdnie_scenario_summary_head">Setează scenariul mDNIe</string>
-  <string name="mdnie_mode_title_head">Mod</string>
-  <string name="mdnie_mode_summary_head">Setează modul mDNIe</string>
   <string name="mdnie_negative_title_head">Mod culori negative</string>
   <string name="mdnie_negative_summary_head">Activează/dezactivează culori inversate</string>
 </resources>

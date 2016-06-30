@@ -27,12 +27,6 @@
     <item>ಗ್ಯಾಲರಿ</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ಕ್ರಿಯಾತ್ಮಕ (ಡೀಫಾಲ್ಟ್)</item>
-    <item>ಸ್ಟಾಂಡರ್ಡ್</item>
-    <item>ನೈಸರ್ಗಿಕ</item>
-    <item>ಸಿನಿಮಾ</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>ಸಾಧಾರಣ</item>
     <item>ಇನ್ವರ್ಟೆಡ್</item>

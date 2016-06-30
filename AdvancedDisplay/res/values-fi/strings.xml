@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Skenaario</string>
   <string name="mdnie_scenario_summary_head">Aseta mDNIe-skenaario</string>
-  <string name="mdnie_mode_title_head">Tila</string>
-  <string name="mdnie_mode_summary_head">Aseta mDNIe-tila</string>
   <string name="mdnie_negative_title_head">Negatiivitila</string>
   <string name="mdnie_negative_summary_head">Käytä käänteisiä värejä</string>
 </resources>

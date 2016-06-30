@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Сцэнар</string>
   <string name="mdnie_scenario_summary_head">Усталёўка сцэнара mDNIe</string>
-  <string name="mdnie_mode_title_head">Рэжым</string>
-  <string name="mdnie_mode_summary_head">Усталёўка рэжыму mDNIe</string>
   <string name="mdnie_negative_title_head">Негатыў</string>
   <string name="mdnie_negative_summary_head">Укл./выкл. інверсіі колераў</string>
 </resources>

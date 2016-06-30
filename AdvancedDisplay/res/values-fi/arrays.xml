@@ -27,12 +27,6 @@
     <item>Galleria</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dynaaminen (oletus)</item>
-    <item>Standardi</item>
-    <item>Luonnollinen</item>
-    <item>Elokuva</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normaali</item>
     <item>Käänteinen</item>

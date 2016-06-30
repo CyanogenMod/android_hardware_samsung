@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Eszenatokia</string>
   <string name="mdnie_scenario_summary_head">mDNIe eszenatokia ezarri</string>
-  <string name="mdnie_mode_title_head">Modua</string>
-  <string name="mdnie_mode_summary_head">Ezarri mDNIe modua</string>
   <string name="mdnie_negative_title_head">Modu negatiboa</string>
   <string name="mdnie_negative_summary_head">Gaitu/ezgaitu kolore alderantzikatuak</string>
 </resources>
