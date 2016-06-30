@@ -26,13 +26,7 @@
     <item>การนำทาง</item>
     <item>แกลเลอรี</item>
     <item>VT</item>
-  </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ไดนามิก (เริ่มต้น)</item>
-    <item>มาตรฐาน</item>
-    <item>ธรรมชาติ</item>
-    <item>ภาพยนตร์</item>
-  </string-array>
+</string-array>
   <string-array name="mdnie_negative_entries">
     <item>ปกติ</item>
     <item>กลับแล้ว</item>

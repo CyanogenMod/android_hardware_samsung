@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Σενάριο</string>
   <string name="mdnie_scenario_summary_head">Ορίστε το σενάριο mDNIe</string>
-  <string name="mdnie_mode_title_head">Λειτουργία</string>
-  <string name="mdnie_mode_summary_head">Ορίστε την λειτουργία mDNIe</string>
   <string name="mdnie_negative_title_head">Αρνητική λειτουργία</string>
   <string name="mdnie_negative_summary_head">Ενεργοποίηση/απενεργοποίηση αντεστραμμένων χρωμάτων</string>
 </resources>

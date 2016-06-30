@@ -27,12 +27,6 @@
     <item>Галерэя</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Дынамічны (Па змаўчанні)</item>
-    <item>Стандартны</item>
-    <item>Натуральны</item>
-    <item>Фільм</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Звычайны</item>
     <item>Інверсія</item>

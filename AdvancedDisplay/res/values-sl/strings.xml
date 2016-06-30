@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenarij</string>
   <string name="mdnie_scenario_summary_head">Nastavite scenarij mDNIe</string>
-  <string name="mdnie_mode_title_head">Način</string>
-  <string name="mdnie_mode_summary_head">Nastavite način mDNIe</string>
   <string name="mdnie_negative_title_head">Način negativa</string>
   <string name="mdnie_negative_summary_head">Omogoči/Onemogoči obrnjene barve</string>
 </resources>

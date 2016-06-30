@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Escenariu</string>
   <string name="mdnie_scenario_summary_head">Definir l\'escenariu mDNIe</string>
-  <string name="mdnie_mode_title_head">Mou</string>
-  <string name="mdnie_mode_summary_head">Definir el mou mDNIe</string>
   <string name="mdnie_negative_title_head">Mou negativu</string>
   <string name="mdnie_negative_summary_head">Activar/desactivar los colores invertíos</string>
 </resources>
