@@ -27,12 +27,6 @@
     <item>Galéria</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dinamikus (alapbeállítás)</item>
-    <item>Hagyományos</item>
-    <item>Természetes</item>
-    <item>Film</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normál</item>
     <item>Fordított</item>

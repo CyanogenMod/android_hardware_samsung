@@ -27,12 +27,6 @@
     <item>गॅलरी</item>
     <item>व्हीटी</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>गतीशील (डिफॉल्ट)</item>
-    <item>मानक</item>
-    <item>नैसर्गिक</item>
-    <item>मुव्ही</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>सामान्य</item>
     <item>अधोमुख</item>
