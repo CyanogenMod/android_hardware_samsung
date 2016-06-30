@@ -27,12 +27,6 @@
     <item>Thư viện</item>
     <item>Công nghệ ảo hóa</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Động (mặc định)</item>
-    <item>Tiêu chuẩn</item>
-    <item>Tự nhiên</item>
-    <item>Phim</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Thông thường</item>
     <item>Đảo ngược</item>

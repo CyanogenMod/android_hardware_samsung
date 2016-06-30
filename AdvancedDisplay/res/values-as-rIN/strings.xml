@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">দৃশ্যপট</string>
   <string name="mdnie_scenario_summary_head">mDNIe দৃশ্যপট ছেট কৰক</string>
-  <string name="mdnie_mode_title_head">মোড</string>
-  <string name="mdnie_mode_summary_head">mDNIe মোড ছেট কৰক</string>
   <string name="mdnie_negative_title_head">নেগেটিভ মোড</string>
   <string name="mdnie_negative_summary_head">বিপৰীত ৰংবোৰ সক্ষম/অক্ষম কৰক</string>
 </resources>

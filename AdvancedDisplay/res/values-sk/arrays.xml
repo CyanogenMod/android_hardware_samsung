@@ -27,12 +27,6 @@
     <item>Galéria</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dynamický (predvolené)</item>
-    <item>Štandardné</item>
-    <item>Prirodzené</item>
-    <item>Film</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normálne</item>
     <item>Obrátené</item>
