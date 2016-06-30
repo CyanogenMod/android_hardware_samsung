@@ -27,12 +27,6 @@
     <item>גלריה</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>דינמי (ברירת מחדל)</item>
-    <item>סטנדרטי</item>
-    <item>טבעי</item>
-    <item>סרט</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>רגיל</item>
     <item>הפוך</item>

@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">ଦୃଶ୍ୟପଟ</string>
   <string name="mdnie_scenario_summary_head">mDNIe ଦୃଶ୍ୟପଟ ସେଟ୍‍ କରନ୍ତୁ</string>
-  <string name="mdnie_mode_title_head">ମୋଡ୍</string>
-  <string name="mdnie_mode_summary_head">mDNIe ଦୃଶ୍ୟପଟ ସେଟ୍‍ କରନ୍ତୁ</string>
   <string name="mdnie_negative_title_head">ନେଗେଟିଭ୍‍ ମୋଡ୍‍</string>
   <string name="mdnie_negative_summary_head">ଇ‍ନ୍ଭର୍ଟେଡ ରଙ୍ଗ ସଷମ/ଅଷମ କରନ୍ତୁ</string>
 </resources>

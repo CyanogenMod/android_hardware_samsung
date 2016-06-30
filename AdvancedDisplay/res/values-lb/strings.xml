@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Zeenario</string>
   <string name="mdnie_scenario_summary_head">mDNIe-Zeenario auswielen</string>
-  <string name="mdnie_mode_title_head">Modus</string>
-  <string name="mdnie_mode_summary_head">mDNIe-Modus setzen</string>
   <string name="mdnie_negative_title_head">Negativ-Modus</string>
   <string name="mdnie_negative_summary_head">Aktivéier/desaktivéier invertéiert Faarwen</string>
 </resources>

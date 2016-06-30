@@ -27,12 +27,6 @@
     <item>Галерия</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Динамичен (по подразбиране)</item>
-    <item>Стандартен</item>
-    <item>Естествен</item>
-    <item>Филм</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Нормално</item>
     <item>Обърнати</item>
