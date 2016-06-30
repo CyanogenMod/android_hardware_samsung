@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">خط مشی</string>
   <string name="mdnie_scenario_summary_head">تنظیم خط مشی mDNIe</string>
-  <string name="mdnie_mode_title_head">حالت</string>
-  <string name="mdnie_mode_summary_head">تنظیم حالت mDNIe</string>
   <string name="mdnie_negative_title_head">حالت معکوس رنگ‌ها</string>
   <string name="mdnie_negative_summary_head">فعال/غیرفعال کردن رنگ‌های معکوس</string>
 </resources>

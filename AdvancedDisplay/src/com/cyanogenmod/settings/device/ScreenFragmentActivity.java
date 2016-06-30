@@ -38,7 +38,6 @@ public class ScreenFragmentActivity extends PreferenceFragment {
     private static final String PREF_ENABLED = "1";
     private static final String TAG = "DisplaySettings_Screen";
     private mDNIeScenario mmDNIeScenario;
-    private mDNIeMode mmDNIeMode;
     private mDNIeNegative mmDNIeNegative;
 
     @Override
@@ -52,9 +51,6 @@ public class ScreenFragmentActivity extends PreferenceFragment {
         /* mDNIe */
         mmDNIeScenario = (mDNIeScenario) findPreference(DisplaySettings.KEY_MDNIE_SCENARIO);
         mmDNIeScenario.setEnabled(mDNIeScenario.isSupported(res.getString(R.string.mdnie_scenario_sysfs_file)));
-
-        mmDNIeMode = (mDNIeMode) findPreference(DisplaySettings.KEY_MDNIE_MODE);
-        mmDNIeMode.setEnabled(mDNIeMode.isSupported(res.getString(R.string.mdnie_mode_sysfs_file)));
 
         mmDNIeNegative = (mDNIeNegative) findPreference(DisplaySettings.KEY_MDNIE_NEGATIVE);
         mmDNIeNegative.setEnabled(mDNIeNegative.isSupported(res.getString(R.string.mdnie_negative_sysfs_file)));
