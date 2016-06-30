@@ -27,12 +27,6 @@
     <item>Galerija</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dinamisks (noklusētais)</item>
-    <item>Standarta</item>
-    <item>Dabīgs</item>
-    <item>Filma</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Parasts</item>
     <item>Invertēts</item>

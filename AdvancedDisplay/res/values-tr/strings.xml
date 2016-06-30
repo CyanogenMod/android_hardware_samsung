@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Ekran Modu</string>
   <string name="mdnie_scenario_summary_head">mDNIe senaryosunu ayarla</string>
-  <string name="mdnie_mode_title_head">Mod</string>
-  <string name="mdnie_mode_summary_head">mDNIe modunu ayarla</string>
   <string name="mdnie_negative_title_head">Negatif modu</string>
   <string name="mdnie_negative_summary_head">Ters renkleri aç/kapat</string>
 </resources>

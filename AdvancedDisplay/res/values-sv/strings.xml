@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenario</string>
   <string name="mdnie_scenario_summary_head">Ställ in mDNIe-scenario</string>
-  <string name="mdnie_mode_title_head">Läge</string>
-  <string name="mdnie_mode_summary_head">Ställ in mDNIe läge</string>
   <string name="mdnie_negative_title_head">Negativt läge</string>
   <string name="mdnie_negative_summary_head">Aktivera/inaktivera inverterade färger</string>
 </resources>

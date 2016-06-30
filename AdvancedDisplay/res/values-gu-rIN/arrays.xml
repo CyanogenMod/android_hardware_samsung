@@ -27,12 +27,6 @@
     <item>ગેલેરી</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ડાયનેમિક (ડિફૉલ્ટ)</item>
-    <item>પ્રમાણભૂત</item>
-    <item>નેચરલ</item>
-    <item>ફિલ્મ</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>સામાન્ય</item>
     <item>ઉલટાવેલ</item>

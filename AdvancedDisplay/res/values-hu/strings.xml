@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Megjelenítés</string>
   <string name="mdnie_scenario_summary_head">mDNIe megjelenítési beállítások</string>
-  <string name="mdnie_mode_title_head">Üzemmód</string>
-  <string name="mdnie_mode_summary_head">mDNIe üzemmódok</string>
   <string name="mdnie_negative_title_head">Negatív üzemmód</string>
   <string name="mdnie_negative_summary_head">Fordított színek ki/be</string>
 </resources>
