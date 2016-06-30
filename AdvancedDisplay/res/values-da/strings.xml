@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenarie</string>
   <string name="mdnie_scenario_summary_head">Angiv mDNIe-scenariet</string>
-  <string name="mdnie_mode_title_head">Tilstand</string>
-  <string name="mdnie_mode_summary_head">Angiv mDNIe-tilstanden</string>
   <string name="mdnie_negative_title_head">Negativ tilstand</string>
   <string name="mdnie_negative_summary_head">Aktivér/deaktivér inverteret farver</string>
 </resources>

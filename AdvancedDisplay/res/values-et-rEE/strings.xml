@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Stsenaarium</string>
   <string name="mdnie_scenario_summary_head">Seadke mDNIe stsenaarium</string>
-  <string name="mdnie_mode_title_head">Režiim</string>
-  <string name="mdnie_mode_summary_head">Seadke mDNIe režiim</string>
   <string name="mdnie_negative_title_head">Negatiivne režiim</string>
   <string name="mdnie_negative_summary_head">Luba/keela negatiivsed värvid</string>
 </resources>

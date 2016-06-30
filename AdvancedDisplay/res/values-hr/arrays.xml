@@ -27,12 +27,6 @@
     <item>Galerija</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dinamično (zadano)</item>
-    <item>Standardno</item>
-    <item>Prirodno</item>
-    <item>Film</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normalan</item>
     <item>Preokrenuto</item>

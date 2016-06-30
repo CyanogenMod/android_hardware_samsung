@@ -27,12 +27,6 @@
     <item>ଗ୍ୟାଲେରୀ</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ଡାଇନାମିକ୍‍ (ଡିଫଲ୍ଟ)</item>
-    <item>ମାନାଙ୍କ</item>
-    <item>ପ୍ରାକୃତିକ</item>
-    <item>ଚଳଚ୍ଚିତ୍ର</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>ସାଧାରଣ</item>
     <item>ଓଲଟା</item>

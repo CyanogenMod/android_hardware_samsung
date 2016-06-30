@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">परिस्थिती</string>
   <string name="mdnie_scenario_summary_head">mDNIe परिस्थिती सेट करा</string>
-  <string name="mdnie_mode_title_head">मोड</string>
-  <string name="mdnie_mode_summary_head">mDNIe मोड सेट करा</string>
   <string name="mdnie_negative_title_head">नकारात्मक मोड</string>
   <string name="mdnie_negative_summary_head">अधोमुख रंग सक्षम करा/अक्षम करा</string>
 </resources>

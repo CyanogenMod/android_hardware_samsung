@@ -27,12 +27,6 @@
     <item>Galerij</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dynamisch (standaard)</item>
-    <item>Standaard</item>
-    <item>Natuurlijk</item>
-    <item>Film</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normaal</item>
     <item>Omgedraaid</item>

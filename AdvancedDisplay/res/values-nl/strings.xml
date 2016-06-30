@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenario</string>
   <string name="mdnie_scenario_summary_head">mDNIe-scenario instellen</string>
-  <string name="mdnie_mode_title_head">Modus</string>
-  <string name="mdnie_mode_summary_head">mDNIe-modus instellen</string>
   <string name="mdnie_negative_title_head">Negatieve modus</string>
   <string name="mdnie_negative_summary_head">Negatieve kleuren in-/uitschakelen</string>
 </resources>
