@@ -27,12 +27,6 @@
     <item>圖片庫</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>動感（預設）</item>
-    <item>標準</item>
-    <item>自然</item>
-    <item>影片</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>適中</item>
     <item>反向</item>

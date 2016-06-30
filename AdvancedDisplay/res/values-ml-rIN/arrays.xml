@@ -27,12 +27,6 @@
     <item>ഗാലറി</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ഡൈനാമിക്</item>
-    <item>സ്റ്റാൻഡേർഡ്</item>
-    <item>സ്വാഭാവികം</item>
-    <item>സിനിമ</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>സാധാരണം</item>
     <item>വിപരീതദിശയിലാക്കി</item>
