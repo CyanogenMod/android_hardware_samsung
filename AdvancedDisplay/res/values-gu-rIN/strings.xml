@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">દ્રશ્ય</string>
   <string name="mdnie_scenario_summary_head">mDNIe દ્રશ્ય સેટ કરો</string>
-  <string name="mdnie_mode_title_head">મોડ</string>
-  <string name="mdnie_mode_summary_head">mDNIe મોડ સેટ કરો</string>
   <string name="mdnie_negative_title_head">નૅવિગેશન મોડ</string>
   <string name="mdnie_negative_summary_head">વિપરીત રંગો સક્ષમ/અક્ષમ કરો</string>
 </resources>

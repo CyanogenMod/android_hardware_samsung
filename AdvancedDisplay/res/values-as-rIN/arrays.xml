@@ -27,12 +27,6 @@
     <item>গেলাৰী</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>ডায়নামিক (ডিফ\'ল্ট)</item>
-    <item>ষ্টেণ্ডাৰ্ড</item>
-    <item>প্ৰাকৃতিক</item>
-    <item>চলচ্চিত্ৰ্ৰ</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>সাধাৰণ</item>
     <item>বিপৰীত</item>

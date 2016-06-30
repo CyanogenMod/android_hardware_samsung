@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">അവസ്ഥ</string>
   <string name="mdnie_scenario_summary_head">mDNle അവസ്ഥ സജ്ജമാക്കാൻ</string>
-  <string name="mdnie_mode_title_head">മോഡ്</string>
-  <string name="mdnie_mode_summary_head">mDNle മോഡ് സജ്ജമാക്കാൻ</string>
   <string name="mdnie_negative_title_head">നെഗറ്റീവ് മോഡ്</string>
   <string name="mdnie_negative_summary_head">വിപരീതം നിറങ്ങൾ ഓൺ-ഓഫ് ചെയ്യുക</string>
 </resources>

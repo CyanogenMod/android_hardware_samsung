@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">سیناریۆ</string>
   <string name="mdnie_scenario_summary_head">دانانی دۆخی mDNIe سیناریۆ</string>
-  <string name="mdnie_mode_title_head">دۆخ</string>
-  <string name="mdnie_mode_summary_head">دانانی mDNIe باری</string>
   <string name="mdnie_negative_title_head">دۆخی نەرێنی</string>
   <string name="mdnie_negative_summary_head">چالاککردن/ناچالاککردنی ڕه‌نگه‌کان گۆڕاوەکان</string>
 </resources>

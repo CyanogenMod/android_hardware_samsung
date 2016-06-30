@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenario</string>
   <string name="mdnie_scenario_summary_head">Stel die mDNIe scenario</string>
-  <string name="mdnie_mode_title_head">Modus</string>
-  <string name="mdnie_mode_summary_head">Stel die mDNIe modus</string>
   <string name="mdnie_negative_title_head">Negatiewe modus</string>
   <string name="mdnie_negative_summary_head">Aktiveer/deaktiveer omgekeerde kleure</string>
 </resources>

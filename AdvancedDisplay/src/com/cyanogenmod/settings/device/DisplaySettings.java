@@ -35,7 +35,6 @@ public class DisplaySettings extends Activity {
     public static final String SHARED_PREFERENCES_BASENAME = "com.cyanogenmod.settings.device";
     public static final String ACTION_UPDATE_PREFERENCES = "com.cyanogenmod.settings.device.UPDATE";
     public static final String KEY_MDNIE_SCENARIO = "mdnie_scenario";
-    public static final String KEY_MDNIE_MODE = "mdnie_mode";
     public static final String KEY_MDNIE_NEGATIVE = "mdnie_negative";
 
     ScreenFragmentActivity mFragment;

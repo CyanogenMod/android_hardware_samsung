@@ -27,12 +27,6 @@
     <item>படத்தொகுப்பு</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>டைனமிக் (இயல்புநிலை)</item>
-    <item>நிலையான</item>
-    <item>இயற்கை</item>
-    <item>திரைப்படம்</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>இயல்பு</item>
     <item>திருப்பிவிடப்பட்ட</item>

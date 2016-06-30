@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scénario</string>
   <string name="mdnie_scenario_summary_head">Définir le scénario mDNIe</string>
-  <string name="mdnie_mode_title_head">Mode</string>
-  <string name="mdnie_mode_summary_head">Définir le mode mDNIe</string>
   <string name="mdnie_negative_title_head">Mode négatif</string>
   <string name="mdnie_negative_summary_head">Activer/désactiver les couleurs inversées</string>
 </resources>

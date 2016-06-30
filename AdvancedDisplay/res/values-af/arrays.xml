@@ -27,12 +27,6 @@
     <item>Galery</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dinamies (standaard)</item>
-    <item>Standaard</item>
-    <item>Natuurlik</item>
-    <item>Flieks</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normaal</item>
     <item>Omgekeerde</item>

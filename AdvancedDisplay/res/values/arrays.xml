@@ -39,20 +39,6 @@
         <item>8</item>
     </string-array>
 
-    <string-array name="mdnie_mode_entries">
-        <item>Dynamic (default)</item>
-        <item>Standard</item>
-        <item>Natural</item>
-        <item>Movie</item>
-    </string-array>
-
-    <string-array name="mdnie_mode_entries_values" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </string-array>
-
     <string-array name="mdnie_negative_entries">
         <item>Normal</item>
         <item>Inverted</item>
