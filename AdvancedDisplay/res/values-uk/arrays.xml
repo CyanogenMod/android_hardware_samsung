@@ -27,12 +27,6 @@
     <item>Галерея</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Динамічний (типово)</item>
-    <item>Стандартний</item>
-    <item>Натуральний</item>
-    <item>Кіно</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Звичайний</item>
     <item>Негатив</item>

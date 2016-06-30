@@ -27,12 +27,6 @@
     <item>Galería</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>Dinámico (por defecto)</item>
-    <item>Estándar</item>
-    <item>Natural</item>
-    <item>Película</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>Normal</item>
     <item>Invertido</item>

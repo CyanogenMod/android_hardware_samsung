@@ -27,12 +27,6 @@
     <item>گەلەری</item>
     <item>VT</item>
   </string-array>
-  <string-array name="mdnie_mode_entries">
-    <item>دینامیک (سەرەکی)</item>
-    <item>پێوانەی</item>
-    <item>سروشتی</item>
-    <item>فیلم</item>
-  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>ئاسایی</item>
     <item>پێچەوانە</item>
