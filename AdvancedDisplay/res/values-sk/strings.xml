@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Scenár</string>
   <string name="mdnie_scenario_summary_head">Nastaviť scenár mDNIe</string>
-  <string name="mdnie_mode_title_head">Režim</string>
-  <string name="mdnie_mode_summary_head">Nastaviť režim mDNIe</string>
   <string name="mdnie_negative_title_head">Inverzný režim</string>
   <string name="mdnie_negative_summary_head">Povoliť/zakázať obrátené farby</string>
 </resources>
