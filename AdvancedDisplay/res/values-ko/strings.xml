@@ -23,8 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">시나리오</string>
   <string name="mdnie_scenario_summary_head">mDNIe 시나리오 설정</string>
-  <string name="mdnie_mode_title_head">모드</string>
-  <string name="mdnie_mode_summary_head">mDNIe 모드 설정</string>
   <string name="mdnie_negative_title_head">반전 모드</string>
   <string name="mdnie_negative_summary_head">반전된 색상 사용/사용 안 함</string>
 </resources>
