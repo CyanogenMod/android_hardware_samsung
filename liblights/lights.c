@@ -190,6 +190,10 @@ static int set_light_leds(struct light_state_t const *state, int type)
     struct led_config *led;
     int err = 0;
 
+    int led_available = open(LED_BLINK, O_RDWR);
+    if (led_available < 0)
+        return -EINVAL;
+
     ALOGV("%s: type=%d, color=0x%010x, fM=%d, fOnMS=%d, fOffMs=%d.", __func__,
           type, state->color,state->flashMode, state->flashOnMS, state->flashOffMS);
 
