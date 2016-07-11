@@ -44,6 +44,8 @@
 #define CPU4_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq"
 #define CPU4_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
 
+#define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
+
 struct samsung_power_module {
     struct power_module base;
     pthread_mutex_t lock;
@@ -338,10 +340,19 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     struct stat sb;
     char buf[80];
     char touchkey_node[2];
-    int touchkey_enabled;
+    char panel_brightness[4];
     int rc;
 
     ALOGV("power_set_interactive: %d\n", on);
+
+    // Do not disable any input devices if the screen is on but we are in a non-interactive state
+    if (!on && sysfs_read(PANEL_BRIGHTNESS, panel_brightness, sizeof(PANEL_BRIGHTNESS)) == 0) {
+        if ((panel_brightness[0] - '0') > 0) {
+            ALOGV("%s: Moving to non-interactive state, but screen is still on"
+                  " (brightness: %d), not disabling input devices\n", __func__, panel_brightness);
+            goto out;
+        }
+    }
 
     sysfs_write(samsung_pwr->touchscreen_power_path, on ? "1" : "0");
 
@@ -353,13 +364,12 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     if (!on) {
         if (sysfs_read(samsung_pwr->touchkey_power_path, touchkey_node,
                        sizeof(touchkey_node)) == 0) {
-            touchkey_enabled = touchkey_node[0] - '0';
             /*
-             * If touchkey_enabled is 0, the keys have been disabled by another component
+             * If touchkey_node is 0, the keys have been disabled by another component
              * (for example cmhw), which means we don't want them to be enabled when resuming
              * from suspend.
              */
-            if (touchkey_enabled == 0) {
+            if ((touchkey_node[0] - '0') == 0) {
                 samsung_pwr->touchkey_blocked = true;
             } else {
                 samsung_pwr->touchkey_blocked = false;
