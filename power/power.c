@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -43,6 +44,8 @@
 #define CPU0_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU4_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq"
 #define CPU4_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
+
+#define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
 
 struct samsung_power_module {
     struct power_module base;
@@ -119,6 +122,29 @@ static void sysfs_write(const char *path, char *s)
     }
 
     close(fd);
+}
+
+static unsigned int read_panel_brightness() {
+    unsigned int ret = 0;
+    int read_status;
+    // brightness can range from 0 to 255, so max. 3 chars + '\0'
+    char panel_brightness[4];
+
+    read_status = sysfs_read(PANEL_BRIGHTNESS, panel_brightness, sizeof(PANEL_BRIGHTNESS));
+    if (read_status < 0) {
+        ALOGE("%s: Failed to read panel brightness from %s!\n", __func__, PANEL_BRIGHTNESS);
+        return -1;
+    }
+
+    for (unsigned int i = 0; i < (sizeof(panel_brightness) / sizeof(panel_brightness[0])); i++) {
+        if (isdigit(panel_brightness[i])) {
+            ret += (panel_brightness[i] - '0');
+        }
+    }
+
+    ALOGV("%s: Panel brightness is: %d", __func__, ret);
+
+    return ret;
 }
 
 /**********************************************************
@@ -338,10 +364,18 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     struct stat sb;
     char buf[80];
     char touchkey_node[2];
-    int touchkey_enabled;
     int rc;
 
     ALOGV("power_set_interactive: %d\n", on);
+
+    // Do not disable any input devices if the screen is on but we are in a non-interactive state
+    if (!on) {
+        if (read_panel_brightness() > 0) {
+            ALOGV("%s: Moving to non-interactive state, but screen is still on,"
+                  " not disabling input devices\n", __func__);
+            goto out;
+        }
+    }
 
     sysfs_write(samsung_pwr->touchscreen_power_path, on ? "1" : "0");
 
@@ -353,13 +387,12 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     if (!on) {
         if (sysfs_read(samsung_pwr->touchkey_power_path, touchkey_node,
                        sizeof(touchkey_node)) == 0) {
-            touchkey_enabled = touchkey_node[0] - '0';
             /*
-             * If touchkey_enabled is 0, the keys have been disabled by another component
+             * If touchkey_node is 0, the keys have been disabled by another component
              * (for example cmhw), which means we don't want them to be enabled when resuming
              * from suspend.
              */
-            if (touchkey_enabled == 0) {
+            if ((touchkey_node[0] - '0') == 0) {
                 samsung_pwr->touchkey_blocked = true;
             } else {
                 samsung_pwr->touchkey_blocked = false;
