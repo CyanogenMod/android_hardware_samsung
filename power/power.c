@@ -125,7 +125,7 @@ static void sysfs_write(const char *path, char *s)
 }
 
 static unsigned int read_panel_brightness() {
-    unsigned int ret = 0;
+    unsigned int i, ret = 0;
     int read_status;
     // brightness can range from 0 to 255, so max. 3 chars + '\0'
     char panel_brightness[4];
@@ -136,7 +136,7 @@ static unsigned int read_panel_brightness() {
         return -1;
     }
 
-    for (unsigned int i = 0; i < (sizeof(panel_brightness) / sizeof(panel_brightness[0])); i++) {
+    for (i = 0; i < (sizeof(panel_brightness) / sizeof(panel_brightness[0])); i++) {
         if (isdigit(panel_brightness[i])) {
             ret += (panel_brightness[i] - '0');
         }
