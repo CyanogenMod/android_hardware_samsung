@@ -26,7 +26,7 @@
     <item>การนำทาง</item>
     <item>แกลเลอรี</item>
     <item>VT</item>
-</string-array>
+  </string-array>
   <string-array name="mdnie_negative_entries">
     <item>ปกติ</item>
     <item>กลับแล้ว</item>
