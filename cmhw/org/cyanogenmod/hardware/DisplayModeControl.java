@@ -113,6 +113,10 @@ public class DisplayModeControl {
      * if this mode is valid.
      */
     public static boolean setMode(DisplayMode mode, boolean makeDefault) {
+        if (mode == null) {
+            return false;
+        }
+
         boolean success = FileUtils.writeLine(MODE_PATH, String.valueOf(mode.id));
         if (success && makeDefault) {
             return FileUtils.writeLine(DEFAULT_PATH, String.valueOf(mode.id));
