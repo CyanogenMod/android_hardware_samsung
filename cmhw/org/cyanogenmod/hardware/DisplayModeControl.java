@@ -52,7 +52,11 @@ public class DisplayModeControl {
             setMode(getDefaultMode(), false);
         } else if (FileUtils.isFileReadable(MODE_PATH)) {
             /* If default mode is not set yet, set current mode as default */
-            setMode(getCurrentMode(), true);
+            DisplayMode mode = getCurrentMode();
+
+            if (mode != null) {
+                setMode(mode, true);
+            }
         }
     }
 
@@ -113,6 +117,10 @@ public class DisplayModeControl {
      * if this mode is valid.
      */
     public static boolean setMode(DisplayMode mode, boolean makeDefault) {
+        if (mode == null) {
+            return false;
+        }
+
         boolean success = FileUtils.writeLine(MODE_PATH, String.valueOf(mode.id));
         if (success && makeDefault) {
             return FileUtils.writeLine(DEFAULT_PATH, String.valueOf(mode.id));
