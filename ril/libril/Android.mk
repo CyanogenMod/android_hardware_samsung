@@ -37,7 +37,6 @@ LOCAL_CFLAGS += -DNEEDS_VIDEO_CALL_FIELD
 endif
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADER)/librilutils
 LOCAL_C_INCLUDES += external/nanopb-c
 
 LOCAL_MODULE:= libril
