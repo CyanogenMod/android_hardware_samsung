@@ -30,6 +30,7 @@ import org.cyanogenmod.internal.util.FileUtils;
 public class SunlightEnhancement {
 
     private static final String FILE_SRE = "/sys/class/mdnie/mdnie/outdoor";
+    private static final String FILE_HBM = "/sys/class/lcd/panel/panel/auto_brightness";
 
     /**
      * Whether device supports SRE
@@ -38,7 +39,9 @@ public class SunlightEnhancement {
      */
     public static boolean isSupported() {
         return FileUtils.isFileWritable(FILE_SRE) &&
-                FileUtils.isFileReadable(FILE_SRE);
+                FileUtils.isFileReadable(FILE_SRE) &&
+                FileUtils.isFileWritable(FILE_HBM) &&
+                FileUtils.isFileReadable(FILE_HBM);
     }
 
     /**
@@ -48,7 +51,8 @@ public class SunlightEnhancement {
      * the operation failed while reading the status; true in any other case.
      */
     public static boolean isEnabled() {
-        return "1".equals(FileUtils.readOneLine(FILE_SRE));
+        return "1".equals(FileUtils.readOneLine(FILE_SRE)) &&
+                "6".equals(FileUtils.readOneLine(FILE_HBM));
     }
 
     /**
@@ -59,7 +63,11 @@ public class SunlightEnhancement {
      * failed; true in any other case.
      */
     public static boolean setEnabled(boolean status) {
-        return FileUtils.writeLine(FILE_SRE, status ? "1" : "0");
+        boolean ret = FileUtils.writeLine(FILE_SRE, status ? "1" : "0");
+        if (ret) {
+            return FileUtils.writeLine(FILE_HBM, status ? "6" : "0");
+        }
+        return ret;
     }
 
     /**
