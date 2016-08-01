@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
+EXYNOS4X12_ROOT := $(call my-dir)
 
-include $(SAM_ROOT)/exynos3/s5pc110/Android.mk
+ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
+ifeq ($(TARGET_SOC),exynos4x12)
 
+include $(TARGET_HAL_PATH)/Android.mk
+include $(EXYNOS4X12_ROOT)/exynos4x12/Android.mk
+include $(EXYNOS4X12_ROOT)/nfc/Android.mk
+
+endif
 endif

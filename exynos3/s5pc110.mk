@@ -12,29 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SAM_ROOT := $(call my-dir)
+S5PC110_ROOT := $(call my-dir)
 
-# Exynos 4
-ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
-include $(SAM_ROOT)/exynos/multimedia/Android.mk
-include $(SAM_ROOT)/exynos4/exynos4.mk
-endif
-
-# Exynos 3
 ifeq ($(TARGET_BOARD_PLATFORM),s5pc110)
-include $(SAM_ROOT)/exynos3/s5pc110.mk
-endif
 
-# Wifi
-ifeq ($(BOARD_HAVE_SAMSUNG_WIFI),true)
-include $(SAM_ROOT)/macloader/Android.mk
-include $(SAM_ROOT)/wifiloader/Android.mk
-endif
+include $(S5PC110_ROOT)/s5pc110/Android.mk
 
-ifeq ($(BOARD_VENDOR),samsung)
-include $(SAM_ROOT)/AdvancedDisplay/Android.mk
-include $(SAM_ROOT)/liblights/Android.mk
-include $(SAM_ROOT)/modemloader/Android.mk
-include $(SAM_ROOT)/power/Android.mk
-include $(SAM_ROOT)/ril/Android.mk
 endif

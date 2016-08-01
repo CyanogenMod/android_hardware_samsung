@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+EXYNOS4210_ROOT := $(call my-dir)
+
 ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
 ifeq ($(TARGET_SOC),exynos4210)
 
 include $(TARGET_HAL_PATH)/Android.mk
-include $(SAM_ROOT)/exynos/multimedia/Android.mk
-include $(SAM_ROOT)/exynos4/exynos4210/Android.mk
+include $(EXYNOS4210_ROOT)/exynos4210/Android.mk
 
 #NFC
 ifeq ($(BOARD_HAVE_NFC),true)
-include $(SAM_ROOT)/exynos4/nfc/Android.mk
+include $(EXYNOS4210_ROOT)/nfc/Android.mk
 endif
 
 endif
