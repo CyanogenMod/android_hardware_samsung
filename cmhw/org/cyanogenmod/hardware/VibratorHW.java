@@ -28,11 +28,7 @@ public class VibratorHW {
 
     public static boolean isSupported() {
         return FileUtils.isFileWritable(LEVEL_PATH) &&
-                FileUtils.isFileReadable(LEVEL_PATH) &&
-                FileUtils.isFileReadable(DEFAULT_PATH) &&
-                FileUtils.isFileReadable(MAX_PATH) &&
-                FileUtils.isFileReadable(MIN_PATH) &&
-                FileUtils.isFileReadable(THRESHOLD_PATH);
+                FileUtils.isFileReadable(LEVEL_PATH);
     }
 
     public static int getMaxIntensity()  {
