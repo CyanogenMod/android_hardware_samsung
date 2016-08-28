@@ -23,6 +23,6 @@
   <!-- mDNIe -->
   <string name="mdnie_scenario_title_head">Skenario</string>
   <string name="mdnie_scenario_summary_head">Setel skenario mDNIe</string>
-  <string name="mdnie_negative_title_head">Modus negatif</string>
-  <string name="mdnie_negative_summary_head">Aktifkan/nonaktifkan warna terbalik</string>
+  <string name="mdnie_negative_title_head">Mode negatif</string>
+  <string name="mdnie_negative_summary_head">Hidup/Matikan warna terbalik</string>
 </resources>
