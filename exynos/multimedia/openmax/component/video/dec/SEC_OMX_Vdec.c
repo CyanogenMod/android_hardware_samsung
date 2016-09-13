@@ -44,7 +44,6 @@
 
 #undef  SEC_LOG_TAG
 #define SEC_LOG_TAG    "SEC_VIDEO_DEC"
-#define SEC_LOG_OFF
 #include "SEC_OSAL_Log.h"
 
 
@@ -323,6 +322,7 @@ OMX_ERRORTYPE SEC_OMX_FreeBuffer(
     }
 
     if ((pSECPort->portState != OMX_StateLoaded) && (pSECPort->portState != OMX_StateInvalid)) {
+		SEC_OSAL_Log(SEC_LOG_TRACE, "pSECPort->portState = %x", pSECPort->portState);
         (*(pSECComponent->pCallbacks->EventHandler)) (pOMXComponent,
                         pSECComponent->callbackData,
                         (OMX_U32)OMX_EventError,

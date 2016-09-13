@@ -52,7 +52,6 @@
 
 #undef  SEC_LOG_TAG
 #define SEC_LOG_TAG    "SEC_H264_DEC"
-#define SEC_LOG_OFF
 #include "SEC_OSAL_Log.h"
 
 #define H264_DEC_NUM_OF_EXTRA_BUFFERS 1
