@@ -192,7 +192,8 @@ int main() {
     }
 
     /* semco3rd */
-    if (strncasecmp(mac_addr_half, "f4:09:d8", 9) == 0) {
+    if (strncasecmp(mac_addr_half, "ec:1f:72", 9) == 0 ||
+        strncasecmp(mac_addr_half, "f4:09:d8", 9) == 0) {
         type = SEMCO3RD;
     }
 
