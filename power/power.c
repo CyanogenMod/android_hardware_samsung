@@ -38,7 +38,9 @@
 
 #define BOOSTPULSE_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse"
 
+#ifndef IO_IS_BUSY_PATH
 #define IO_IS_BUSY_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/io_is_busy"
+#endif
 
 #define CPU0_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq"
 #define CPU0_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
