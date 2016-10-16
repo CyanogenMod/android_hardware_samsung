@@ -404,7 +404,11 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
     }
 
 out:
+#ifdef CUSTOM_IO_IS_BUSY_PATH
+    sysfs_write(CUSTOM_IO_IS_BUSY_PATH, on ? "1" : "0");
+#else
     sysfs_write(IO_IS_BUSY_PATH, on ? "1" : "0");
+#endif
     ALOGV("power_set_interactive: %d done\n", on);
 }
 
