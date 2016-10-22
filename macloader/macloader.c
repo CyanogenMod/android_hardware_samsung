@@ -192,14 +192,16 @@ int main() {
     }
 
     /* semco3rd */
-    if (strncasecmp(mac_addr_half, "ec:1f:72", 9) == 0 ||
+    if (strncasecmp(mac_addr_half, "c0:bd:d1", 9) == 0 ||
+        strncasecmp(mac_addr_half, "e8:50:8b", 9) == 0 ||
+        strncasecmp(mac_addr_half, "ec:1f:72", 9) == 0 ||
+        strncasecmp(mac_addr_half, "f0:25:b7", 9) == 0 ||
         strncasecmp(mac_addr_half, "f4:09:d8", 9) == 0) {
         type = SEMCO3RD;
     }
 
     /* semco */
     if (strncasecmp(mac_addr_half, "51:f6:6b", 9) == 0 ||
-        strncasecmp(mac_addr_half, "c0:bd:d1", 9) == 0 ||
         strncasecmp(mac_addr_half, "ec:9b:f3", 9) == 0) {
         type = SEMCO;
     }
