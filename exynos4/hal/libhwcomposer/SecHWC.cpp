@@ -36,9 +36,9 @@
 #include "SecHWCUtils.h"
 
 #include "gralloc_priv.h"
-#ifdef HWC_HWOVERLAY
+
 #include <GLES/gl.h>
-#endif
+
 #if defined(BOARD_USES_HDMI)
 #include "SecHdmiClient.h"
 #include "SecTVOutService.h"
