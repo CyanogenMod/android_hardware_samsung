@@ -508,10 +508,10 @@ static void samsung_set_feature(struct power_module *module, feature_t feature, 
     struct samsung_power_module *samsung_pwr = (struct samsung_power_module *) module;
 
     switch (feature) {
-#ifdef DT2W_PATH
+#ifdef TARGET_TAP_TO_WAKE_NODE
         case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
             ALOGV("%s: %s double tap to wake", __func__, state ? "enabling" : "disabling");
-            sysfs_write(DT2W_PATH, state > 0 ? "1" : "0");
+            sysfs_write(TARGET_TAP_TO_WAKE_NODE, state > 0 ? "1" : "0");
             break;
 #endif
         default:
