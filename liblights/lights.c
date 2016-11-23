@@ -31,7 +31,9 @@
 
 #include <hardware/lights.h>
 
-#define PANEL_FILE "/sys/class/backlight/panel/brightness"
+#ifndef LIBLIGHTS_PANEL_FILE_PATH
+#define LIBLIGHTS_PANEL_FILE_PATH "/sys/class/backlight/panel/brightness"
+#endif
 #define BUTTON_FILE "/sys/class/sec/sec_touchkey/brightness"
 #define LED_BLINK "/sys/class/sec/led/led_blink"
 
@@ -116,7 +118,7 @@ static int set_light_backlight(struct light_device_t *dev __unused,
     int brightness = rgb_to_brightness(state);
 
     pthread_mutex_lock(&g_lock);
-    err = write_int(PANEL_FILE, brightness);
+    err = write_int(LIBLIGHTS_PANEL_FILE_PATH, brightness);
 
     pthread_mutex_unlock(&g_lock);
     return err;
