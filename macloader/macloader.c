@@ -194,6 +194,7 @@ int main() {
 
     /* semco3rd */
     if (strncasecmp(mac_addr_half, "84:38:38", 9) == 0 ||
+        strncasecmp(mac_addr_half, "ac:36:13", 9) == 0 ||
         strncasecmp(mac_addr_half, "c0:bd:d1", 9) == 0 ||
         strncasecmp(mac_addr_half, "e8:50:8b", 9) == 0 ||
         strncasecmp(mac_addr_half, "ec:1f:72", 9) == 0 ||
