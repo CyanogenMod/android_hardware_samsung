@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
- * Copyright (C) 2015 The CyanogenMod Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@
 
 #include <hardware/lights.h>
 
-#define PANEL_FILE "/sys/class/backlight/panel/brightness"
-#define BUTTON_FILE "/sys/class/sec/sec_touchkey/brightness"
-#define LED_BLINK "/sys/class/sec/led/led_blink"
+#include "samsung_lights.h"
+
+#define UNUSED __attribute__((unused))
 
 #define COLOR_MASK 0x00ffffff
 
@@ -101,36 +101,41 @@ static int write_str(char const *path, const char* value)
     }
 }
 
+static int get_color(struct light_state_t const *state)
+{
+    return state->color & COLOR_MASK;
+}
+
 static int rgb_to_brightness(struct light_state_t const *state)
 {
-    int color = state->color & COLOR_MASK;
+    int color = get_color(state);
 
     return ((77*((color>>16) & 0x00ff))
         + (150*((color>>8) & 0x00ff)) + (29*(color & 0x00ff))) >> 8;
 }
 
-static int set_light_backlight(struct light_device_t *dev __unused,
+static int set_light_backlight(UNUSED struct light_device_t *dev,
                                struct light_state_t const *state)
 {
     int err = 0;
     int brightness = rgb_to_brightness(state);
 
     pthread_mutex_lock(&g_lock);
-    err = write_int(PANEL_FILE, brightness);
+    err = write_int(PANEL_BRIGHTNESS_NODE, brightness);
 
     pthread_mutex_unlock(&g_lock);
     return err;
 }
 
-static int set_light_buttons(struct light_device_t* dev __unused,
+static int set_light_buttons(UNUSED struct light_device_t* dev,
                              struct light_state_t const* state)
 {
     int err = 0;
-    int on = (state->color & COLOR_MASK);
+    int on = get_color(state);
 
     pthread_mutex_lock(&g_lock);
 
-    err = write_int(BUTTON_FILE, on ? 1 : 0);
+    err = write_int(BUTTON_BRIGHTNESS_NODE, on ? 1 : 0);
 
     pthread_mutex_unlock(&g_lock);
 
@@ -153,7 +158,6 @@ static int write_leds(const struct led_config *led)
 
     char blink[32];
     int count, err;
-    int color;
 
     if (led == NULL)
         led = &led_off;
@@ -179,7 +183,7 @@ static int write_leds(const struct led_config *led)
     blink[count+1] = '\0';
 
     pthread_mutex_lock(&g_lock);
-    err = write_str(LED_BLINK, blink);
+    err = write_str(LED_BLINK_NODE, blink);
     pthread_mutex_unlock(&g_lock);
 
     return err;
@@ -193,9 +197,8 @@ static int set_light_leds(struct light_state_t const *state, int type)
     ALOGV("%s: type=%d, color=0x%010x, fM=%d, fOnMS=%d, fOffMs=%d.", __func__,
           type, state->color,state->flashMode, state->flashOnMS, state->flashOffMS);
 
-    if (type < 0 || (size_t)type >= sizeof(g_leds)/sizeof(g_leds[0])) {
+    if (type < 0 || (size_t)type >= sizeof(g_leds)/sizeof(g_leds[0]))
         return -EINVAL;
-    }
 
     /* type is one of:
      *   0. battery
@@ -218,7 +221,7 @@ static int set_light_leds(struct light_state_t const *state, int type)
         return -EINVAL;
     }
 
-    led->color = state->color & COLOR_MASK;
+    led->color = get_color(state);
 
     if (led->color > 0) {
         /* This LED is lit. */
@@ -251,19 +254,19 @@ switched:
     return err;
 }
 
-static int set_light_leds_battery(struct light_device_t *dev __unused,
+static int set_light_leds_battery(UNUSED struct light_device_t *dev,
                                   struct light_state_t const *state)
 {
     return set_light_leds(state, 0);
 }
 
-static int set_light_leds_notifications(struct light_device_t *dev __unused,
+static int set_light_leds_notifications(UNUSED struct light_device_t *dev,
                                         struct light_state_t const *state)
 {
     return set_light_leds(state, 1);
 }
 
-static int set_light_leds_attention(struct light_device_t *dev __unused,
+static int set_light_leds_attention(UNUSED struct light_device_t *dev,
                                     struct light_state_t const *state)
 {
     struct light_state_t fixed;
