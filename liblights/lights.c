@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
- * Copyright (C) 2015 The CyanogenMod Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@
 
 #include <hardware/lights.h>
 
-#define PANEL_FILE "/sys/class/backlight/panel/brightness"
-#define BUTTON_FILE "/sys/class/sec/sec_touchkey/brightness"
-#define LED_BLINK "/sys/class/sec/led/led_blink"
+#include "samsung_lights.h"
 
 #define COLOR_MASK 0x00ffffff
 
@@ -116,7 +114,8 @@ static int set_light_backlight(struct light_device_t *dev __unused,
     int brightness = rgb_to_brightness(state);
 
     pthread_mutex_lock(&g_lock);
-    err = write_int(PANEL_FILE, brightness);
+
+    err = write_int(PANEL_BRIGHTNESS_NODE, brightness);
 
     pthread_mutex_unlock(&g_lock);
     return err;
@@ -130,12 +129,30 @@ static int set_light_buttons(struct light_device_t* dev __unused,
 
     pthread_mutex_lock(&g_lock);
 
-    err = write_int(BUTTON_FILE, on ? 1 : 0);
+    err = write_int(BUTTON_BRIGHTNESS_NODE, on ? 1 : 0);
 
     pthread_mutex_unlock(&g_lock);
 
     return err;
 }
+
+#ifdef KEYBOARD_BRIGHTNESS_NODE
+static int set_light_keyboard(struct light_device_t* dev __unused,
+                              struct light_state_t const* state)
+{
+    int err = 0;
+    int on = (state->color & COLOR_MASK);
+
+    pthread_mutex_lock(&g_lock);
+
+    err = write_int(KEYBOARD_BRIGHTNESS_NODE, on ? 255 : 0);
+
+    pthread_mutex_unlock(&g_lock);
+
+    return err;
+
+}
+#endif
 
 static int close_lights(struct light_device_t *dev)
 {
@@ -179,7 +196,7 @@ static int write_leds(const struct led_config *led)
     blink[count+1] = '\0';
 
     pthread_mutex_lock(&g_lock);
-    err = write_str(LED_BLINK, blink);
+    err = write_str(LED_BLINK_NODE, blink);
     pthread_mutex_unlock(&g_lock);
 
     return err;
@@ -301,6 +318,10 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         set_light = set_light_buttons;
     else if (0 == strcmp(LIGHT_ID_BATTERY, name))
         set_light = set_light_leds_battery;
+#ifdef KEYBOARD_BRIGHTNESS_NODE
+    else if (0 == strcmp(LIGHT_ID_KEYBOARD, name))
+        set_light = set_light_leds_keyboard;
+#endif
     else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
         set_light = set_light_leds_notifications;
     else if (0 == strcmp(LIGHT_ID_ATTENTION, name))
