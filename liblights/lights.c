@@ -35,20 +35,57 @@
 
 #define COLOR_MASK 0x00ffffff
 
+#define MAX_INPUT_BRIGHTNESS 255
+
 static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
+
+struct backlight_config {
+    int cur_brightness, max_brightness;
+};
 
 struct led_config {
     unsigned int color;
     int delay_on, delay_off;
 };
 
+static struct backlight_config g_backlight; // For panel backlight
 static struct led_config g_leds[3]; // For battery, notifications, and attention.
 static int g_cur_led = -1;          // Presently showing LED of the above.
 
 void init_g_lock(void)
 {
     pthread_mutex_init(&g_lock, NULL);
+}
+
+static int read_int(char const *path)
+{
+    int fd, len;
+    int num_bytes = 10;
+    char buf[11];
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        ALOGE("%s: failed to open %s\n", __func__, path);
+        goto fail;
+    }
+
+    len = read(fd, buf, num_bytes - 1);
+    if (len < 0) {
+        ALOGE("%s: failed to read from %s\n", __func__, path);
+        goto fail;
+    }
+
+    buf[len] = '\0';
+    close(fd);
+
+    // no endptr, decimal base
+    return strtol(buf, NULL, 10);
+
+fail:
+    if (fd >= 0)
+        close(fd);
+    return -1;
 }
 
 static int write_int(char const *path, int value)
@@ -113,8 +150,22 @@ static int set_light_backlight(struct light_device_t *dev __unused,
     int err = 0;
     int brightness = rgb_to_brightness(state);
 
+    /*
+     * If our max panel brightness is > 255, apply linear scaling across the
+     * accepted range.
+     */
+    if (g_backlight.max_brightness > 0 && g_backlight.max_brightness > 255) {
+        int old_brightness = brightness;
+        brightness = brightness * g_backlight.max_brightness
+            / MAX_INPUT_BRIGHTNESS;
+        ALOGV("%s: scaling brightness %d => %d\n", __func__,
+            old_brightness, brightness);
+    }
+
     pthread_mutex_lock(&g_lock);
     err = write_int(PANEL_BRIGHTNESS_NODE, brightness);
+    if (err == 0)
+        g_backlight.cur_brightness = brightness;
 
     pthread_mutex_unlock(&g_lock);
     return err;
@@ -305,6 +356,8 @@ static int open_lights(const struct hw_module_t *module, char const *name,
         set_light = set_light_leds_attention;
     else
         return -EINVAL;
+
+    g_backlight.max_brightness = read_int(PANEL_MAX_BRIGHTNESS_NODE);
 
     pthread_once(&g_init, init_g_lock);
 
