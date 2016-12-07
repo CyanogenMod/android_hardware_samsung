@@ -37,6 +37,8 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
+#include "samsung_lights.h"
+
 #define BOOSTPULSE_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse"
 
 #define IO_IS_BUSY_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/io_is_busy"
@@ -45,8 +47,6 @@
 #define CPU0_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU4_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq"
 #define CPU4_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
-
-#define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
 
 struct samsung_power_module {
     struct power_module base;
@@ -123,27 +123,6 @@ static void sysfs_write(const char *path, char *s)
     }
 
     close(fd);
-}
-
-static int read_panel_brightness() {
-    int ret = 0;
-    int read_status;
-    // brightness can range from 0 to 255, so max. 3 chars + '\0'
-    char panel_brightness[4];
-    // for strtol
-    char *dummy;
-    const int base = 10;
-
-    read_status = sysfs_read(PANEL_BRIGHTNESS, panel_brightness, sizeof(PANEL_BRIGHTNESS));
-    if (read_status < 0) {
-        ALOGE("%s: Failed to read panel brightness from %s!\n", __func__, PANEL_BRIGHTNESS);
-        return -1;
-    }
-
-    ret = strtol(panel_brightness, &dummy, base);
-    ALOGV("%s: Panel brightness is: %d", __func__, ret);
-
-    return ret;
 }
 
 /**********************************************************
@@ -367,9 +346,10 @@ static void samsung_power_set_interactive(struct power_module *module, int on)
 
     ALOGV("power_set_interactive: %d\n", on);
 
+    // Get panel backlight brightness from lights HAL
     // Do not disable any input devices if the screen is on but we are in a non-interactive state
     if (!on) {
-        if (read_panel_brightness() > 0) {
+        if (g_backlight.cur_brightness > 0) {
             ALOGV("%s: Moving to non-interactive state, but screen is still on,"
                   " not disabling input devices\n", __func__);
             goto out;
