@@ -29,4 +29,24 @@
 #define BUTTON_BRIGHTNESS_NODE "/sys/class/sec/sec_touchkey/brightness"
 #define LED_BLINK_NODE "/sys/class/sec/led/led_blink"
 
+/*
+ * Allow other modules to access our static data
+ *
+ * Currently we expose panel cur/max brightness, as well as led config and
+ * active count.
+ *
+ */
+struct backlight_config {
+    int cur_brightness, max_brightness;
+};
+
+struct led_config {
+    unsigned int color;
+    int delay_on, delay_off;
+};
+
+static struct backlight_config g_backlight; // For panel backlight
+static struct led_config g_leds[3];         // For battery, notifications, and attention.
+static int g_cur_led = -1;                  // Presently showing LED of the above.
+
 #endif // SAMSUNG_LIGHTS_H

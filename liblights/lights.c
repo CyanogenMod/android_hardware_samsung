@@ -40,19 +40,6 @@
 static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
-struct backlight_config {
-    int cur_brightness, max_brightness;
-};
-
-struct led_config {
-    unsigned int color;
-    int delay_on, delay_off;
-};
-
-static struct backlight_config g_backlight; // For panel backlight
-static struct led_config g_leds[3]; // For battery, notifications, and attention.
-static int g_cur_led = -1;          // Presently showing LED of the above.
-
 void init_g_lock(void)
 {
     pthread_mutex_init(&g_lock, NULL);
