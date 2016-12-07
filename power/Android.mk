@@ -20,7 +20,9 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := power.c
 
-LOCAL_C_INCLUDES := hardware/samsung/liblights/include
+LOCAL_C_INCLUDES := \
+    $(LOCAL_PATH)/include \
+    hardware/samsung/liblights/include
 
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 
