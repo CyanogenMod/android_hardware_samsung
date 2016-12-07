@@ -22,7 +22,7 @@ LOCAL_SRC_FILES := power.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 
-LOCAL_SHARED_LIBRARIES := liblog libcutils
+LOCAL_SHARED_LIBRARIES := liblog libcutils liblights_helper
 
 LOCAL_MODULE := power.$(TARGET_BOOTLOADER_BOARD_NAME)
 LOCAL_MODULE_RELATIVE_PATH := hw
