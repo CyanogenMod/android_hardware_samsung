@@ -165,6 +165,7 @@ int main() {
         strncasecmp(mac_addr_half, "04:46:65", 9) == 0 ||
         strncasecmp(mac_addr_half, "10:5f:06", 9) == 0 ||
         strncasecmp(mac_addr_half, "10:a5:d0", 9) == 0 ||
+        strncasecmp(mac_addr_half, "10:d5:42", 9) == 0 ||
         strncasecmp(mac_addr_half, "1c:99:4c", 9) == 0 ||
         strncasecmp(mac_addr_half, "14:7d:c5", 9) == 0 ||
         strncasecmp(mac_addr_half, "20:02:af", 9) == 0 ||
