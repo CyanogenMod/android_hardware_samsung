@@ -31,7 +31,7 @@
 
 #include <hardware/lights.h>
 
-#include "samsung_lights.h"
+#include <samsung_lights.h>
 
 #define COLOR_MASK 0x00ffffff
 
