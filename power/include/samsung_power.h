@@ -33,4 +33,6 @@
 #define CPU4_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/interactive/hispeed_freq"
 #define CPU4_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
 
+#define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
+
 #endif // SAMSUNG_POWER_H

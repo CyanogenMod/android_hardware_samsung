@@ -39,8 +39,6 @@
 
 #include <samsung_power.h>
 
-#define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
-
 struct samsung_power_module {
     struct power_module base;
     pthread_mutex_t lock;
