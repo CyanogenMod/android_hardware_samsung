@@ -37,7 +37,7 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-#include "samsung_power.h"
+#include <samsung_power.h>
 
 #define PANEL_BRIGHTNESS "/sys/class/backlight/panel/brightness"
 
