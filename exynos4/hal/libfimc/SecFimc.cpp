@@ -751,7 +751,7 @@ SecBuffer * SecFimc::getMemAddr(int index)
 {
     if (mFlagCreate == false) {
         ALOGE("%s::Not yet created", __func__);
-        return false;
+        return NULL;
     }
 
     return &mDstBuffer[index];
